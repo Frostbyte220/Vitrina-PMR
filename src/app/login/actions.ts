@@ -19,7 +19,8 @@ export async function registerUser(formData: FormData) {
   // 2. Защита от спама (Rate Limit). Блокируем, если больше 3 регистраций в минуту.
   const headerList = await headers();
   const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
-  if (!registerRateLimiter.check(ip)) {
+  const isAllowed = await registerRateLimiter.check(ip);
+  if (!isAllowed) {
     return { error: "Слишком много попыток регистрации. Подождите 1 минуту." };
   }
 
