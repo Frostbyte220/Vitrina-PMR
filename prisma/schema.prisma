@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String    // Название магазина / Имя владельца
+  email        String    @unique
+  password     String?
+  instagram    String    
+  instagramUrl String?   
+  avatar       String?   
+  products     Product[]
+  store        Store?    // <-- Связь с расширенными настройками магазина
+  resetTokens  PasswordResetToken[]
+  createdAt    DateTime  @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// <-- Модель Профиль/Витрина магазина -->
+model Store {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String   
+  slug        String   @unique 
+  description String?  
+  instagram   String?  
+  phone       String?  
+  cities      String[] 
+  
+  avatarUrl   String?  
+  coverUrl    String?  
+
+  // 🔥 Добавьте эту строку для связи с продуктами
+  products    Product[] 
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  title       String
+  price       Float
+  category    String    @default("Разное")
+  subCategory String?   
+  images      String[]  
+  description String?
+  status      String?   @default("Активен")
+  deletedAt   DateTime? 
+
+  // Связь с продавцом
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 🔥 НОВОЕ: Связь товара с магазином (для корректной работы include: { store: true })
+  storeId     String?
+  store       Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Фон акцентного цвета rose-600 со скругленными углами -->
+  <rect width="512" height="512" rx="120" fill="#e11d48" />
+  
+  <!-- Лаконичная белая буква V -->
+  <path 
+    d="M160 160 L256 360 L352 160" 
+    fill="none" 
+    stroke="#ffffff" 
+    stroke-width="56" 
+    stroke-linecap="round" 
+    stroke-linejoin="round" 
+  />
+</svg>
