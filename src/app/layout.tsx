@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 import { ToastProvider } from "@/components/ui/Toast"; 
 import { Footer } from "@/components/layout/Footer"; // 🔥 Добавлен импорт футера
 import { MobileTabBar } from "@/components/layout/MobileTabBar"; // Добавлена мобильная навигация
+import { Suspense } from "react";
+import { YandexMetrika } from "@/components/YandexMetrika"; // Яндекс.Метрика
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -27,6 +29,9 @@ export default function RootLayout({
         className="flex min-h-screen flex-col antialiased"
         suppressHydrationWarning={true}
       >
+        <Suspense fallback={null}>
+          <YandexMetrika />
+        </Suspense>
         <AuthSessionProvider>
           <ToastProvider>
             
