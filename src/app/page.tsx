@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { LogIn, LayoutDashboard } from "lucide-react";
+import { LogIn, LayoutDashboard, Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
+import { VisualCategories } from "@/components/home/VisualCategories";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -97,7 +98,15 @@ export default async function HomePage({
       
       {/* Контейнер для кнопок в правом верхнем углу */}
       <div className="absolute right-4 top-4 z-50 flex items-center gap-2 md:right-8 md:top-6 md:gap-3">
-        
+        {/* Кнопка Магазинов (десктоп) */}
+        <Link
+          href="/shops"
+          className="hidden sm:flex items-center gap-2 rounded-full bg-white px-4 py-2.5 sm:px-5 text-sm font-medium text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-gray-50 hover:text-rose-800 hover:shadow-md"
+        >
+          <Store className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span>Все магазины</span>
+        </Link>
+
         {/* Кнопка Избранного */}
         <FavoritesButton />
 
@@ -136,8 +145,11 @@ export default async function HomePage({
         </div>
       </section>
 
+      {/* Категории (визуальные) */}
+      <VisualCategories />
+
       {/* Сетка товаров */}
-      <section className="mx-auto max-w-7xl px-3 pt-6 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8">
         {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
             <h3 className="text-lg font-semibold text-gray-900">

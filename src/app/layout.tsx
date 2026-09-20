@@ -3,6 +3,7 @@ import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider"
 import { Toaster } from "react-hot-toast"; 
 import { ToastProvider } from "@/components/ui/Toast"; 
 import { Footer } from "@/components/layout/Footer"; // 🔥 Добавлен импорт футера
+import { MobileTabBar } from "@/components/layout/MobileTabBar"; // Добавлена мобильная навигация
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -29,14 +30,17 @@ export default function RootLayout({
         <AuthSessionProvider>
           <ToastProvider>
             
-            {/* 🔥 Обернули children в flex-grow. Этот блок займет всё свободное место, отталкивая футер вниз */}
-            <div className="flex-grow">
+            {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
+            <div className="flex-grow pb-16 md:pb-0">
               {children}
             </div>
 
-            {/* 🔥 Вставляем наш футер */}
-            <Footer />
+            {/* 🔥 Вставляем наш футер (тоже скрывается за таббаром, поэтому нужен padding) */}
+            <div className="pb-16 md:pb-0">
+              <Footer />
+            </div>
 
+            <MobileTabBar />
           </ToastProvider>
           
           {/* Toaster просто лежит рядом, он сам отрендерит уведомления поверх всего сайта */}
