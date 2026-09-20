@@ -85,12 +85,22 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Копирайт */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 md:flex-row">
+        {/* Копирайт и юридическая информация */}
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 md:flex-row text-center md:text-left">
           <p className="text-sm text-gray-400">
             &copy; {currentYear} Vitrina PMR. Все права защищены.
           </p>
-          <p className="text-sm font-medium text-gray-400">Сделано в ПМР</p>
+          
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs text-gray-400">
+            <Link href="/privacy" className="hover:text-rose-600 transition-colors">
+              Политика конфиденциальности
+            </Link>
+            <Link href="/terms" className="hover:text-rose-600 transition-colors">
+              Пользовательское соглашение
+            </Link>
+          </div>
+
+          <p className="text-sm font-medium text-gray-400 hidden lg:block">Сделано в ПМР</p>
         </div>
       </div>
     </footer>
