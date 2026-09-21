@@ -130,6 +130,40 @@ export async function deleteProduct(id: string) {
   }
 }
 
+export async function toggleProductStatus(id: string, currentStatus: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { user: true }
+    });
+
+    if (!product || product.user?.id !== session.user.id) {
+      return { success: false, error: "Товар не найден или у вас нет прав" };
+    }
+
+    const newStatus = currentStatus === "Активен" ? "Скрыт" : "Активен";
+
+    await prisma.product.update({
+      where: { id },
+      data: { status: newStatus },
+    });
+
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/products", "layout");
+    revalidatePath("/", "layout");
+
+    return { success: true, newStatus };
+  } catch (error) {
+    console.error("Ошибка при обновлении статуса:", error);
+    return { success: false, error: "Не удалось обновить статус" };
+  }
+}
+
 export async function updateProduct(id: string, formData: FormData) {
   try {
     const session = await getServerSession(authOptions);
