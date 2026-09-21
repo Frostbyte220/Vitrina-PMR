@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash2, ImageOff, Edit, EyeOff, Eye, Search, Plus, Filter } from "lucide-react";
+import { Trash2, ImageOff, Edit, EyeOff, Eye, Search, Plus, Filter, Package } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { deleteProduct, toggleProductStatus } from "@/app/dashboard/actions";
 import type { Product } from "@/types";
