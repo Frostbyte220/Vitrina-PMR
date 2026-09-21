@@ -29,47 +29,52 @@ export function LoginForm() {
 
     setIsLoading(true);
 
-    // Если включен режим регистрации
-    if (isRegister) {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("instagram", instagram);
-      formData.append("instagramLink", instagramLink); // <-- ПЕРЕДАЕМ ССЫЛКУ НА СЕРВЕР
-      formData.append("email", email);
-      formData.append("password", password);
+    try {
+      // Если включен режим регистрации
+      if (isRegister) {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("instagram", instagram);
+        formData.append("instagramLink", instagramLink); // <-- ПЕРЕДАЕМ ССЫЛКУ НА СЕРВЕР
+        formData.append("email", email);
+        formData.append("password", password);
 
-      const res = await registerUser(formData);
-      
-      if (res?.error) {
-        showToast(res.error);
+        const res = await registerUser(formData);
+        
+        if (res?.error) {
+          showToast(res.error);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Вход (срабатывает как для обычного логина, так и автологин после регистрации)
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      // --- ИСПРАВЛЕННЫЙ БЛОК РЕДИРЕКТА ---
+      if (result?.error || !result?.ok) {
+        showToast(
+          isRegister 
+            ? "Регистрация прошла успешно, но войти не удалось. Попробуйте войти вручную." 
+            : "Неверный email или пароль"
+        );
         setIsLoading(false);
         return;
       }
+
+      // Сначала делаем refresh, чтобы Next.js подхватил новые куки сессии
+      router.refresh();
+      // Затем перенаправляем пользователя в дашборд
+      router.push(callbackUrl);
+    } catch (error: any) {
+      console.error("Auth error:", error);
+      showToast(error?.message || "Произошла системная ошибка. Попробуйте еще раз.");
+      setIsLoading(false);
     }
-
-    // Вход (срабатывает как для обычного логина, так и автологин после регистрации)
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setIsLoading(false);
-
-    // --- ИСПРАВЛЕННЫЙ БЛОК РЕДИРЕКТА ---
-    if (result?.error || !result?.ok) {
-      showToast(
-        isRegister 
-          ? "Регистрация прошла успешно, но войти не удалось. Попробуйте войти вручную." 
-          : "Неверный email или пароль"
-      );
-      return;
-    }
-
-    // Сначала делаем refresh, чтобы Next.js подхватил новые куки сессии
-    router.refresh();
-    // Затем перенаправляем пользователя в дашборд
-    router.push(callbackUrl);
   };
 
   return (

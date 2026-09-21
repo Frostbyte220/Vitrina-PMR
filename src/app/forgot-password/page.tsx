@@ -53,7 +53,9 @@ export default function ForgotPasswordPage() {
             <h2 className="text-lg font-medium text-green-800 mb-2">Ссылка отправлена!</h2>
             <p className="text-sm text-green-700">
               Если аккаунт с таким email существует, мы отправили на него ссылку для сброса пароля.
-              (В режиме разработки проверьте консоль сервера)
+            </p>
+            <p className="mt-2 text-sm font-medium text-green-800">
+              Обязательно проверьте папку «Спам», если письмо не приходит.
             </p>
             <Link 
               href="/login"
