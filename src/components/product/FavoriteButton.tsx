@@ -5,7 +5,8 @@ import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { useEffect, useState } from "react";
 
 export function FavoriteButton({ productId }: { productId: string }) {
-  const { favorites, toggleFavorite } = useFavoritesStore();
+  const isFavorite = useFavoritesStore((state) => state.favorites.includes(productId));
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const [mounted, setMounted] = useState(false);
 
   // Ждем загрузки на клиенте, чтобы серверный и клиентский HTML совпали
@@ -21,8 +22,6 @@ export function FavoriteButton({ productId }: { productId: string }) {
       </button>
     );
   }
-
-  const isFavorite = favorites.includes(productId);
 
   return (
     <button

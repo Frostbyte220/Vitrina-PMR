@@ -4,6 +4,8 @@ import { productSchema } from "@/lib/validations/product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
+import { revalidatePath } from "next/cache";
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,6 +19,7 @@ export async function POST(req: Request) {
     // Находим магазин текущего пользователя, чтобы привязать товар
     const store = await prisma.store.findUnique({
       where: { userId: session.user.id },
+      select: { id: true }
     });
 
     const newProduct = await prisma.product.create({
@@ -32,6 +35,10 @@ export async function POST(req: Request) {
         storeId: store ? store.id : null,
       },
     });
+
+    revalidatePath("/");
+    revalidatePath("/shops");
+    revalidatePath("/dashboard/products");
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {

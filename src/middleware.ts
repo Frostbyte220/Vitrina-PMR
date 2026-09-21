@@ -34,15 +34,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Конфигурация: на каких маршрутах работает middleware
+// Конфигурация: middleware срабатывает ТОЛЬКО на защищённых маршрутах
 export const config = {
-  matcher: [
-    /*
-     * Обрабатываем все маршруты, КРОМЕ:
-     * - api routes (/api/*)
-     * - статических файлов Next.js (_next/static, _next/image)
-     * - favicon, иконок и публичных файлов
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
-  ],
+  matcher: ["/dashboard/:path*"],
 };

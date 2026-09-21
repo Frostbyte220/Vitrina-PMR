@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
@@ -77,13 +78,38 @@ export default async function HomePage({
       skip: skip,
       take: ITEMS_PER_PAGE,
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        images: true,
+        category: true,
+        subCategory: true,
         user: {
-          include: {
-            store: true,
+          select: {
+            name: true,
+            instagram: true,
+            avatar: true,
+            store: {
+              select: {
+                name: true,
+                slug: true,
+                instagram: true,
+                avatarUrl: true,
+                cities: true,
+              }
+            }
           }
         },
-        store: true, 
+        store: {
+          select: {
+            name: true,
+            slug: true,
+            instagram: true,
+            avatarUrl: true,
+            cities: true,
+          }
+        },
       },
     }),
     prisma.product.count({
@@ -141,7 +167,9 @@ export default async function HomePage({
           </p>
         </div>
         <div className="mx-auto max-w-2xl">
-          <SearchAndFilter />
+          <React.Suspense fallback={<div className="h-12 w-full animate-pulse rounded-full bg-gray-100" />}>
+            <SearchAndFilter />
+          </React.Suspense>
         </div>
       </section>
 

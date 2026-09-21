@@ -31,13 +31,13 @@ const categoryMap = [
 
 export function VisualCategories() {
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-      <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
+    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8" style={{ contentVisibility: 'auto' }}>
+      <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
         {categoryMap.map((cat) => (
           <Link
             key={cat.name}
             href={`/?category=${encodeURIComponent(cat.name)}`}
-            className="flex min-w-[72px] flex-col items-center gap-2 transition-transform hover:scale-105"
+            className="flex min-w-[72px] flex-col items-center gap-2 transition-transform hover:scale-105 snap-start"
           >
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${cat.color} shadow-sm`}>
               <cat.icon className="h-6 w-6" strokeWidth={1.5} />

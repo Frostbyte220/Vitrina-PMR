@@ -75,6 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
               src={avatarSrc} 
               alt={displayName} 
               fill 
+              sizes="32px"
               className="object-cover" 
             />
           ) : (

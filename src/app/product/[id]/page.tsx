@@ -34,7 +34,21 @@ export async function generateMetadata({
   const { id } = await params;
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { user: true },
+    select: {
+      title: true,
+      description: true,
+      images: true,
+      user: {
+        select: {
+          name: true,
+          store: {
+            select: {
+              name: true,
+            }
+          }
+        }
+      }
+    }
   });
 
   if (!product) {
@@ -79,13 +93,26 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const product = await prisma.product.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      price: true,
+      images: true,
+      status: true,
       user: {
-        include: {
-          store: true
+        select: {
+          name: true,
+          instagram: true,
+          store: {
+            select: {
+              name: true,
+              instagram: true,
+            }
+          }
         }
-      },
-    },
+      }
+    }
   });
 
   if (!product) {

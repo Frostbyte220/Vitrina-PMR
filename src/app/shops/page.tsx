@@ -17,7 +17,15 @@ export default async function ShopsPage() {
   // where: { products: { some: { deletedAt: null } } }
   const stores = await prisma.store.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
+    take: 50, // Ограничиваем количество магазинов для производительности
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      instagram: true,
+      cities: true,
+      coverUrl: true,
+      avatarUrl: true,
       _count: {
         select: {
           products: {
@@ -72,6 +80,7 @@ export default async function ShopsPage() {
                         src={store.coverUrl} 
                         alt={`Обложка ${store.name}`}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover"
                       />
                     )}
@@ -85,6 +94,7 @@ export default async function ShopsPage() {
                           src={store.avatarUrl} 
                           alt={store.name} 
                           fill 
+                          sizes="80px"
                           className="object-cover" 
                         />
                       ) : (
