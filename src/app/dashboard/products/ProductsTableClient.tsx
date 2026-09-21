@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Trash2, ImageOff, Edit, EyeOff, Eye, Search, Plus, Filter, Package } from "lucide-react";
+import { Trash2, ImageOff, Edit, EyeOff, Eye, Package } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { deleteProduct, toggleProductStatus } from "@/app/dashboard/actions";
 import type { Product } from "@/types";
@@ -17,7 +16,6 @@ interface ProductsTableClientProps {
 }
 
 export function ProductsTableClient({ items, searchQuery }: ProductsTableClientProps) {
-  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -29,7 +27,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
     try {
       const result = await deleteProduct(id);
       if (result?.error) alert(result.error);
-    } catch (error) {
+    } catch {
       alert("Ошибка при удалении");
     } finally {
       setDeletingId(null);
@@ -41,7 +39,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
     try {
       const result = await toggleProductStatus(id, currentStatus);
       if (result?.error) alert(result.error);
-    } catch (error) {
+    } catch {
       alert("Ошибка при обновлении статуса");
     } finally {
       setTogglingId(null);
