@@ -157,7 +157,7 @@ export default async function HomePage({
       </div>
 
       {/* Hero-секция (заголовок сайта) */}
-      <section className="bg-white px-4 pt-8 pb-4 shadow-sm sm:px-6 lg:px-8 animate-fade-in">
+      <section className="bg-white px-4 pt-8 pb-4 shadow-sm sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-6 mt-8 sm:mt-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-rose-800 sm:text-4xl">
             Vitrina PMR
@@ -174,12 +174,12 @@ export default async function HomePage({
       </section>
 
       {/* Категории (визуальные) */}
-      <div className="animate-fade-in" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+      <div>
         <VisualCategories />
       </div>
 
       {/* Сетка товаров */}
-      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8">
         {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
             <h3 className="text-lg font-semibold text-gray-900">

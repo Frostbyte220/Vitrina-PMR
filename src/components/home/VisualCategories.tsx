@@ -31,7 +31,7 @@ const categoryMap = [
 
 export function VisualCategories() {
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8" style={{ contentVisibility: 'auto' }}>
+    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
       <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
         {categoryMap.map((cat) => (
           <Link
