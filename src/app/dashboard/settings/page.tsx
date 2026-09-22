@@ -52,6 +52,7 @@ export default function DashboardSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [loadError, setLoadError] = useState(false);
   
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [coverUrl, setCoverUrl] = useState<string>("");
@@ -62,9 +63,12 @@ export default function DashboardSettingsPage() {
   });
 
   useEffect(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // 8 секунд максимум
+
     const fetchStore = async () => {
       try {
-        const res = await fetch("/api/store");
+        const res = await fetch("/api/store", { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           if (data) {
@@ -83,11 +87,18 @@ export default function DashboardSettingsPage() {
         }
       } catch (error) {
         console.error("Ошибка загрузки магазина:", error);
+        setLoadError(true);
       } finally {
+        clearTimeout(timeout);
         setIsLoading(false);
       }
     };
     fetchStore();
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [reset]);
 
   const onSubmit: SubmitHandler<StoreFormData> = async (data) => {
@@ -142,7 +153,26 @@ export default function DashboardSettingsPage() {
   if (isLoading) {
     return (
       <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
-        <div className="text-center text-text-muted">Загрузка настроек...</div>
+        <div className="flex items-center justify-center gap-3 text-text-muted pt-16">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-rose-600" />
+          Загрузка настроек...
+        </div>
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+        <div className="flex flex-col items-center gap-4 pt-16 text-center">
+          <p className="text-text-muted">Не удалось загрузить настройки. Проверьте соединение.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
+          >
+            Обновить страницу
+          </button>
+        </div>
       </main>
     );
   }
