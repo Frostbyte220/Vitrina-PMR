@@ -28,8 +28,6 @@ interface ProductCardProps {
   };
 }
 
-import { motion } from "framer-motion";
-
 export function ProductCard({ product }: ProductCardProps) {
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
@@ -64,14 +62,7 @@ export function ProductCard({ product }: ProductCardProps) {
     null;
 
   return (
-    <motion.div 
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ y: -4 }}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-shadow duration-300 hover:shadow-xl"
-    >
+    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       
       {/* 1. Шапка продавца */}
       <Link 
@@ -160,6 +151,6 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
       
-    </motion.div>
+    </div>
   );
 }
