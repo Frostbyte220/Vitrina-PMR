@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Словарь подкатегорий: связываем название категории с массивом нужных тегов
 const SUBCATEGORIES_MAP: Record<string, string[]> = {
@@ -91,27 +92,37 @@ export function SearchAndFilter() {
       </form>
 
       {/* 2. Подкатегории (Теги) - рендерятся динамически на основе словаря */}
-      <div className="mx-auto max-w-4xl">
-        {activeSubCategories && (
-          <div className="flex flex-wrap justify-center gap-2 px-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            {activeSubCategories.map((sub) => {
-              const isActive = currentSubCategory === sub;
-              return (
-                <button
-                  key={sub}
-                  onClick={() => toggleSubCategory(sub)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all sm:text-sm sm:px-5 sm:py-2 ${
-                    isActive
-                      ? "bg-rose-600 text-white shadow-sm hover:bg-rose-700"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-                  }`}
-                >
-                  {sub}
-                </button>
-              );
-            })}
-          </div>
-        )}
+      <div className="mx-auto max-w-4xl h-[40px] flex items-center justify-center">
+        <AnimatePresence mode="popLayout">
+          {activeSubCategories && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-wrap justify-center gap-2 px-4"
+            >
+              {activeSubCategories.map((sub) => {
+                const isActive = currentSubCategory === sub;
+                return (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    key={sub}
+                    onClick={() => toggleSubCategory(sub)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors sm:text-sm sm:px-5 sm:py-2 ${
+                      isActive
+                        ? "bg-rose-600 text-white shadow-sm"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {sub}
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

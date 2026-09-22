@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Heart, Store, User } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 
 export function MobileTabBar() {
   const pathname = usePathname();
@@ -36,15 +37,22 @@ export function MobileTabBar() {
             <Link
               key={tab.name}
               href={tab.href}
-              className={`flex flex-col items-center justify-center w-full h-full gap-1 ${
-                isActive ? "text-rose-600" : "text-gray-500 hover:text-gray-900"
+              className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-300 ${
+                isActive ? "text-rose-700" : "text-gray-500 hover:text-gray-900"
               }`}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="active-tab"
+                  className="absolute inset-0 top-1 bottom-3 mx-auto w-12 rounded-full bg-rose-50"
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                />
+              )}
               <tab.icon
-                className={`h-6 w-6 ${isActive ? "fill-rose-50" : ""}`}
+                className={`relative z-10 h-6 w-6 transition-transform duration-300 ${isActive ? "scale-110" : ""}`}
                 strokeWidth={isActive ? 2 : 1.5}
               />
-              <span className="text-[10px] font-medium leading-none">
+              <span className="relative z-10 text-[10px] font-medium leading-none">
                 {tab.name}
               </span>
             </Link>

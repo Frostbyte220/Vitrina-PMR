@@ -6,9 +6,17 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-text-main font-sans;
+  }
+}
+
+/* Нативные View Transitions для MPA-переходов (если браузер поддерживает) */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
   }
 }
