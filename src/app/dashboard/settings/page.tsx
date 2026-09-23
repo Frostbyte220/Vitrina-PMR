@@ -84,22 +84,35 @@ export default function DashboardSettingsPage() {
             if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
             if (data.coverUrl) setCoverUrl(data.coverUrl);
           }
+        } else {
+          setLoadError(true);
         }
-      } catch (error) {
-        console.error("Ошибка загрузки магазина:", error);
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error("Ошибка загрузки магазина:", error);
+        }
         setLoadError(true);
       } finally {
         clearTimeout(timeout);
         setIsLoading(false);
       }
     };
+
     fetchStore();
+
+    // Жёсткий запасной таймаут: если через 10 секунд всё ещё грузится, принудительно снимаем флаг
+    const hardTimeout = setTimeout(() => {
+      setIsLoading(false);
+      setLoadError(true);
+    }, 10000);
 
     return () => {
       clearTimeout(timeout);
+      clearTimeout(hardTimeout);
       controller.abort();
     };
-  }, [reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit: SubmitHandler<StoreFormData> = async (data) => {
     setIsSaving(true);

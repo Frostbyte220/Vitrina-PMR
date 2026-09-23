@@ -10,13 +10,22 @@ export async function GET() {
       return NextResponse.json({ message: "Не авторизован" }, { status: 401 });
     }
 
-    const store = await prisma.store.findUnique({
-      where: { userId: session.user.id },
-    });
+    // Таймаут 7 секунд — защита от зависания Neon PgBouncer при idle соединении
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("DB_TIMEOUT")), 7000)
+    );
+
+    const store = await Promise.race([
+      prisma.store.findUnique({ where: { userId: session.user.id } }),
+      timeoutPromise,
+    ]);
 
     return NextResponse.json(store || null, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[STORE_GET]", error);
+    if (error.message === "DB_TIMEOUT") {
+      return NextResponse.json({ message: "Превышено время ожидания БД" }, { status: 503 });
+    }
     return NextResponse.json({ message: "Внутренняя ошибка" }, { status: 500 });
   }
 }
