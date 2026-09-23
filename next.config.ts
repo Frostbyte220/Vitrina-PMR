@@ -67,6 +67,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // 🔥 Фикс для Windows: не даем Watchpack сканировать диск C:\
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.next/**',
+          'C:/*', // Игнорируем корень диска
+        ],
+        poll: 1000, // Включаем поллинг (fallback, если стандартный watcher ломается)
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
