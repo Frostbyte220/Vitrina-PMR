@@ -23,7 +23,7 @@ export default function GlobalError({
               Произошел серьезный сбой при загрузке платформы.
             </p>
             <button
-              onClick={() => typeof reset === 'function' ? reset() : window.location.reload()}
+              onClick={() => window.location.reload()}
               className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-rose-700"
             >
               <RefreshCcw className="h-4 w-4" />
