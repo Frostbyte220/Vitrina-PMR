@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { Toaster } from "react-hot-toast"; 
 import { ToastProvider } from "@/components/ui/Toast"; 
-import { Footer } from "@/components/layout/Footer"; // 🔥 Добавлен импорт футера
-import { MobileTabBar } from "@/components/layout/MobileTabBar"; // Добавлена мобильная навигация
+import { Footer } from "@/components/layout/Footer";
+import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
-import { YandexMetrika } from "@/components/YandexMetrika"; // Яндекс.Метрика
+import { YandexMetrika } from "@/components/YandexMetrika";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ export default function RootLayout({
               <Footer />
             </div>
 
-            <MobileTabBar />
+            <MobileTabBarLazy />
           </ToastProvider>
           
           {/* Toaster просто лежит рядом, он сам отрендерит уведомления поверх всего сайта */}

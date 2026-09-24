@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
 
   // Оптимизация: автоматический tree-shaking для пакетов иконок
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: ["lucide-react", "framer-motion"],
   },
 
   // Оптимизация: заголовки кэширования для статических ресурсов
@@ -68,17 +68,13 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // 🔥 Фикс для Windows: не даем Watchpack сканировать диск C:\
+  // 🔥 Фикс для Windows: используем RegExp для ignored (строки ненадёжны)
+  // ВАЖНО: poll:1000 УДАЛЁН — поллинг убивает производительность dev-сервера
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/.next/**',
-          'C:/*', // Игнорируем корень диска
-        ],
-        poll: 1000, // Включаем поллинг (fallback, если стандартный watcher ломается)
+        ignored: /node_modules|\.git|\.next/,
+        aggregateTimeout: 300,
       };
     }
     return config;
