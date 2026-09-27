@@ -75,4 +75,10 @@ model Product {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  // Индексы для быстрой фильтрации на главной странице
+  @@index([status, deletedAt, createdAt(sort: Desc)])
+  @@index([category, status, deletedAt])
+  @@index([userId])
+  @@index([storeId])
 }
