@@ -44,7 +44,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-white/95 backdrop-blur-md pt-safe">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 md:h-16 md:px-6">
         {/* 1. Логотип */}
         <Link

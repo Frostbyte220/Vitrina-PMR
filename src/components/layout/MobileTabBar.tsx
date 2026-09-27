@@ -16,7 +16,8 @@ export function MobileTabBar() {
     pathname.startsWith("/register") || 
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password")
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/product")
   ) {
     return null;
   }

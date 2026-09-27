@@ -17,6 +17,14 @@ export const metadata: Metadata = {
     "Локальный маркетплейс-агрегатор. Новые коллекции от местных брендов в Тирасполе.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#ffffff",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,12 +44,12 @@ export default function RootLayout({
           <ToastProvider>
             
             {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
-            <div className="flex-grow pb-16 md:pb-0">
+            <div className="flex-grow pb-tabbar md:pb-0">
               {children}
             </div>
 
             {/* 🔥 Вставляем наш футер (тоже скрывается за таббаром, поэтому нужен padding) */}
-            <div className="pb-16 md:pb-0">
+            <div className="pb-tabbar md:pb-0">
               <Footer />
             </div>
 

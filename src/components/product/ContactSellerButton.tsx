@@ -128,9 +128,8 @@ export function ContactSellerButton({
     return buttonContent;
   }
 
-  // Если на отдельной странице товара — рендерим с прилипанием к низу экрана на мобильных
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-white p-4 md:static md:border-0 md:p-0">
+    <div className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-white p-4 pb-safe md:static md:border-0 md:p-0">
       {buttonContent}
     </div>
   );

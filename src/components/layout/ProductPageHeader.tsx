@@ -8,7 +8,7 @@ export function ProductPageHeader() {
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-white/95 px-4 backdrop-blur-md md:hidden">
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-white/95 px-4 backdrop-blur-md pt-safe md:hidden">
       <button
         type="button"
         onClick={() => router.back()}
@@ -39,7 +39,7 @@ export function ProductPageHeader() {
 
 export function ProductPageHeaderDesktop({ title }: { title: string }) {
   return (
-    <header className="sticky top-0 z-50 hidden border-b border-border/60 bg-white/95 backdrop-blur-md md:block">
+    <header className="sticky top-0 z-50 hidden border-b border-border/60 bg-white/95 backdrop-blur-md pt-safe md:block">
       <div className="mx-auto flex h-16 max-w-3xl items-center gap-4 px-6">
         <Link
           href="/"
