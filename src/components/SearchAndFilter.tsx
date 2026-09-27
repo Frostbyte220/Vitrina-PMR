@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackEvent } from "@/lib/analytics";
 
 // Словарь подкатегорий: связываем название категории с массивом нужных тегов
 const SUBCATEGORIES_MAP: Record<string, string[]> = {
@@ -52,7 +53,6 @@ export function SearchAndFilter() {
           params.set("sub", updates.sub);
         }
       }
-
       params.delete("page"); 
       router.push(`/?${params.toString()}`, { scroll: false });
     },
@@ -61,8 +61,12 @@ export function SearchAndFilter() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (searchQuery.trim()) {
+      trackEvent("search", { query: searchQuery.trim() });
+    }
     updateParams({ q: searchQuery });
   };
+
 
   const toggleSubCategory = (sub: string) => {
     if (currentSubCategory === sub) {

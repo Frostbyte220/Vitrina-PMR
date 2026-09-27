@@ -43,6 +43,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
   document.body.removeChild(textarea);
   return success;
 }
+import { trackEvent } from "@/lib/analytics";
 
 export function ContactSellerButton({
   productName,
@@ -61,6 +62,10 @@ export function ContactSellerButton({
 
     if (isLoading || !shopUsername) return;
     setIsLoading(true);
+
+    // Отправляем событие в Яндекс Метрику
+    trackEvent("contact_seller", { product: productName, shop: shopUsername });
+
 
     const formattedPrice = formatPrice(productPrice);
     const message = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} (нашел на Vitrina PMR)`;
