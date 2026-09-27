@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { productSchema } from "@/lib/validations/product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { productRateLimiter } from "@/lib/rate-limit";
 
 // Обновление товара (PATCH)
 export async function PATCH(
@@ -16,6 +17,11 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Не авторизован" }, { status: 401 });
+    }
+
+    const isAllowed = await productRateLimiter.check(session.user.id);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Слишком много запросов. Подождите минуту." }, { status: 429 });
     }
 
     const body = await req.json();
@@ -74,6 +80,11 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Не авторизован" }, { status: 401 });
+    }
+
+    const isAllowed = await productRateLimiter.check(session.user.id);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Слишком много запросов. Подождите минуту." }, { status: 429 });
     }
 
     // Мягкое удаление: вместо .delete() используем .update()

@@ -67,3 +67,8 @@ export class RateLimiter {
 export const loginRateLimiter = new RateLimiter(5, 60 * 1000, 'login'); 
 // 3 регистрации в минуту
 export const registerRateLimiter = new RateLimiter(3, 60 * 1000, 'register');
+
+// 10 созданий/редактирований товаров в минуту (защита от спама)
+export const productRateLimiter = new RateLimiter(10, 60 * 1000, 'product');
+// 5 обновлений магазина в минуту
+export const storeRateLimiter = new RateLimiter(5, 60 * 1000, 'store');

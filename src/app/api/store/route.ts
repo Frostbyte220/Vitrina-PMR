@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { storeRateLimiter } from "@/lib/rate-limit";
 
 export async function GET() {
   try {
@@ -35,6 +36,11 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Не авторизован" }, { status: 401 });
+    }
+
+    const isAllowed = await storeRateLimiter.check(session.user.id);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Слишком много запросов. Подождите минуту." }, { status: 429 });
     }
 
     const body = await req.json();
