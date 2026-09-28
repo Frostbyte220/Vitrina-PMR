@@ -54,7 +54,7 @@ export function DashboardNav() {
       </aside>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-border bg-white px-2 py-2 md:hidden">
+      <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-border bg-white px-2 py-2 pb-safe md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (

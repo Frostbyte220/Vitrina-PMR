@@ -273,7 +273,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       <button
         type="submit"
         disabled={isUploading || isSubmitting || imageUrls.length === 0}
-        className="mt-4 w-full shrink-0 rounded-lg bg-black py-3 font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 w-full shrink-0 rounded-lg bg-primary py-3 font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSubmitting 
           ? (isEditing ? "Сохранение..." : "Публикация...") 

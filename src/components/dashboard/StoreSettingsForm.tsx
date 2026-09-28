@@ -247,7 +247,7 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
       <button
         type="submit"
         disabled={isSaving || !!uploadingType}
-        className="w-full rounded-lg bg-black py-3.5 font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+        className="w-full rounded-lg bg-primary py-3.5 font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
         {isSaving ? "Сохранение..." : "Сохранить настройки магазина"}
       </button>
