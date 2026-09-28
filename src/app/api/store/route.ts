@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { storeRateLimiter } from "@/lib/rate-limit";
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   try {
@@ -77,6 +78,9 @@ export async function POST(req: Request) {
         coverUrl: body.coverUrl,
       },
     });
+
+    revalidatePath("/shops");
+    revalidatePath(`/shop/${store.instagram?.replace(/^@/, "") || store.slug}`);
 
     return NextResponse.json(store, { status: 200 });
   } catch (error: any) {

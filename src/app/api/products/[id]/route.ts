@@ -4,6 +4,7 @@ import { productSchema } from "@/lib/validations/product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { productRateLimiter } from "@/lib/rate-limit";
+import { revalidatePath } from "next/cache";
 
 // Обновление товара (PATCH)
 export async function PATCH(
@@ -42,6 +43,10 @@ export async function PATCH(
         images: validatedData.images,
       },
     });
+
+    revalidatePath("/");
+    revalidatePath(`/product/${id}`);
+    revalidatePath("/dashboard/products");
 
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error: any) {
@@ -97,6 +102,9 @@ export async function DELETE(
         deletedAt: new Date(),
       },
     });
+
+    revalidatePath("/");
+    revalidatePath("/dashboard/products");
 
     return NextResponse.json(
       { message: "Товар успешно удален", product: deletedProduct },

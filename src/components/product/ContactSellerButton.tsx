@@ -4,6 +4,7 @@ import { Instagram, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { isMobileDevice, formatPrice } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 interface ContactSellerButtonProps {
   productName: string;
@@ -43,7 +44,6 @@ async function copyToClipboard(text: string): Promise<boolean> {
   document.body.removeChild(textarea);
   return success;
 }
-import { trackEvent } from "@/lib/analytics";
 
 export function ContactSellerButton({
   productName,

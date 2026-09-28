@@ -10,11 +10,16 @@ export async function getFavoriteProducts(productIds: string[]) {
     const products = await prisma.product.findMany({
       where: {
         id: {
-          in: productIds, // Ищем все товары, чьи ID есть в нашем массиве
+          in: productIds,
         },
+        // Не показываем удалённые и скрытые товары в избранном
+        deletedAt: null,
+        status: "Активен",
       },
       include: {
-        user: true, // Обязательно подтягиваем продавца, так как он нужен для ProductCard
+        user: {
+          include: { store: true },
+        },
       },
     });
 
