@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { Toaster } from "react-hot-toast"; 
 import { ToastProvider } from "@/components/ui/Toast"; 
@@ -7,6 +8,15 @@ import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import "@/app/globals.css";
+
+// Подключаем Inter через next/font — шрифт загружается без FOUT (мигания)
+// и без блокировки рендера. Vercel автоматически хостит его на своём CDN.
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+  variable: "--font-inter",
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -31,7 +41,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={inter.variable}>
+      {/* Preconnect к внешним ресурсам — браузер установит TCP-соединение заранее */}
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://mc.yandex.ru" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+      </head>
       <body
         // 🔥 Добавили flex и flex-col для того, чтобы футер всегда был внизу
         className="flex min-h-screen flex-col antialiased"

@@ -200,8 +200,8 @@ export default async function HomePage({
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product as any} />
+              {products.map((product, i) => (
+                <ProductCard key={product.id} product={product as any} priority={i < 4} />
               ))}
             </div>
             <Pagination totalPages={totalPages} currentPage={currentPage} />

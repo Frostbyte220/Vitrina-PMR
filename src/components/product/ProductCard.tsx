@@ -26,9 +26,10 @@ interface ProductCardProps {
     shopName?: string;
     image?: string | null;
   };
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
   const prod = product as Record<string, any>;
@@ -108,6 +109,7 @@ export function ProductCard({ product }: ProductCardProps) {
               alt={product.title}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              priority={priority}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
