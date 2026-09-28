@@ -7,7 +7,7 @@ import { useEffect } from "react";
 // Добавляем типизацию для Yandex Metrika в глобальный объект window
 declare global {
   interface Window {
-    ym?: (id: number, action: string, options?: any) => void;
+    ym?: (id: number, action: string, target?: string, params?: Record<string, any>) => void;
   }
 }
 

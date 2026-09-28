@@ -51,7 +51,6 @@ async function uploadToCloudinary(file: File): Promise<string> {
 
 export function StoreSettingsForm({ initialData }: { initialData: any }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
   
   const [avatarUrl, setAvatarUrl] = useState<string>(initialData?.avatarUrl || "");
   const [coverUrl, setCoverUrl] = useState<string>(initialData?.coverUrl || "");
@@ -72,7 +71,6 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
 
   const onSubmit: SubmitHandler<StoreFormData> = async (data) => {
     setIsSaving(true);
-    setMessage({ text: "", type: "" });
 
     try {
       const cleanInstaForm = data.instagram.replace(/^@/, "").trim();

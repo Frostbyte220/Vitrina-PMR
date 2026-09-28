@@ -63,7 +63,6 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const isEditing = !!initialData; // Флаг: если есть initialData, значит это режим редактирования
 
   const [isUploading, setIsUploading] = useState(false);
-  const [serverError, setServerError] = useState("");
   // Подставляем подкатегорию, если редактируем, иначе "Нет"
   const [subCategory, setSubCategory] = useState(initialData?.subCategory || "Нет");
 
