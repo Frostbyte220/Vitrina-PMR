@@ -6,6 +6,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { productSchema, ProductFormData, CATEGORIES } from "@/lib/validations/product";
+import toast from "react-hot-toast";
 
 interface AddProductFormProps {
   onSuccess?: () => void;
@@ -98,14 +99,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   // 2. Обработчик отправки
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
-    setServerError("");
     try {
       const payload = {
         ...data,
         subCategory: subCategory !== "Нет" ? subCategory : undefined,
       };
 
-      // Выбираем URL и метод отправки в зависимости от режима (создание или редактирование)
       const url = isEditing ? `/api/products/${initialData.id}` : "/api/products";
       const method = isEditing ? "PATCH" : "POST";
 
@@ -120,12 +119,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         throw new Error(errorData.message || "Ошибка при сохранении товара");
       }
 
+      toast.success(isEditing ? "Товар успешно обновлен" : "Товар успешно опубликован");
+
       if (isEditing) {
-        // После успешного редактирования возвращаем пользователя на дашборд
-        router.push("/dashboard");
+        router.push("/dashboard/products");
         router.refresh();
       } else {
-        // После успешного создания очищаем форму и закрываем модалку (если она есть)
         reset();
         setSubCategory("Нет");
         if (onSuccess) onSuccess();
@@ -133,7 +132,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       }
       
     } catch (error: any) {
-      setServerError(error.message);
+      toast.error(error.message || "Ошибка при сохранении товара");
       console.error("Ошибка:", error);
     }
   };
@@ -224,7 +223,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       {/* ФОТОГРАФИИ */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">Фотографии товара (минимум 1)</label>
+        <label className="text-sm font-medium text-gray-700">Фотографии товара (минимум 1) <span className="text-red-500">*</span></label>
         
         {imageUrls.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-2">
@@ -267,8 +266,6 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         />
         {errors.description && <span className="text-xs text-red-500">{errors.description.message}</span>}
       </div>
-
-      {serverError && <p className="text-sm text-red-500 bg-red-50 p-3 rounded-lg border border-red-200">{serverError}</p>}
 
       <button
         type="submit"

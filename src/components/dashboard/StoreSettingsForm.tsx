@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 const CITIES = [
   "Тирасполь",
@@ -94,9 +95,9 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
         throw new Error(err.message || "Ошибка при сохранении");
       }
 
-      setMessage({ text: "Настройки успешно сохранены!", type: "success" });
+      toast.success("Настройки успешно сохранены!");
     } catch (error: any) {
-      setMessage({ text: error.message, type: "error" });
+      toast.error(error.message);
     } finally {
       setIsSaving(false);
     }
@@ -237,12 +238,6 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
           </div>
         </div>
       </section>
-
-      {message.text && (
-        <div className={`rounded-lg p-4 text-sm font-medium ${message.type === 'error' ? 'border border-red-200 bg-red-50 text-red-600' : 'border border-green-200 bg-green-50 text-green-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       <button
         type="submit"
