@@ -1,15 +1,15 @@
-import React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { LogIn, LayoutDashboard, Store } from "lucide-react";
-import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
+import { getProducts } from "@/lib/cache";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -34,90 +34,6 @@ export default async function HomePage({
 }) {
   const session = await getServerSession(authOptions);
   const params = await searchParams;
-  
-  // Извлекаем параметры поиска
-  const { category, sub, q, page, ...otherFilters } = params;
-
-  const currentPage = Number(page) || 1;
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  const dynamicFilters = Object.keys(otherFilters)
-    .filter((key) => Boolean(otherFilters[key]))
-    .map((key) => ({
-      description: { contains: otherFilters[key]!, mode: "insensitive" as const },
-    }));
-
-  // 🔥 Безопасное формирование whereClause без передачи undefined полей
-  const whereClause: any = {
-    deletedAt: null,
-    status: "Активен",
-  };
-
-  if (category && category !== "Все") {
-    whereClause.category = category;
-  }
-
-  if (sub) {
-    whereClause.subCategory = sub;
-  }
-
-  if (dynamicFilters.length > 0) {
-    whereClause.AND = dynamicFilters;
-  }
-
-  if (q) {
-    whereClause.OR = [
-      { title: { contains: q, mode: "insensitive" as const } },
-      { description: { contains: q, mode: "insensitive" as const } },
-    ];
-  }
-
-  const [products, totalCount] = await Promise.all([
-    prisma.product.findMany({
-      where: whereClause,
-      skip: skip,
-      take: ITEMS_PER_PAGE,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        price: true,
-        images: true,
-        category: true,
-        subCategory: true,
-        user: {
-          select: {
-            name: true,
-            instagram: true,
-            avatar: true,
-            store: {
-              select: {
-                name: true,
-                slug: true,
-                instagram: true,
-                avatarUrl: true,
-                cities: true,
-              }
-            }
-          }
-        },
-        store: {
-          select: {
-            name: true,
-            slug: true,
-            instagram: true,
-            avatarUrl: true,
-            cities: true,
-          }
-        },
-      },
-    }),
-    prisma.product.count({
-      where: whereClause,
-    }),
-  ]);
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
     <main className="relative min-h-screen bg-gray-50 pb-24">
@@ -178,36 +94,96 @@ export default async function HomePage({
         <VisualCategories />
       </div>
 
-      {/* Сетка товаров */}
-      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8">
-        {products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {q
-                ? `По запросу «${q}» ничего не найдено`
-                : "По вашим фильтрам ничего не найдено"}
-            </h3>
-            <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
-              Попробуйте изменить параметры или сбросить фильтры.
-            </p>
-            <Link
-              href="/"
-              className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
-            >
-              Сбросить фильтры
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product, i) => (
-                <ProductCard key={product.id} product={product as any} priority={i < 4} />
-              ))}
-            </div>
-            <Pagination totalPages={totalPages} currentPage={currentPage} />
-          </>
-        )}
+      {/* Сетка товаров с Suspense */}
+      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
+        <Suspense key={JSON.stringify(params)} fallback={<ProductsSkeleton />}>
+          <ProductCatalog params={params} />
+        </Suspense>
       </section>
     </main>
+  );
+}
+
+// Компонент загрузки (Скелетон)
+function ProductsSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 animate-pulse">
+          <div className="aspect-[4/5] w-full rounded-xl bg-gray-200" />
+          <div className="h-4 w-3/4 rounded bg-gray-200 mt-2" />
+          <div className="h-4 w-1/2 rounded bg-gray-200" />
+          <div className="h-8 w-full rounded-xl bg-gray-200 mt-2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Отдельный асинхронный компонент для запроса данных
+async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
+  const { category, sub, q, page, ...otherFilters } = params;
+  const currentPage = Number(page) || 1;
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const dynamicFilters = Object.keys(otherFilters)
+    .filter((key) => Boolean(otherFilters[key]))
+    .map((key) => ({
+      description: { contains: otherFilters[key]!, mode: "insensitive" as const },
+    }));
+
+  const whereClause: any = {
+    deletedAt: null,
+    status: "Активен",
+  };
+
+  if (category && category !== "Все") {
+    whereClause.category = category;
+  }
+
+  if (sub) {
+    whereClause.subCategory = sub;
+  }
+
+  if (dynamicFilters.length > 0) {
+    whereClause.AND = dynamicFilters;
+  }
+
+  if (q) {
+    whereClause.OR = [
+      { title: { contains: q, mode: "insensitive" as const } },
+      { description: { contains: q, mode: "insensitive" as const } },
+    ];
+  }
+
+  // Используем кэшированную версию запроса
+  const [products, totalCount] = await getProducts(whereClause, skip, ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  if (products.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
+        <h3 className="text-lg font-semibold text-gray-900">
+          {q ? `По запросу «${q}» ничего не найдено` : "По вашим фильтрам ничего не найдено"}
+        </h3>
+        <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
+          Попробуйте изменить параметры или сбросить фильтры.
+        </p>
+        <Link href="/" className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800">
+          Сбросить фильтры
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        {products.map((product, i) => (
+          <ProductCard key={product.id} product={product as any} priority={i < 4} />
+        ))}
+      </div>
+      <Pagination totalPages={totalPages} currentPage={currentPage} />
+    </>
   );
 }

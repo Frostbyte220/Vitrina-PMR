@@ -1,0 +1,53 @@
+import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
+
+export const getProducts = unstable_cache(
+  async (whereClause: any, skip: number, take: number) => {
+    return prisma.$transaction([
+      prisma.product.findMany({
+        where: whereClause,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          images: true,
+          category: true,
+          subCategory: true,
+          user: {
+            select: {
+              name: true,
+              instagram: true,
+              avatar: true,
+              store: {
+                select: {
+                  name: true,
+                  slug: true,
+                  instagram: true,
+                  avatarUrl: true,
+                  cities: true,
+                },
+              },
+            },
+          },
+          store: {
+            select: {
+              name: true,
+              slug: true,
+              instagram: true,
+              avatarUrl: true,
+              cities: true,
+            },
+          },
+        },
+      }),
+      prisma.product.count({
+        where: whereClause,
+      }),
+    ]);
+  },
+  ["products-catalog"], 
+  { revalidate: 3600, tags: ["products"] }
+);
