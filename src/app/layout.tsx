@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   },
   description:
     "Локальный маркетплейс-агрегатор. Новые коллекции от местных брендов в Тирасполе.",
+  verification: {
+    google: "SMOT2_G-Ry9W1_VqCOdQRWY6mqD_-d7Ci48fMUotqek",
+  },
 };
 
 export const viewport = {
