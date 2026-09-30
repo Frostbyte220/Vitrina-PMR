@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-const BASE_URL = process.env.NEXTAUTH_URL || "https://vitrina-pmr.ru";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vitrina-pmr.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Статические страницы
