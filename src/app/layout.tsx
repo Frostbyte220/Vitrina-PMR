@@ -20,11 +20,44 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Vitrina PMR",
+    default: "Витрина ПМР — Магазины Тирасполя и Приднестровья",
     template: "%s | Vitrina PMR",
   },
   description:
-    "Локальный маркетплейс-агрегатор. Новые коллекции от местных брендов в Тирасполе.",
+    "Vitrina PMR — единый каталог товаров из локальных магазинов Приднестровья. Купить одежду, обувь, косметику и электронику в Тирасполе и Бендерах. Бесплатное размещение для продавцов.",
+  keywords: [
+    "витрина ПМР",
+    "магазины Тирасполя",
+    "купить в Приднестровье",
+    "интернет магазин ПМР",
+    "купить Тирасполь",
+    "магазины Бендеры",
+    "шопинг Приднестровье",
+    "Vitrina PMR",
+    "локальные магазины ПМР",
+  ],
+  authors: [{ name: "Vitrina PMR", url: "https://vitrina-pmr.vercel.app" }],
+  creator: "Vitrina PMR",
+  metadataBase: new URL("https://vitrina-pmr.vercel.app"),
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: "https://vitrina-pmr.vercel.app",
+    siteName: "Vitrina PMR",
+    title: "Витрина ПМР — Магазины Тирасполя и Приднестровья",
+    description:
+      "Единый каталог товаров из локальных магазинов Приднестровья. Одежда, обувь, косметика, электроника — всё в одном месте.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   verification: {
     google: "SMOT2_G-Ry9W1_VqCOdQRWY6mqD_-d7Ci48fMUotqek",
   },

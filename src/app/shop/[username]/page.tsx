@@ -34,16 +34,33 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
   if (!store) return { title: "Магазин не найден | Vitrina PMR" };
 
-
+  const baseUrl = "https://vitrina-pmr.vercel.app";
+  const cityText = store.cities?.length ? `в ${store.cities[0]}` : "в ПМР";
+  const description =
+    store.description ||
+    `Купить товары магазина ${store.name} ${cityText}. Каталог товаров на Витрине ПМР — локальные магазины Приднестровья.`;
 
   return {
-    title: `${store.name} | Vitrina PMR`,
-    description: store.description || `Каталог товаров магазина ${store.name}. Покупайте у локальных брендов ПМР.`,
+    title: `${store.name} — магазин ${cityText} | Vitrina PMR`,
+    description,
+    keywords: [
+      store.name,
+      `купить ${cityText}`,
+      "магазин ПМР",
+      "витрина ПМР",
+      "магазины Тирасполя",
+      "купить в Приднестровье",
+    ],
+    alternates: {
+      canonical: `${baseUrl}/shop/${store.instagram?.replace(/^@/, "") || store.slug}`,
+    },
     openGraph: {
       title: `${store.name} на Vitrina PMR`,
-      description: store.description || `Смотрите товары от ${store.name} в едином каталоге Приднестровья.`,
-      images: store.avatarUrl ? [store.avatarUrl] : [],
+      description,
+      images: store.avatarUrl ? [{ url: store.avatarUrl, alt: store.name }] : [],
       type: "website",
+      siteName: "Vitrina PMR",
+      locale: "ru_RU",
     },
   };
 }

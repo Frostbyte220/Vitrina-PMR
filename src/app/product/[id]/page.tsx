@@ -58,19 +58,30 @@ export async function generateMetadata({
   const appUrl = await getAppUrl();
   const productUrl = `${appUrl}/product/${id}`;
   const images = product.images?.length > 0 ? product.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"];
-  const shopName = product.user?.name || "Vitrina PMR";
+  const shopName = product.user?.store?.name || product.user?.name || "Vitrina PMR";
   
   // Обрезаем описание для мета-тегов до 160 символов (стандарт поисковиков)
-  const cleanDescription = product.description?.substring(0, 160) || `Купить ${product.title} в ПМР.`;
+  const cleanDescription =
+    product.description?.substring(0, 140) ||
+    `Купить ${product.title} в ПМР — магазин ${shopName} на Витрине ПМР. Тирасполь, Приднестровье.`;
 
   return {
-    title: `${product.title} | ${shopName}`,
+    title: `${product.title} — купить в ПМР | ${shopName}`,
     description: cleanDescription,
+    keywords: [
+      product.title,
+      `купить ${product.title}`,
+      `${product.title} Тирасполь`,
+      `${product.title} ПМР`,
+      shopName,
+      "витрина ПМР",
+      "купить в Приднестровье",
+    ],
     alternates: {
-      canonical: productUrl, // Защита от дублей страниц в SEO
+      canonical: productUrl,
     },
     openGraph: {
-      title: product.title,
+      title: `${product.title} — купить в ПМР`,
       description: cleanDescription,
       url: productUrl,
       siteName: "Vitrina PMR",
