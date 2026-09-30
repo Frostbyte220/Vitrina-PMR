@@ -65,7 +65,7 @@ export default function AboutPage() {
               О проекте <span className="text-rose-600">Vitrina PMR</span>
             </h1>
             <p className="mt-4 text-lg text-gray-500">
-              Единая витрина ПМР — находим лучшие магазины Тирасполя и Приднестровья в одном месте.
+              Единая витрина ПМР — собираем локальные магазины Тирасполя и Приднестровья в одном месте.
             </p>
           </div>
 
