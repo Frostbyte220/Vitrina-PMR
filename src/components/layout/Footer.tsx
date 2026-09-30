@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Mail, Heart, Store, Info, Home } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
-import { BackButton } from "@/components/ui/BackButton";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,11 +8,6 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t border-gray-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Кнопка назад */}
-        <div className="mb-8 border-b border-gray-100 pb-8">
-          <BackButton />
-        </div>
-        
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
           {/* Блок 1: О бренде */}
           <div className="space-y-4">

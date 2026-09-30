@@ -5,10 +5,15 @@ export const metadata: Metadata = {
   description: "Политика конфиденциальности и обработки персональных данных платформы Vitrina PMR.",
 };
 
+import { BackButton } from "@/components/ui/BackButton";
+
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl bg-white p-8 rounded-2xl shadow-sm border border-gray-100 prose prose-rose prose-sm sm:prose-base">
+        <div className="mb-8 not-prose">
+          <BackButton />
+        </div>
         <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Политика конфиденциальности</h1>
         
         <p className="text-gray-500 text-sm mb-8">

@@ -8,10 +8,15 @@ export const metadata: Metadata = {
     "Информация для партнеров и предложения по сотрудничеству с платформой Vitrina PMR.",
 };
 
+import { BackButton } from "@/components/ui/BackButton";
+
 export default function PartnershipPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 sm:py-16">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         <div className="rounded-3xl bg-white px-6 py-12 shadow-sm sm:p-16">
           {/* Заголовок страницы */}
           <div className="mx-auto max-w-2xl text-center">
