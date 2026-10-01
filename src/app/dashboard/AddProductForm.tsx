@@ -52,7 +52,10 @@ async function uploadToCloudinary(file: File): Promise<string> {
     body: formData,
   });
 
-  if (!response.ok) throw new Error("Ошибка при загрузке в Cloudinary");
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`Cloudinary Error: ${errorData?.error?.message || response.statusText || "Ошибка загрузки"}`);
+  }
   
   const data = await response.json();
   return data.secure_url;
