@@ -19,14 +19,15 @@ interface ShopPageProps {
 export async function generateMetadata({ params }: ShopPageProps): Promise<Metadata> {
   const { username } = await params;
 
-  // Ищем магазин по instagram из настроек магазина ИЛИ из базового профиля пользователя
+  // Ищем магазин по instagram или slug из настроек магазина ИЛИ из базового профиля пользователя
   const store = await prisma.store.findFirst({
     where: {
       OR: [
         { instagram: username },
         { instagram: `@${username}` },
+        { slug: username },
         { user: { instagram: username } },
-        { user: { instagram: `@${username}` } }
+        { user: { instagram: `@${username}` } },
       ]
     },
     include: { user: true }
@@ -80,14 +81,15 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   if (sortFilter === "price_asc") orderBy = { price: "asc" };
   if (sortFilter === "price_desc") orderBy = { price: "desc" };
 
-  // 2. Ищем магазин по instagram (проверяем и таблицу Store, и таблицу User)
+  // 2. Ищем магазин по instagram или slug (проверяем и таблицу Store, и таблицу User)
   const store = await prisma.store.findFirst({
     where: {
       OR: [
         { instagram: username },
         { instagram: `@${username}` },
+        { slug: username },
         { user: { instagram: username } },
-        { user: { instagram: `@${username}` } }
+        { user: { instagram: `@${username}` } },
       ]
     },
     include: { user: true }

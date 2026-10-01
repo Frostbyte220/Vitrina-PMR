@@ -118,6 +118,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           store: {
             select: {
               name: true,
+              slug: true,
               instagram: true,
             }
           }
@@ -135,9 +136,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     
   const shopName = (product.user as any)?.store?.name || product.user?.name || "Магазин";
   const rawInstagram = (product.user as any)?.store?.instagram || product.user?.instagram || "";
+  const storeSlug = (product.user as any)?.store?.slug || "";
   
-  // Очищаем от '@' для правильной ссылки внутри приложения
-  const cleanUsername = rawInstagram.replace(/^@/, '') || "instagram";
+  // Очищаем от '@' для правильной ссылки внутри приложения.
+  // Если instagram не заполнен — используем slug магазина.
+  const cleanUsername = rawInstagram.replace(/^@/, '') || storeSlug;
 
   // Структурированные данные JSON-LD для Google Rich Snippets
   const jsonLd = {
