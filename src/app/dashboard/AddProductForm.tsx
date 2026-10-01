@@ -152,8 +152,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       const urls = await Promise.all(uploadPromises);
       
       setValue("images", [...imageUrls, ...urls], { shouldValidate: true });
-    } catch {
-      alert("Не удалось загрузить фото. Проверьте настройки Cloudinary.");
+    } catch (err: any) {
+      console.error("Cloudinary upload error:", err);
+      alert(`Не удалось загрузить фото: ${err.message || "Проверьте настройки Cloudinary."}`);
     } finally {
       setIsUploading(false);
       e.target.value = ""; 

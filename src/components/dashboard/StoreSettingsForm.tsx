@@ -109,8 +109,9 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
       const url = await uploadToCloudinary(e.target.files[0]);
       if (type === "avatar") setAvatarUrl(url);
       if (type === "cover") setCoverUrl(url);
-    } catch {
-      alert(`Не удалось загрузить ${type === "avatar" ? "логотип" : "обложку"}.`);
+    } catch (err: any) {
+      console.error("Cloudinary upload error:", err);
+      alert(`Не удалось загрузить ${type === "avatar" ? "логотип" : "обложку"}: ${err.message || "Ошибка загрузки"}`);
     } finally {
       setUploadingType(null);
       e.target.value = ""; 
