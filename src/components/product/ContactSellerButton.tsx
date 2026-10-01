@@ -52,63 +52,46 @@ export function ContactSellerButton({
   isCardView = false, // По умолчанию false (работает как раньше для страницы товара)
 }: ContactSellerButtonProps) {
   const { showToast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false); // Состояние для зеленой кнопки
+  const [isCopied, setIsCopied] = useState(false);
 
-  const handleClick = async (e: React.MouseEvent) => {
-    // Важно: останавливаем всплытие клика, если кнопка лежит внутри <Link> карточки
-    e.preventDefault();
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // НЕ вызываем preventDefault() — даём браузеру нативно открыть ссылку.
+    // Копирование — побочный эффект без await в основном потоке.
     e.stopPropagation();
 
-    if (isLoading || !shopUsername) return;
-    setIsLoading(true);
-
-    // Отправляем событие в Яндекс Метрику
     trackEvent("contact_seller", { product: productName, shop: shopUsername });
 
-    const cleanUsername = shopUsername.trim().replace(/^@/, "");
-    const targetUrl = `https://ig.me/m/${cleanUsername}`;
-
-    // ⚡ ВАЖНО: открываем окно СИНХРОННО до любых await-вызовов.
-    // Браузер блокирует window.open если он вызывается после async-операции.
-    if (!isMobileDevice()) {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
-    }
-
-    // Теперь делаем async-операции (копирование)
     const formattedPrice = formatPrice(productPrice);
     const message = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} (нашел на Vitrina PMR)`;
-    
-    const copied = await copyToClipboard(message);
 
-    if (copied) {
-      if (showToast) showToast("Текст скопирован! Вставьте его в чат");
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 3000);
-    } else {
-      if (showToast) showToast("Не удалось скопировать. Скопируйте текст вручную");
-    }
-
-    // На мобильных — перенаправляем после копирования
-    if (isMobileDevice()) {
-      setTimeout(() => {
-        window.location.href = targetUrl;
-      }, 300);
-    }
-
-    setIsLoading(false);
+    // fire-and-forget: не await-им, чтобы не задерживать переход
+    copyToClipboard(message).then((copied) => {
+      if (copied) {
+        if (showToast) showToast("Текст скопирован! Вставьте его в чат");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 3000);
+      } else {
+        if (showToast) showToast("Не удалось скопировать. Скопируйте вручную");
+      }
+    });
   };
 
-  // Сама кнопка вынесена в константу для переиспользования
+  const cleanUsername = shopUsername.trim().replace(/^@/, "");
+  const instagramUrl = `https://ig.me/m/${cleanUsername}`;
+
+  // Сама кнопка — нативная ссылка <a>, браузер никогда её не заблокирует
   const buttonContent = (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isLoading || !shopUsername}
-      className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-semibold text-white transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed ${
-        isCopied 
-          ? "bg-green-500 hover:bg-green-600" 
-          // Заменил bg-primary на градиент инстаграма, но если у вас дизайн требует строго Primary, верните "bg-primary hover:opacity-90"
+    <a
+      href={shopUsername ? instagramUrl : undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={shopUsername ? handleClick : undefined}
+      aria-disabled={!shopUsername}
+      className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-semibold text-white transition-all duration-300 select-none ${
+        !shopUsername
+          ? "opacity-50 cursor-not-allowed bg-gray-400"
+          : isCopied
+          ? "bg-green-500 hover:bg-green-600"
           : "bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 shadow-sm"
       }`}
     >
@@ -123,7 +106,7 @@ export function ContactSellerButton({
           <span>{shopUsername ? "Написать продавцу" : "Instagram не указан"}</span>
         </>
       )}
-    </button>
+    </a>
   );
 
   // Если компонент вызван внутри карточки товара — рендерим только кнопку
