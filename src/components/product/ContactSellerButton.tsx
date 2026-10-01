@@ -66,14 +66,22 @@ export function ContactSellerButton({
     // Отправляем событие в Яндекс Метрику
     trackEvent("contact_seller", { product: productName, shop: shopUsername });
 
+    const cleanUsername = shopUsername.trim().replace(/^@/, "");
+    const targetUrl = `https://ig.me/m/${cleanUsername}`;
 
+    // ⚡ ВАЖНО: открываем окно СИНХРОННО до любых await-вызовов.
+    // Браузер блокирует window.open если он вызывается после async-операции.
+    if (!isMobileDevice()) {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
+
+    // Теперь делаем async-операции (копирование)
     const formattedPrice = formatPrice(productPrice);
     const message = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} (нашел на Vitrina PMR)`;
     
     const copied = await copyToClipboard(message);
 
     if (copied) {
-      // Добавил проверку на наличие функции на случай проблем с контекстом
       if (showToast) showToast("Текст скопирован! Вставьте его в чат");
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 3000);
@@ -81,16 +89,11 @@ export function ContactSellerButton({
       if (showToast) showToast("Не удалось скопировать. Скопируйте текст вручную");
     }
 
-    const cleanUsername = shopUsername.trim().replace(/^@/, "");
-    const targetUrl = `https://ig.me/m/${cleanUsername}`;
-
-    // Умный редирект без модального окна
+    // На мобильных — перенаправляем после копирования
     if (isMobileDevice()) {
       setTimeout(() => {
         window.location.href = targetUrl;
-      }, 300); // Небольшая задержка, чтобы юзер успел увидеть зеленую кнопку
-    } else {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
+      }, 300);
     }
 
     setIsLoading(false);
