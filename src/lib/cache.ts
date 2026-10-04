@@ -49,5 +49,5 @@ export const getProducts = unstable_cache(
     ]);
   },
   ["products-catalog"],
-  { revalidate: 3600, tags: ["products"] }
+  { revalidate: 60, tags: ["products"] }
 );
