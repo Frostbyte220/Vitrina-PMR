@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Store as StoreIcon, MapPin } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { BackButton } from "@/components/ui/BackButton";
 
 export const metadata: Metadata = {
   title: "Магазины и бренды",
@@ -38,6 +39,11 @@ export default async function ShopsPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">
+      {/* Кнопка Назад */}
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <BackButton />
+      </div>
+
       {/* Шапка */}
       <section className="bg-white px-4 py-12 shadow-sm sm:px-6 lg:px-8 text-center">
         <div className="mx-auto max-w-2xl">
