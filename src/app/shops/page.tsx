@@ -61,7 +61,7 @@ export default async function ShopsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((store) => {
               const cleanInstagram = store.instagram ? store.instagram.trim().replace(/^@/, "") : "";
               const shopHref = cleanInstagram ? `/shop/${cleanInstagram}` : `/shop/${store.slug}`;
@@ -71,58 +71,67 @@ export default async function ShopsPage() {
                 <Link 
                   key={store.id} 
                   href={shopHref}
-                  className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-all duration-200 hover:shadow-lg hover:border-gray-200"
+                  className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:border-gray-200"
                 >
                   {/* Обложка */}
-                  <div className="h-24 w-full bg-gradient-to-r from-rose-100 to-teal-100 relative">
-                    {store.coverUrl && (
+                  <div className="h-32 w-full bg-gradient-to-r from-gray-100 to-gray-200 relative overflow-hidden">
+                    {store.coverUrl ? (
                       <Image 
                         src={store.coverUrl} 
                         alt={`Обложка ${store.name}`}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-rose-100 to-teal-50 opacity-80" />
                     )}
+                    {/* Затемнение обложки сверху-вниз для читаемости (если нужно) */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </div>
                   
-                  <div className="relative px-5 pb-5">
-                    {/* Аватарка (сдвинута вверх на границу обложки) */}
-                    <div className="relative -mt-10 mb-3 h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-gray-100 shadow-sm shrink-0">
+                  <div className="relative flex flex-col items-center px-6 pb-8 text-center">
+                    {/* Аватарка (по центру, выходит за края) */}
+                    <div className="relative -mt-12 mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-white shadow-md shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:border-rose-50">
                       {store.avatarUrl ? (
                         <Image 
                           src={store.avatarUrl} 
                           alt={store.name} 
                           fill 
-                          sizes="80px"
+                          sizes="96px"
                           className="object-cover" 
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 text-2xl font-bold text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 text-3xl font-bold text-gray-400">
                           {store.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-rose-700 transition-colors">
+                    <h3 className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-rose-600 transition-colors line-clamp-1">
                       {store.name}
                     </h3>
                     
                     {cleanInstagram && (
-                      <p className="text-sm font-medium text-rose-600 mt-1">
+                      <p className="mt-1 text-sm font-medium text-rose-500/80">
                         @{cleanInstagram}
                       </p>
                     )}
                     
-                    <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span className="truncate max-w-[120px]">{cityLabel}</span>
+                    <div className="mt-5 flex w-full items-center justify-center gap-6 text-sm text-gray-500 border-t border-gray-50 pt-5">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="truncate max-w-[100px]">{cityLabel}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                        <span>Товаров: {store._count.products}</span>
+                      <div className="flex items-center gap-1.5">
+                        <StoreIcon className="h-4 w-4 text-gray-400" />
+                        <span>{store._count.products} товаров</span>
                       </div>
+                    </div>
+
+                    {/* Декоративная "кнопка" перехода, появляется при наведении */}
+                    <div className="absolute bottom-0 left-0 w-full translate-y-full bg-rose-600 py-3 text-center text-sm font-semibold text-white transition-transform duration-300 group-hover:translate-y-0">
+                      Перейти в магазин
                     </div>
                   </div>
                 </Link>
