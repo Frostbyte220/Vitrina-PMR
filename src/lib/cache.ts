@@ -2,13 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
 
 export const getProducts = unstable_cache(
-  async (whereClause: any, skip: number, take: number) => {
+  async (whereClause: any, skip: number, take: number, orderBy: any = { createdAt: "desc" }) => {
     return prisma.$transaction([
       prisma.product.findMany({
         where: whereClause,
         skip,
         take,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         select: {
           id: true,
           title: true,
@@ -48,6 +48,6 @@ export const getProducts = unstable_cache(
       }),
     ]);
   },
-  ["products-catalog"], 
+  ["products-catalog"],
   { revalidate: 3600, tags: ["products"] }
 );

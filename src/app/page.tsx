@@ -122,9 +122,14 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, ...otherFilters } = params;
+  const { category, sub, q, page, sort, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  // Определяем сортировку
+  let orderBy: any = { createdAt: "desc" };
+  if (sort === "price_asc") orderBy = { price: "asc" };
+  if (sort === "price_desc") orderBy = { price: "desc" };
 
   const dynamicFilters = Object.keys(otherFilters)
     .filter((key) => Boolean(otherFilters[key]))
@@ -157,7 +162,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   }
 
   // Используем кэшированную версию запроса
-  const [products, totalCount] = await getProducts(whereClause, skip, ITEMS_PER_PAGE);
+  const [products, totalCount] = await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   if (products.length === 0) {
