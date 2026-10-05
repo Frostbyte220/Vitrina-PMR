@@ -33,7 +33,7 @@ const jsonLd = {
   "@type": "Organization",
   name: "Vitrina PMR",
   description:
-    "Единая витрина локальных магазинов Приднестровья. Купить товары в Тирасполе и Бендерах.",
+    "Единая витрина локальных магазинов Приднестровья. Купить товары во всех городах ПМР.",
   url: "https://vitrina-pmr.vercel.app",
   areaServed: {
     "@type": "Place",
@@ -82,13 +82,13 @@ export default function AboutPage() {
               </div>
               <p className="text-gray-600 leading-relaxed">
                 <strong>Vitrina PMR</strong> — это бесплатный онлайн-каталог товаров из локальных
-                Instagram-магазинов Приднестровья. Мы собрали в одном месте лучшие магазины
-                Тирасполя и Бендер, чтобы вам не приходилось тратить часы на поиск нужного товара
+                Instagram-магазинов Приднестровья. Мы собрали в одном месте лучшие магазины со
+                всей республики, чтобы вам не приходилось тратить часы на поиск нужного товара
                 по десяткам разрозненных аккаунтов.
                 <br /><br />
                 Здесь можно купить <strong>одежду, обувь, косметику, парфюмерию, детские товары,
                 электронику и handmade изделия</strong> от местных продавцов с доставкой по ПМР
-                или самовывозом в Тирасполе и Бендерах. Все покупки совершаются напрямую с продавцом
+                или самовывозом во всех 8 городах республики. Все покупки совершаются напрямую с продавцом
                 в Instagram или Telegram — без посредников и скрытых комиссий.
               </p>
             </section>
@@ -110,8 +110,8 @@ export default function AboutPage() {
                   <div className="flex justify-center mb-2">
                     <MapPin className="h-7 w-7 text-blue-500" />
                   </div>
-                  <p className="text-2xl font-extrabold text-blue-700">2+</p>
-                  <p className="text-sm text-gray-500 mt-1">Города ПМР</p>
+                  <p className="text-2xl font-extrabold text-blue-700">8</p>
+                  <p className="text-sm text-gray-500 mt-1">Городов ПМР</p>
                 </div>
                 <div className="rounded-xl bg-green-50 p-5 text-center">
                   <div className="flex justify-center mb-2">
@@ -136,7 +136,7 @@ export default function AboutPage() {
               <p className="text-gray-600 leading-relaxed mb-4">
                 Разместите свои товары на Витрине ПМР абсолютно <strong>бесплатно</strong> и
                 получите дополнительный канал продаж. Ваш магазин увидят тысячи покупателей
-                из Тирасполя, Бендер и всего Приднестровья, которые ищут товары прямо сейчас.
+                со всех городов Приднестровья, которые ищут товары прямо сейчас.
                 Покупатели будут писать вам напрямую в Instagram — никаких комиссий, никаких
                 посредников.
               </p>

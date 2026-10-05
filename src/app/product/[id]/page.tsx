@@ -64,7 +64,7 @@ export async function generateMetadata({
   // Обрезаем описание для мета-тегов до 160 символов (стандарт поисковиков)
   const cleanDescription =
     product.description?.substring(0, 140) ||
-    `Купить ${product.title} в ПМР — магазин ${shopName} на Витрине ПМР. Тирасполь, Приднестровье.`;
+    `Купить ${product.title} в ПМР — магазин ${shopName} на Витрине ПМР. Доставка по всему Приднестровью.`;
 
   return {
     title: `${product.title} — купить в ПМР | ${shopName}`,
@@ -72,7 +72,6 @@ export async function generateMetadata({
     keywords: [
       product.title,
       `купить ${product.title}`,
-      `${product.title} Тирасполь`,
       `${product.title} ПМР`,
       shopName,
       "витрина ПМР",
