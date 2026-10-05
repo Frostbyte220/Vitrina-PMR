@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXTAUTH_URL 
       || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
     const safeBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    const resetUrl = `${safeBaseUrl}/reset-password?token=${token}`;
+    const resetUrl = `${safeBaseUrl}/reset-password/${token}`;
 
     // ДЛЯ РЕЖИМА РАЗРАБОТКИ: всегда выводим ссылку в консоль
     console.log("=====================================");

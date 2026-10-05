@@ -5,14 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 
-function ResetPasswordForm() {
+function ResetPasswordForm({ token }: { token: string }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
   const router = useRouter();
   const { showToast } = useToast();
 
@@ -124,7 +122,10 @@ function ResetPasswordForm() {
   );
 }
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
+  const resolvedParams = await params;
+  const token = resolvedParams.token;
+  
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border bg-white p-8 shadow-sm">
@@ -138,9 +139,7 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <Suspense fallback={<div className="text-center text-sm text-gray-500 py-10">Загрузка...</div>}>
-          <ResetPasswordForm />
-        </Suspense>
+        <ResetPasswordForm token={token} />
       </div>
     </div>
   );
