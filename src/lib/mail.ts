@@ -17,8 +17,12 @@ const transporter = nodemailer.createTransport({
  * @param resetUrl Ссылка на страницу сброса с уникальным токеном
  */
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
-  const from = process.env.EMAIL_FROM || "Vitrina PMR <no-reply@vitrina-pmr.ru>";
+  // Если используется Resend и домен не подтвержден, отправка разрешена ТОЛЬКО с onboarding@resend.dev
+  const defaultFrom = process.env.SMTP_HOST?.includes('resend') 
+    ? "Vitrina PMR <onboarding@resend.dev>" 
+    : "Vitrina PMR <no-reply@vitrina-pmr.ru>";
   
+  const from = process.env.EMAIL_FROM || defaultFrom;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #e11d48; text-align: center;">Восстановление пароля</h2>
