@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2, ImageOff, Edit, EyeOff, Eye, Package } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { PmrRubleIcon } from "@/components/ui/PmrRubleIcon";
 import { deleteProduct, toggleProductStatus } from "@/app/dashboard/actions";
 import type { Product } from "@/types";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";

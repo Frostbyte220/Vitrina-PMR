@@ -1,5 +1,5 @@
 export function formatPrice(price: number): string {
-  return price.toLocaleString("ru-RU");
+  return `${price.toLocaleString("ru-RU")} Руб`;
 }
 
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
