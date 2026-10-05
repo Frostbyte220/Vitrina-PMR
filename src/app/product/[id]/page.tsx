@@ -11,6 +11,7 @@ import { ContactSellerButton } from "@/components/product/ContactSellerButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { PmrRubleIcon } from "@/components/ui/PmrRubleIcon";
 
 // Включаем ISR (кэширование). Страница будет обновляться раз в час (3600 сек),
 // что идеально для маркетплейса: сервер не перегружается, а данные свежие.
@@ -180,8 +181,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <h1 className="text-2xl font-bold leading-tight text-text-main md:text-3xl">
               {product.title}
             </h1>
-            <p className="mt-2 text-2xl font-bold text-primary">
+            <p className="mt-2 flex items-center gap-1.5 text-2xl font-bold text-primary">
               {formatPrice(product.price)}
+              <PmrRubleIcon className="h-[1.1em] w-[0.75em]" />
             </p>
           </div>
 

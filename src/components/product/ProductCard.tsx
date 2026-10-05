@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton"; 
+import { PmrRubleIcon } from "@/components/ui/PmrRubleIcon";
 
 interface ProductCardProps {
   product: Product & {
@@ -123,8 +124,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       {/* 3. Инфо и кнопки */}
       <div className="flex flex-col p-4 flex-grow justify-between gap-3">
         <div>
-          <p className="text-lg font-bold text-primary">
+          <p className="flex items-center gap-1 text-lg font-bold text-primary">
             {formatPrice(product.price)}
+            <PmrRubleIcon className="h-[1.1em] w-[0.75em]" />
           </p>
           <Link href={`/product/${product.id}`}>
             <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
