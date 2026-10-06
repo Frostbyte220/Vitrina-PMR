@@ -55,6 +55,14 @@ export function Footer() {
                   <Info className="h-4 w-4" />О проекте
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/faq"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                >
+                  <Info className="h-4 w-4" />Частые вопросы
+                </Link>
+              </li>
             </ul>
           </div>
 
