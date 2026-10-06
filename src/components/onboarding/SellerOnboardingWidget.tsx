@@ -52,10 +52,10 @@ export function SellerOnboardingWidget() {
     <>
       {/* ── ПЛАВАЮЩАЯ КНОПКА (PROMPT) ── */}
       {isVisible && !isWizardOpen && (
-        <div className="fixed bottom-20 right-4 z-40 md:bottom-8 md:right-8 animate-in slide-in-from-bottom-5 fade-in duration-500">
+        <div className="fixed bottom-20 right-4 z-40 md:bottom-8 md:right-8 animate-in slide-in-from-bottom-8 fade-in duration-1000">
           <div 
             onClick={() => setIsWizardOpen(true)}
-            className="group relative flex cursor-pointer items-center gap-3 rounded-2xl bg-white p-3 pr-5 shadow-xl outline outline-1 outline-rose-100 hover:outline-rose-200 transition-all hover:-translate-y-1"
+            className="group relative flex cursor-pointer items-center gap-3 rounded-2xl bg-white p-3 pr-5 shadow-xl outline outline-1 outline-rose-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:outline-rose-300"
           >
             {/* Кнопка закрытия */}
             <button
