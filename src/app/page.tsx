@@ -10,6 +10,7 @@ import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
 import { getProducts } from "@/lib/cache";
+import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -93,6 +94,9 @@ export default async function HomePage({
       <div>
         <VisualCategories />
       </div>
+
+      {/* Рекламная карусель — Баннер #1 */}
+      <AdBannerCarousel />
 
       {/* Сетка товаров с Suspense */}
       <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
