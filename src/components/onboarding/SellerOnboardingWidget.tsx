@@ -128,26 +128,33 @@ export function SellerOnboardingWidget() {
                   <h3 className="mb-6 text-center text-xl font-bold text-gray-900">
                     Процесс проще простого
                   </h3>
-                  <div className="space-y-6 mb-8">
+                  <div className="space-y-4 mb-8">
                     <div className="flex gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold">1</div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold text-sm">1</div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">Регистрация</h4>
-                        <p className="text-sm text-gray-600 mt-1">Создаете профиль за 1 минуту и указываете ссылку на свой Instagram.</p>
+                        <h4 className="font-semibold text-gray-900 text-sm">Регистрация</h4>
+                        <p className="text-xs text-gray-600 mt-0.5">Создаете профиль за 1 минуту.</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 font-bold">2</div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 font-bold text-sm">2</div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">Добавление товаров</h4>
-                        <p className="text-sm text-gray-600 mt-1">Загружаете фото, пишете цену и описание. Ограничений на количество нет.</p>
+                        <h4 className="font-semibold text-gray-900 text-sm">Настройка магазина</h4>
+                        <p className="text-xs text-gray-600 mt-0.5">Добавляете название, логотип и ссылку на Instagram.</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 font-bold">3</div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600 font-bold text-sm">3</div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">Получение заказов</h4>
-                        <p className="text-sm text-gray-600 mt-1">Покупатели находят ваши товары через поиск и пишут вам напрямую в Direct.</p>
+                        <h4 className="font-semibold text-gray-900 text-sm">Добавление товаров</h4>
+                        <p className="text-xs text-gray-600 mt-0.5">Загружаете фото, описание и цену без ограничений.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 font-bold text-sm">4</div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm">Сообщения в Direct</h4>
+                        <p className="text-xs text-gray-600 mt-0.5">Покупатели находят товары и пишут напрямую вам.</p>
                       </div>
                     </div>
                   </div>
