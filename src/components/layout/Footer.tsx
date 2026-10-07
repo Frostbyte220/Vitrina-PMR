@@ -21,7 +21,7 @@ export function Footer() {
               Находим, объединяем и делаем онлайн-шопинг удобнее.
             </p>
             <div className="pt-2">
-              <CopyEmailIconButton email="vitrinapmr@mail.ru" />
+              <CopyEmailIconButton email="e-vitrinapmr@mail.ru" />
             </div>
           </div>
 

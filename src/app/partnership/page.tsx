@@ -56,11 +56,11 @@ export default function PartnershipPage() {
                 <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm outline outline-1 outline-gray-200">
                   <Mail className="h-5 w-5 text-gray-400" />
                   <span className="font-medium text-gray-700">
-                    vitrinapmr@mail.ru
+                    e-vitrinapmr@mail.ru
                   </span>
                 </div>
                 {/* Наша кнопка копирования из предыдущего шага */}
-                <CopyEmailIconButton email="vitrinapmr@mail.ru" />
+                <CopyEmailIconButton email="e-vitrinapmr@mail.ru" />
               </div>
             </div>
           </div>

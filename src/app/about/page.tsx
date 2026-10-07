@@ -39,7 +39,7 @@ const jsonLd = {
   },
   contactPoint: {
     "@type": "ContactPoint",
-    email: "vitrinapmr@mail.ru",
+    email: "e-vitrinapmr@mail.ru",
     contactType: "customer support",
   },
 };
@@ -238,13 +238,13 @@ export default function AboutPage() {
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="font-semibold text-gray-900">Напишите нам на почту:</h3>
                     <a
-                      href="mailto:vitrinapmr@mail.ru"
+                      href="mailto:e-vitrinapmr@mail.ru"
                       className="mt-1 inline-block text-lg font-medium text-rose-600 transition-colors hover:text-rose-700"
                     >
-                      vitrinapmr@mail.ru
+                      e-vitrinapmr@mail.ru
                     </a>
                   </div>
-                  <CopyEmailButton email="vitrinapmr@mail.ru" />
+                  <CopyEmailButton email="e-vitrinapmr@mail.ru" />
                 </div>
               </section>
             </div>

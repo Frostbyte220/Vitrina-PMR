@@ -80,11 +80,11 @@ const FAQS = [
       },
       {
         q: "Как сообщить о проблеме или предложить идею?",
-        a: "Напишите нам на почту vitrinapmr@mail.ru или в Instagram @vitrinapmr. Мы читаем все сообщения и стараемся отвечать в течение суток.",
+        a: "Напишите нам на почту e-vitrinapmr@mail.ru или в Instagram @vitrinapmr. Мы читаем все сообщения и стараемся отвечать в течение суток.",
       },
       {
         q: "Я не продавец, могу ли я предложить добавить магазин?",
-        a: "Конечно! Если вы знаете классный местный магазин в Instagram — напишите нам название аккаунта на vitrinapmr@mail.ru. Мы свяжемся с продавцом и пригласим его на платформу.",
+        a: "Конечно! Если вы знаете классный местный магазин в Instagram — напишите нам название аккаунта на e-vitrinapmr@mail.ru. Мы свяжемся с продавцом и пригласим его на платформу.",
       },
     ],
   },
@@ -162,10 +162,10 @@ export default function FaqPage() {
             Напишите нам — ответим в течение суток.
           </p>
           <a
-            href="mailto:vitrinapmr@mail.ru"
+            href="mailto:e-vitrinapmr@mail.ru"
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-rose-700"
           >
-            vitrinapmr@mail.ru
+            e-vitrinapmr@mail.ru
           </a>
         </div>
 
