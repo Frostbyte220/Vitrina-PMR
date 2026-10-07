@@ -74,7 +74,7 @@ export async function generateMetadata({
       `купить ${product.title}`,
       `${product.title} ПМР`,
       shopName,
-      "витрина ПМР",
+      "E-Vitrina PMR",
       "купить в Приднестровье",
     ],
     alternates: {

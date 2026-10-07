@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "Как появилась E-Vitrina PMR — история проекта, который собирает локальные магазины Приднестровья в одном месте. Бесплатное размещение для продавцов ПМР.",
   keywords: [
-    "витрина ПМР",
+    "E-Vitrina PMR",
     "магазины Тирасполя",
     "купить в Приднестровье",
     "магазины ПМР",
@@ -102,7 +102,7 @@ export default function AboutPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                     <Store className="h-5 w-5" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Что такое Витрина ПМР?</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Что такое E-Vitrina PMR?</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed">
                   <strong>E-Vitrina PMR</strong> — это бесплатный онлайн-каталог товаров из локальных
@@ -121,7 +121,7 @@ export default function AboutPage() {
             {/* Блок: Цифры */}
             <div className="rounded-2xl bg-white p-8 shadow-sm outline outline-1 outline-gray-200 sm:p-10">
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Витрина ПМР в цифрах</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">E-Vitrina PMR в цифрах</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="rounded-xl bg-rose-50 p-5 text-center">
                     <div className="flex justify-center mb-2">

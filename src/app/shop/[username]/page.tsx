@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
       store.name,
       `купить ${cityText}`,
       "магазин ПМР",
-      "витрина ПМР",
+      "E-Vitrina PMR",
       "магазины Тирасполя",
       "купить в Приднестровье",
     ],
