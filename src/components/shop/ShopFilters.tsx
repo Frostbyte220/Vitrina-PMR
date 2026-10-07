@@ -1,4 +1,4 @@
-// C:\Dima\Vitrina PMR\src\components\shop\ShopFilters.tsx
+// C:\Dima\E-Vitrina PMR\src\components\shop\ShopFilters.tsx
 
 "use client";
 

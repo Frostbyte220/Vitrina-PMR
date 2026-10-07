@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md rounded-2xl border border-border bg-white p-8 shadow-sm">
         <div className="mb-8 text-center">
           <Link href="/" className="mb-4 inline-block text-2xl font-bold tracking-tight text-primary">
-            Vitrina PMR
+            E-Vitrina PMR
           </Link>
           <h1 className="text-xl font-semibold text-text-main">Восстановление пароля</h1>
           <p className="mt-2 text-sm text-text-muted">

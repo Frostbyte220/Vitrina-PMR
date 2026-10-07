@@ -8,7 +8,7 @@ import { ProductsTableClient } from "./ProductsTableClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Мои товары | Vitrina PMR",
+  title: "Мои товары | E-Vitrina PMR",
 };
 
 const ITEMS_PER_PAGE = 20;

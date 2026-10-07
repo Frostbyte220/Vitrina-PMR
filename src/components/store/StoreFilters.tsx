@@ -54,7 +54,7 @@ export function StoreFilters() {
         </div>
         <input
           type="text"
-          placeholder="Найти товар на Vitrina PMR..."
+          placeholder="Найти товар на E-Vitrina PMR..."
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           className="w-full rounded-2xl border-0 bg-surface py-3.5 pl-11 pr-4 text-sm text-text-main ring-1 ring-inset ring-gray-200 transition-all placeholder:text-text-muted focus:bg-white focus:ring-2 focus:ring-primary outline-none"

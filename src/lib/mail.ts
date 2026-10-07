@@ -19,15 +19,15 @@ const transporter = nodemailer.createTransport({
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   // Если используется Resend и домен не подтвержден, отправка разрешена ТОЛЬКО с onboarding@resend.dev
   const defaultFrom = process.env.SMTP_HOST?.includes('resend') 
-    ? "Vitrina PMR <onboarding@resend.dev>" 
-    : "Vitrina PMR <no-reply@vitrina-pmr.ru>";
+    ? "E-Vitrina PMR <onboarding@resend.dev>" 
+    : "E-Vitrina PMR <no-reply@vitrina-pmr.ru>";
   
   const from = process.env.EMAIL_FROM || defaultFrom;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #e11d48; text-align: center;">Восстановление пароля</h2>
       <p>Здравствуйте!</p>
-      <p>Вы запросили сброс пароля для вашего аккаунта на платформе <strong>Vitrina PMR</strong>.</p>
+      <p>Вы запросили сброс пароля для вашего аккаунта на платформе <strong>E-Vitrina PMR</strong>.</p>
       <p>Пожалуйста, нажмите на кнопку ниже, чтобы задать новый пароль. Ссылка действительна в течение 1 часа.</p>
       
       <div style="text-align: center; margin: 30px 0;">
@@ -46,7 +46,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     await transporter.sendMail({
       from,
       to,
-      subject: "Сброс пароля | Vitrina PMR",
+      subject: "Сброс пароля | E-Vitrina PMR",
       html,
     });
     return { success: true };

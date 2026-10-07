@@ -5,22 +5,22 @@ import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
 import { BackButton } from "@/components/ui/BackButton";
 
 export const metadata: Metadata = {
-  title: "О проекте | Vitrina PMR",
+  title: "О проекте | E-Vitrina PMR",
   description:
-    "Как появилась Vitrina PMR — история проекта, который собирает локальные магазины Приднестровья в одном месте. Бесплатное размещение для продавцов ПМР.",
+    "Как появилась E-Vitrina PMR — история проекта, который собирает локальные магазины Приднестровья в одном месте. Бесплатное размещение для продавцов ПМР.",
   keywords: [
     "витрина ПМР",
     "магазины Тирасполя",
     "купить в Приднестровье",
     "магазины ПМР",
     "о проекте витрина",
-    "история vitrina pmr",
+    "история e-vitrina pmr",
   ],
   openGraph: {
-    title: "О проекте | Vitrina PMR",
+    title: "О проекте | E-Vitrina PMR",
     description:
-      "История создания Vitrina PMR — единого каталога локальных магазинов Приднестровья.",
-    siteName: "Vitrina PMR",
+      "История создания E-Vitrina PMR — единого каталога локальных магазинов Приднестровья.",
+    siteName: "E-Vitrina PMR",
     locale: "ru_RU",
     type: "website",
   },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Vitrina PMR",
+  name: "E-Vitrina PMR",
   description:
     "Единая витрина локальных магазинов Приднестровья. Купить товары во всех городах ПМР.",
   url: "https://vitrina-pmr.vercel.app",
@@ -60,7 +60,7 @@ export default function AboutPage() {
           {/* Заголовок */}
           <div className="text-center mb-12">
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              О проекте <span className="text-rose-600">Vitrina PMR</span>
+              О проекте <span className="text-rose-600">E-Vitrina PMR</span>
             </h1>
             <p className="mt-4 text-lg text-gray-500">
               Собираем локальные магазины Приднестровья в одном месте — бесплатно и без посредников.
@@ -86,7 +86,7 @@ export default function AboutPage() {
                     у местного продавца — нужно было потратить час на перебор аккаунтов.
                   </p>
                   <p>
-                    Так появилась <strong>Vitrina PMR</strong> — агрегатор, который собирает
+                    Так появилась <strong>E-Vitrina PMR</strong> — агрегатор, который собирает
                     все локальные магазины в одном месте. Продавец регистрируется, загружает товары,
                     а покупатель находит их через поиск и фильтры — и сразу пишет продавцу напрямую
                     в Instagram без никаких посредников.
@@ -95,7 +95,7 @@ export default function AboutPage() {
               </section>
             </div>
 
-            {/* Блок: Что такое Vitrina PMR */}
+            {/* Блок: Что такое E-Vitrina PMR */}
             <div className="rounded-2xl bg-white p-8 shadow-sm outline outline-1 outline-gray-200 sm:p-10">
               <section>
                 <div className="flex items-center gap-3 mb-4">
@@ -105,7 +105,7 @@ export default function AboutPage() {
                   <h2 className="text-xl font-bold text-gray-900">Что такое Витрина ПМР?</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed">
-                  <strong>Vitrina PMR</strong> — это бесплатный онлайн-каталог товаров из локальных
+                  <strong>E-Vitrina PMR</strong> — это бесплатный онлайн-каталог товаров из локальных
                   Instagram-магазинов Приднестровья. Мы собрали в одном месте магазины со
                   всей республики, чтобы вам не приходилось тратить часы на поиск нужного товара
                   по десяткам разрозненных аккаунтов.

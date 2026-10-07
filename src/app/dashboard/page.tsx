@@ -7,7 +7,7 @@ import { Package, Store, Eye, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Главная | Vitrina PMR",
+  title: "Главная | E-Vitrina PMR",
 };
 
 export default async function DashboardHomePage() {
@@ -45,7 +45,7 @@ export default async function DashboardHomePage() {
           Добро пожаловать, {storeInfo?.name || "Продавец"}! 👋
         </h1>
         <p className="mt-2 text-sm text-text-muted">
-          Это сводная статистика вашего магазина на платформе Vitrina PMR.
+          Это сводная статистика вашего магазина на платформе E-Vitrina PMR.
         </p>
       </div>
 

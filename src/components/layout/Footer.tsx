@@ -13,7 +13,7 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="inline-block">
               <h3 className="text-2xl font-extrabold tracking-tight text-rose-800 transition-opacity hover:opacity-80">
-                Vitrina PMR
+                E-Vitrina PMR
               </h3>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-gray-500">
@@ -96,7 +96,7 @@ export function Footer() {
         {/* Копирайт и юридическая информация */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 md:flex-row text-center md:text-left">
           <p className="text-sm text-gray-400">
-            &copy; {currentYear} Vitrina PMR. Все права защищены.
+            &copy; {currentYear} E-Vitrina PMR. Все права защищены.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs text-gray-400">

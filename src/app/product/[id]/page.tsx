@@ -53,13 +53,13 @@ export async function generateMetadata({
   });
 
   if (!product) {
-    return { title: "Товар не найден | Vitrina PMR" };
+    return { title: "Товар не найден | E-Vitrina PMR" };
   }
 
   const appUrl = await getAppUrl();
   const productUrl = `${appUrl}/product/${id}`;
   const images = product.images?.length > 0 ? product.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"];
-  const shopName = product.user?.store?.name || product.user?.name || "Vitrina PMR";
+  const shopName = product.user?.store?.name || product.user?.name || "E-Vitrina PMR";
   
   // Обрезаем описание для мета-тегов до 160 символов (стандарт поисковиков)
   const cleanDescription =
@@ -84,7 +84,7 @@ export async function generateMetadata({
       title: `${product.title} — купить в ПМР`,
       description: cleanDescription,
       url: productUrl,
-      siteName: "Vitrina PMR",
+      siteName: "E-Vitrina PMR",
       images: [
         {
           url: images[0],

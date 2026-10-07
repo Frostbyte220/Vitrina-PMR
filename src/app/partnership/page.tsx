@@ -3,9 +3,9 @@ import { Mail, Handshake } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
 
 export const metadata: Metadata = {
-  title: "Сотрудничество | Vitrina PMR",
+  title: "Сотрудничество | E-Vitrina PMR",
   description:
-    "Информация для партнеров и предложения по сотрудничеству с платформой Vitrina PMR.",
+    "Информация для партнеров и предложения по сотрудничеству с платформой E-Vitrina PMR.",
 };
 
 import { BackButton } from "@/components/ui/BackButton";
@@ -34,7 +34,7 @@ export default function PartnershipPage() {
           {/* Основной текстовый блок */}
           <div className="mt-12 space-y-8 text-gray-600">
             <p className="text-base leading-relaxed text-center sm:text-left">
-              Проект <strong>Vitrina PMR</strong> активно развивается, и мы
+              Проект <strong>E-Vitrina PMR</strong> активно развивается, и мы
               приглашаем к сотрудничеству локальные магазины, бренды и
               предпринимателей Приднестровья. Если вы хотите разместить свои
               товары на нашей платформе, обсудить рекламу или предложить

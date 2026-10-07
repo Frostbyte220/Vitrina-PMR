@@ -86,7 +86,7 @@ export function LoginForm() {
               href="/"
               className="text-xl font-bold tracking-tight text-primary"
             >
-              Vitrina PMR
+              E-Vitrina PMR
             </Link>
             <p className="mt-2 text-sm text-text-muted">
               {isRegister ? "Регистрация магазина" : "Вход для продавцов"}

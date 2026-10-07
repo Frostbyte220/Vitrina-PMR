@@ -20,12 +20,12 @@ export async function GET(req: Request) {
       },
     });
 
-    const from = process.env.EMAIL_FROM || "Vitrina PMR <onboarding@resend.dev>";
+    const from = process.env.EMAIL_FROM || "E-Vitrina PMR <onboarding@resend.dev>";
 
     const info = await transporter.sendMail({
       from,
       to,
-      subject: "Тестовое письмо от Vitrina PMR",
+      subject: "Тестовое письмо от E-Vitrina PMR",
       html: "<p>Если вы это читаете, SMTP работает отлично!</p>",
     });
 

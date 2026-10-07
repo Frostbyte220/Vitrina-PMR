@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Единая витрина локальных магазинов Приднестровья",
     description: "Удобный поиск товаров из локальных магазинов в одном месте.",
-    siteName: "Vitrina PMR",
+    siteName: "E-Vitrina PMR",
     locale: "ru_RU",
     type: "website",
   },
@@ -77,7 +77,7 @@ export default async function HomePage({
       <section className="bg-white px-4 pt-8 pb-4 shadow-sm sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-6 mt-8 sm:mt-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-rose-800 sm:text-4xl">
-            Vitrina PMR
+            E-Vitrina PMR
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             Единая витрина локальных магазинов Приднестровья

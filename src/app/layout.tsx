@@ -22,10 +22,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: {
     default: "Витрина ПМР — Магазины Тирасполя и Приднестровья",
-    template: "%s | Vitrina PMR",
+    template: "%s | E-Vitrina PMR",
   },
   description:
-    "Vitrina PMR — единый каталог товаров из локальных магазинов Приднестровья. Купить одежду, обувь, косметику и электронику во всех городах ПМР. Бесплатное размещение для продавцов.",
+    "E-Vitrina PMR — единый каталог товаров из локальных магазинов Приднестровья. Купить одежду, обувь, косметику и электронику во всех городах ПМР. Бесплатное размещение для продавцов.",
   keywords: [
     "витрина ПМР",
     "магазины Тирасполя",
@@ -34,17 +34,17 @@ export const metadata: Metadata = {
     "купить Тирасполь",
     "магазины Бендеры",
     "шопинг Приднестровье",
-    "Vitrina PMR",
+    "E-Vitrina PMR",
     "локальные магазины ПМР",
   ],
-  authors: [{ name: "Vitrina PMR", url: "https://vitrina-pmr.vercel.app" }],
-  creator: "Vitrina PMR",
+  authors: [{ name: "E-Vitrina PMR", url: "https://vitrina-pmr.vercel.app" }],
+  creator: "E-Vitrina PMR",
   metadataBase: new URL("https://vitrina-pmr.vercel.app"),
   openGraph: {
     type: "website",
     locale: "ru_RU",
     url: "https://vitrina-pmr.vercel.app",
-    siteName: "Vitrina PMR",
+    siteName: "E-Vitrina PMR",
     title: "Витрина ПМР — Магазины Тирасполя и Приднестровья",
     description:
       "Единый каталог товаров из локальных магазинов Приднестровья. Одежда, обувь, косметика, электроника — всё в одном месте.",

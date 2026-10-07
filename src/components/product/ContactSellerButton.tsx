@@ -62,7 +62,7 @@ export function ContactSellerButton({
     trackEvent("contact_seller", { product: productName, shop: shopUsername });
 
     const formattedPrice = formatPrice(productPrice);
-    const message = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} руб. (нашел на Vitrina PMR)`;
+    const message = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} руб. (нашел на E-Vitrina PMR)`;
 
     // fire-and-forget: не await-им, чтобы не задерживать переход
     copyToClipboard(message).then((copied) => {

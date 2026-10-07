@@ -51,7 +51,7 @@ export function Header() {
           href="/"
           className="shrink-0 text-base font-bold uppercase tracking-tight text-primary md:text-lg"
         >
-          Vitrina PMR
+          E-Vitrina PMR
         </Link>
 
         {/* 2. Строка поиска (только для десктопа) */}

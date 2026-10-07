@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
     include: { user: true }
   });
 
-  if (!store) return { title: "Магазин не найден | Vitrina PMR" };
+  if (!store) return { title: "Магазин не найден | E-Vitrina PMR" };
 
   const baseUrl = "https://vitrina-pmr.vercel.app";
   const cityText = store.cities?.length ? `в ${store.cities[0]}` : "в ПМР";
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
     `Купить товары магазина ${store.name} ${cityText}. Каталог товаров на Витрине ПМР — локальные магазины Приднестровья.`;
 
   return {
-    title: `${store.name} — магазин ${cityText} | Vitrina PMR`,
+    title: `${store.name} — магазин ${cityText} | E-Vitrina PMR`,
     description,
     keywords: [
       store.name,
@@ -56,11 +56,11 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
       canonical: `${baseUrl}/shop/${store.instagram?.replace(/^@/, "") || store.slug}`,
     },
     openGraph: {
-      title: `${store.name} на Vitrina PMR`,
+      title: `${store.name} на E-Vitrina PMR`,
       description,
       images: store.avatarUrl ? [{ url: store.avatarUrl, alt: store.name }] : [],
       type: "website",
-      siteName: "Vitrina PMR",
+      siteName: "E-Vitrina PMR",
       locale: "ru_RU",
     },
   };
