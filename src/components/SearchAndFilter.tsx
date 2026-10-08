@@ -199,18 +199,22 @@ export function SearchAndFilter() {
                       className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowSuggestions(false)}
                     >
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
-                        <Image 
-                          src={product.images[0]} 
-                          alt={product.title} 
-                          width={40} 
-                          height={40}
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                        {product.images && product.images.length > 0 ? (
+                          <Image 
+                            src={product.images[0]} 
+                            alt={product.title || "Товар"} 
+                            width={40} 
+                            height={40}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
                       </div>
                       <div className="flex-1 truncate">
                         <p className="truncate text-sm font-medium text-gray-900">{product.title}</p>
-                        <p className="text-xs text-gray-500">{product.category}</p>
+                        <p className="text-xs text-gray-500">{product.category || "Без категории"}</p>
                       </div>
                       <span className="font-semibold text-rose-600 shrink-0">{product.price} ₽</span>
                     </Link>

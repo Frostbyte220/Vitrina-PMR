@@ -155,9 +155,16 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   }
 
   if (minPrice || maxPrice) {
-    whereClause.price = {};
-    if (minPrice && !isNaN(Number(minPrice))) whereClause.price.gte = Number(minPrice);
-    if (maxPrice && !isNaN(Number(maxPrice))) whereClause.price.lte = Number(maxPrice);
+    const min = minPrice ? Number(minPrice) : null;
+    const max = maxPrice ? Number(maxPrice) : null;
+    
+    let priceFilter: any = {};
+    if (min !== null && !isNaN(min)) priceFilter.gte = min;
+    if (max !== null && !isNaN(max)) priceFilter.lte = max;
+    
+    if (Object.keys(priceFilter).length > 0) {
+      whereClause.price = priceFilter;
+    }
   }
 
   if (dynamicFilters.length > 0) {
