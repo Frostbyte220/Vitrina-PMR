@@ -1,10 +1,11 @@
 "use client";
 
-import { LayoutDashboard, Package, Store } from "lucide-react";
+import { LayoutDashboard, Package, Store, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 const navItems = [
   { href: "/dashboard", label: "Главная", icon: LayoutDashboard },
@@ -15,6 +16,10 @@ const navItems = [
 
 export function DashboardNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  
+  // Проверяем, является ли текущий юзер Супер-Админом
+  const isAdmin = session?.user?.email === "ainol2004@gmail.com";
 
   return (
     <>
@@ -46,6 +51,25 @@ export function DashboardNav() {
               </Link>
             );
           })}
+
+          {/* Кнопка Админки (Только для Админа) */}
+          {isAdmin && (
+            <>
+              <div className="my-2 border-t border-gray-100" />
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                  pathname.startsWith("/admin")
+                    ? "bg-red-50 text-red-600"
+                    : "text-red-500 hover:bg-red-50 hover:text-red-600"
+                )}
+              >
+                <ShieldAlert className="h-5 w-5" />
+                Админ-панель
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="border-t border-border p-4">
@@ -71,6 +95,21 @@ export function DashboardNav() {
             </Link>
           );
         })}
+        
+        {/* Кнопка Админки на мобильном (Только для Админа) */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors",
+              pathname.startsWith("/admin") ? "text-red-600" : "text-red-400 hover:text-red-600"
+            )}
+          >
+            <ShieldAlert className="h-6 w-6" />
+            Админка
+          </Link>
+        )}
+
         <SignOutButton variant="mobile" />
       </nav>
     </>
