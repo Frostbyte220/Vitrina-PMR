@@ -126,7 +126,7 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, ...otherFilters } = params;
+  const { category, sub, q, page, sort, minPrice, maxPrice, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -152,6 +152,12 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
 
   if (sub) {
     whereClause.subCategory = sub;
+  }
+
+  if (minPrice || maxPrice) {
+    whereClause.price = {};
+    if (minPrice && !isNaN(Number(minPrice))) whereClause.price.gte = Number(minPrice);
+    if (maxPrice && !isNaN(Number(maxPrice))) whereClause.price.lte = Number(maxPrice);
   }
 
   if (dynamicFilters.length > 0) {
