@@ -5,11 +5,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 
-const ADMIN_EMAIL = "ainol2004@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
+  if (!session?.user?.email || !ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) {
     throw new Error("Доступ запрещен");
   }
 }

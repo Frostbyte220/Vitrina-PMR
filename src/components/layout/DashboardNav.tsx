@@ -18,8 +18,8 @@ export function DashboardNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   
-  // Проверяем, является ли текущий юзер Супер-Админом
-  const isAdmin = session?.user?.email === "ainol2004@gmail.com";
+  // Проверяем, является ли текущий юзер Супер-Админом (через env)
+  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <>

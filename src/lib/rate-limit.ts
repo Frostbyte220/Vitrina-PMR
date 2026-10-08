@@ -7,6 +7,11 @@ const getRedis = () => {
   if (url && token && url.startsWith('https://')) {
     return new Redis({ url, token });
   }
+  // ⚠️ ВАЖНО: Без Redis rate limiting не работает на Vercel (serverless = нет общей памяти)
+  // Подключите Upstash Redis в https://upstash.com/ и добавьте переменные в Vercel
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('[RateLimit] ВНИМАНИЕ: Redis не настроен! Rate limiting работает только в памяти и неэффективен на Vercel. Добавьте UPSTASH_REDIS_REST_URL и UPSTASH_REDIS_REST_TOKEN.');
+  }
   return null;
 };
 

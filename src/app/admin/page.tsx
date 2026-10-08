@@ -6,12 +6,12 @@ import { AdminClient } from "./AdminClient";
 import { ShieldAlert, Users, Package, Store } from "lucide-react";
 import Link from "next/link";
 
-const ADMIN_EMAIL = "ainol2004@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
+  if (!session?.user?.email || !ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center p-4 text-center">
         <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />

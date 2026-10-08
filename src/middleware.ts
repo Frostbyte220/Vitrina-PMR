@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Маршруты, требующие авторизации
-const PROTECTED_PATHS = ["/dashboard"];
+const PROTECTED_PATHS = ["/dashboard", "/admin"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -36,5 +36,5 @@ export async function middleware(request: NextRequest) {
 
 // Конфигурация: middleware срабатывает ТОЛЬКО на защищённых маршрутах
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/admin"],
 };
