@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AdminClient } from "./AdminClient";
-import { ShieldAlert, Users, Package, Store } from "lucide-react";
+import { ShieldAlert, Users, Package, Store, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -45,6 +45,13 @@ export default async function AdminDashboardPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
+          <Link 
+            href="/dashboard" 
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Назад в дашборд
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
             Панель Супер-Админа
           </h1>
