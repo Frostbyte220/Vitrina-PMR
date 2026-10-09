@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, DollarSign } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
@@ -47,11 +47,18 @@ export function SearchAndFilter() {
   const [isDebouncing, setIsDebouncing] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
 
-  // Закрытие подсказок при клике вне
+  // Всплывающее меню диапазона цен
+  const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const pricePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Закрытие подсказок и меню цены при клике вне
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+      }
+      if (pricePopoverRef.current && !pricePopoverRef.current.contains(event.target as Node)) {
+        setIsPriceOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -234,55 +241,147 @@ export function SearchAndFilter() {
         </AnimatePresence>
       </form>
 
-      {/* 2. Фильтры и сортировка (Mobile scrollable, Desktop flex) */}
-      <div className="mx-auto max-w-4xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-30">
+      {/* 2. Фильтры и сортировка (Лаконичный объединенный ряд) */}
+      <div className="mx-auto max-w-4xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
         
-        {/* Фильтр по цене */}
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm w-full sm:w-auto overflow-x-auto no-scrollbar">
-          <DollarSign className="h-4 w-4 text-gray-400 shrink-0" />
-          <input 
-            type="number" 
-            placeholder="От"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            className="w-16 text-sm bg-transparent outline-none focus:text-rose-600 placeholder:text-gray-400"
-          />
-          <span className="text-gray-300">-</span>
-          <input 
-            type="number" 
-            placeholder="До"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            className="w-16 text-sm bg-transparent outline-none focus:text-rose-600 placeholder:text-gray-400"
-          />
-          <button 
-            onClick={applyPriceFilter}
-            className="ml-1 text-xs font-medium text-white bg-gray-900 rounded-full px-3 py-1 hover:bg-rose-600 transition-colors shrink-0"
+        {/* Кнопка фильтра по цене (выпадающий popover) */}
+        <div className="relative" ref={pricePopoverRef}>
+          <button
+            type="button"
+            onClick={() => setIsPriceOpen(!isPriceOpen)}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
+              minPrice || maxPrice
+                ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
+                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+            }`}
           >
-            ОК
+            <SlidersHorizontal className={`h-3.5 w-3.5 ${minPrice || maxPrice ? "text-rose-600" : "text-gray-500"}`} />
+            <span>
+              {minPrice && maxPrice
+                ? `${minPrice} – ${maxPrice} Руб`
+                : minPrice
+                ? `От ${minPrice} Руб`
+                : maxPrice
+                ? `До ${maxPrice} Руб`
+                : "Цена"}
+            </span>
+
+            {minPrice || maxPrice ? (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMinPrice("");
+                  setMaxPrice("");
+                  updateParams({ minPrice: "", maxPrice: "" });
+                }}
+                className="ml-1 rounded-full p-0.5 text-rose-500 hover:bg-rose-200 hover:text-rose-800 transition-colors"
+                title="Сбросить цену"
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            ) : (
+              <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isPriceOpen ? "rotate-180" : ""}`} />
+            )}
           </button>
+
+          {/* Всплывающее аккуратное меню цены */}
+          <AnimatePresence>
+            {isPriceOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 w-72 rounded-2xl bg-white p-4 shadow-xl border border-gray-100"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-gray-800">Диапазон цены</span>
+                  <span className="text-[11px] font-medium text-gray-400">в Рублях</span>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      placeholder="От"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          applyPriceFilter();
+                          setIsPriceOpen(false);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500"
+                    />
+                  </div>
+                  <span className="text-gray-300 font-medium">—</span>
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      placeholder="До"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          applyPriceFilter();
+                          setIsPriceOpen(false);
+                        }
+                      }}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPrice("");
+                      setMaxPrice("");
+                      updateParams({ minPrice: "", maxPrice: "" });
+                      setIsPriceOpen(false);
+                    }}
+                    className="flex-1 rounded-xl py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    Сбросить
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyPriceFilter();
+                      setIsPriceOpen(false);
+                    }}
+                    className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors"
+                  >
+                    Применить
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Сортировка */}
-        <div className="flex justify-center sm:justify-end gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-          {SORT_OPTIONS.map(({ value, label, Icon }) => {
-            const isActive = currentSort === value;
-            return (
-              <button
-                key={value}
-                onClick={() => updateParams({ sort: value })}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors shrink-0 ${
-                  isActive
-                    ? "bg-rose-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Кнопки сортировки */}
+        {SORT_OPTIONS.map(({ value, label, Icon }) => {
+          const isActive = currentSort === value;
+          return (
+            <button
+              key={value}
+              onClick={() => updateParams({ sort: value })}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm ${
+                isActive
+                  ? "bg-rose-600 text-white shadow-rose-200"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* 3. Подкатегории */}
