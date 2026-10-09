@@ -23,24 +23,32 @@ export function SellerOnboardingWidget() {
       return;
     }
 
-    const hidden = localStorage.getItem("hideSellerWidget");
-    if (!hidden) {
-      // Небольшая задержка перед появлением плашки, чтобы не перегружать интерфейс сразу
-      const timer = setTimeout(() => setIsVisible(true), 3000);
-      return () => clearTimeout(timer);
+    try {
+      const hidden = localStorage.getItem("hideSellerWidget");
+      if (!hidden) {
+        // Небольшая задержка перед появлением плашки, чтобы не перегружать интерфейс сразу
+        const timer = setTimeout(() => setIsVisible(true), 3000);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // Игнорируем ошибку, если localStorage заблокирован браузером
     }
   }, [status, session]);
 
   const handleClosePrompt = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsVisible(false);
-    localStorage.setItem("hideSellerWidget", "true");
+    try {
+      localStorage.setItem("hideSellerWidget", "true");
+    } catch {}
   };
 
   const handleCloseWizard = () => {
     setIsWizardOpen(false);
     setIsVisible(false);
-    localStorage.setItem("hideSellerWidget", "true");
+    try {
+      localStorage.setItem("hideSellerWidget", "true");
+    } catch {}
   };
 
   const nextStep = () => setStep((s) => Math.min(s + 1, 3));
