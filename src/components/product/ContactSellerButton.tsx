@@ -3,7 +3,7 @@
 import { Instagram, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { isMobileDevice, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 
 interface ContactSellerButtonProps {

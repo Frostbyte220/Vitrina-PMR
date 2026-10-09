@@ -6,8 +6,7 @@ import { Store, MapPin } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
-import { FavoriteButton } from "./FavoriteButton"; 
-import { PmrRubleIcon } from "@/components/ui/PmrRubleIcon";
+import { FavoriteButton } from "./FavoriteButton";
 
 interface ProductCardProps {
   product: Product & {

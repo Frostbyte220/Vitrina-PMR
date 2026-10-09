@@ -11,7 +11,6 @@ import { ContactSellerButton } from "@/components/product/ContactSellerButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
-import { PmrRubleIcon } from "@/components/ui/PmrRubleIcon";
 
 // Включаем ISR (кэширование). Страница будет обновляться раз в час (3600 сек),
 // что идеально для маркетплейса: сервер не перегружается, а данные свежие.

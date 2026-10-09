@@ -45,7 +45,7 @@ export function AdminClient({
         await deleteProductAdmin(id);
         toast.success("Товар скрыт");
       }
-    } catch (error) {
+    } catch {
       toast.error("Ошибка");
     } finally {
       setLoadingId(null);
@@ -58,7 +58,7 @@ export function AdminClient({
     try {
       await deleteStoreAdmin(id);
       toast.success("Магазин удален");
-    } catch (error) {
+    } catch {
       toast.error("Ошибка удаления");
     } finally {
       setLoadingId(null);

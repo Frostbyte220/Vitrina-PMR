@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 
 function ResetPasswordForm({ token }: { token: string }) {
@@ -122,9 +122,8 @@ function ResetPasswordForm({ token }: { token: string }) {
   );
 }
 
-export default async function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
-  const resolvedParams = await params;
-  const token = resolvedParams.token;
+export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params);
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12">

@@ -158,7 +158,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
     const min = minPrice ? Number(minPrice) : null;
     const max = maxPrice ? Number(maxPrice) : null;
     
-    let priceFilter: any = {};
+    const priceFilter: any = {};
     if (min !== null && !isNaN(min)) priceFilter.gte = min;
     if (max !== null && !isNaN(max)) priceFilter.lte = max;
     

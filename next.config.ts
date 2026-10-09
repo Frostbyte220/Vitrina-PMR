@@ -62,19 +62,6 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           // Ограничиваем доступ браузерных API (GPS, камера, микрофон)
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          // Базовая политика разрешённых источников контента (CSP)
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://mc.yandex.ru",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://ui-avatars.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
-              "connect-src 'self' https://mc.yandex.ru https://vitrina-pmr.vercel.app",
-              "frame-ancestors 'none'",
-            ].join("; "),
-          },
         ],
       },
       // ──────────────────────────────────────────────────

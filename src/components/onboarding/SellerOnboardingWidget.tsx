@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Store, X, ChevronRight, CheckCircle2, Instagram, ShoppingBag } from "lucide-react";
-import Link from "next/link";
+import { Store, X, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function SellerOnboardingWidget() {
