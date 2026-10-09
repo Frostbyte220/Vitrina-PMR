@@ -132,6 +132,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
 
   // Определяем сортировку
   let orderBy: any = { createdAt: "desc" };
+  if (sort === "oldest") orderBy = { createdAt: "asc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
 

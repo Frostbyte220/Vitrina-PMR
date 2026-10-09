@@ -17,7 +17,8 @@ const SUBCATEGORIES_MAP: Record<string, string[]> = {
 };
 
 const SORT_OPTIONS = [
-  { value: "newest",     label: "Новые",               Icon: ArrowUpDown },
+  { value: "newest",     label: "Сначала новые",       Icon: ArrowUpDown },
+  { value: "oldest",     label: "Сначала старые",      Icon: ArrowUpDown },
   { value: "price_asc",  label: "Сначала дешевые",     Icon: ArrowUp },
   { value: "price_desc", label: "Сначала дорогие",     Icon: ArrowDown },
 ] as const;
