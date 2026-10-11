@@ -229,6 +229,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {/* Десктопная версия кнопки связи */}
           <div className="hidden md:block mt-4">
             <ContactSellerButton
+              productId={product.id}
               productName={product.title}
               productPrice={product.price}
               shopUsername={cleanUsername}
@@ -242,6 +243,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Мобильная версия кнопки связи */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white p-4 md:hidden pb-safe">
         <ContactSellerButton
+          productId={product.id}
           productName={product.title}
           productPrice={product.price}
           shopUsername={cleanUsername}

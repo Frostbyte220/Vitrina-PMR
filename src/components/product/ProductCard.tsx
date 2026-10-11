@@ -142,6 +142,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
         <div className="flex flex-col gap-2 mt-auto pt-1">
           <ContactSellerButton
+            productId={product.id}
             productName={product.title}
             productPrice={product.price}
             shopUsername={cleanInstagram}

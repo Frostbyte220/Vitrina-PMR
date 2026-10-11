@@ -26,6 +26,7 @@ export interface StoreContacts {
 }
 
 interface ContactSellerButtonProps {
+  productId?: string;
   productName: string;
   productPrice: number;
   shopUsername?: string | null;
@@ -66,6 +67,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export function ContactSellerButton({
+  productId,
   productName,
   productPrice,
   shopUsername,
@@ -106,8 +108,18 @@ export function ContactSellerButton({
   const rawViber = (contacts?.viber || "").trim();
   const rawPhone = (contacts?.phone || "").trim();
 
-  const formattedPrice = formatPrice(productPrice);
-  const greetingMessage = `Здравствуйте! Меня интересует товар «${productName}» за ${formattedPrice} руб. (нашел на E-Vitrina PMR)`;
+  // Формируем ссылку на товар и текст сообщения для продавца
+  const productUrl =
+    typeof window !== "undefined" && productId
+      ? `${window.location.origin}/product/${productId}`
+      : productId
+      ? `https://vitrina-pmr.vercel.app/product/${productId}`
+      : "";
+
+  const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
+  const greetingMessage = productUrl
+    ? `Здравствуйте! Меня интересует товар «${productName}» (${formattedPrice}).\nСсылка на товар: ${productUrl}`
+    : `Здравствуйте! Меня интересует товар «${productName}» (${formattedPrice}) на E-Vitrina PMR.`;
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
@@ -148,7 +160,7 @@ export function ContactSellerButton({
       id: "telegram",
       name: "Telegram",
       sub: `@${cleanTelegram}`,
-      url: `https://t.me/${cleanTelegram}`,
+      url: `https://t.me/${cleanTelegram}?text=${encodeURIComponent(greetingMessage)}`,
       icon: Send,
       bgClass: "bg-[#229ED9] hover:bg-[#1E8EC4] text-white shadow-sm",
       target: "_blank",
@@ -341,8 +353,8 @@ export function ContactSellerButton({
                   <span>{isCopied ? "Скопировано!" : "Скопировать ещё раз"}</span>
                 </button>
               </div>
-              <p className="text-xs text-gray-600 italic bg-white p-2 rounded-lg border border-gray-100 select-all leading-relaxed">
-                «{greetingMessage}»
+              <p className="text-xs text-gray-700 italic bg-white p-2.5 rounded-lg border border-gray-100 select-all leading-relaxed whitespace-pre-wrap break-words">
+                {greetingMessage}
               </p>
             </div>
           </motion.div>
