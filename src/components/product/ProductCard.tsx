@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Store, MapPin } from "lucide-react";
@@ -27,9 +28,10 @@ interface ProductCardProps {
     image?: string | null;
   };
   priority?: boolean;
+  activeCities?: string[];
 }
 
-export function ProductCard({ product, priority = false }: ProductCardProps) {
+export function ProductCard({ product, priority = false, activeCities }: ProductCardProps) {
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
   const prod = product as Record<string, any>;
@@ -43,7 +45,29 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const shopHref = cleanInstagram ? `/shop/${cleanInstagram}` : "#";
 
   const storeCities: string[] | undefined = prod.store?.cities || prod.user?.store?.cities;
-  const cityLabel = storeCities && storeCities.length > 0 ? storeCities[0] : null;
+  
+  // Динамически определяем отображаемый город:
+  // Если в фильтре выбран город (например, Тирасполь) и магазин там работает,
+  // показываем именно Тирасполь (+ остальные города), а не случайный первый город из БД.
+  const cityLabel = useMemo(() => {
+    if (!storeCities || storeCities.length === 0) return null;
+
+    const matched = activeCities && activeCities.length > 0
+      ? storeCities.filter((c) => activeCities.includes(c))
+      : [];
+
+    if (matched.length > 0) {
+      const otherCount = storeCities.length - matched.length;
+      return otherCount > 0
+        ? `${matched.join(", ")} (+${otherCount})`
+        : matched.join(", ");
+    }
+
+    if (storeCities.length <= 2) {
+      return storeCities.join(", ");
+    }
+    return `${storeCities[0]} (+${storeCities.length - 1})`;
+  }, [storeCities, activeCities]);
 
   const storeData = product.store || prod.user?.store;
   const storeContacts = {
@@ -96,8 +120,11 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           <span className="truncate text-sm font-semibold text-gray-900 group-hover/header:text-rose-700 transition-colors">
             {displayUsername}
           </span>
-          <span className="truncate text-[11px] text-gray-500 flex items-center gap-0.5">
-            {cityLabel && <><MapPin className="h-3 w-3" /> {cityLabel}</>}
+          <span 
+            className="truncate text-[11px] text-gray-500 flex items-center gap-0.5"
+            title={storeCities && storeCities.length > 0 ? `Города доставки: ${storeCities.join(", ")}` : undefined}
+          >
+            {cityLabel && <><MapPin className="h-3 w-3 shrink-0 text-gray-400" /> {cityLabel}</>}
           </span>
         </div>
       </Link>

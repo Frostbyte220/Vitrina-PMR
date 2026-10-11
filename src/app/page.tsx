@@ -243,7 +243,12 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
         <>
           <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product, i) => (
-              <ProductCard key={product.id} product={product as any} priority={i < 4} />
+              <ProductCard
+                key={product.id}
+                product={product as any}
+                priority={i < 4}
+                activeCities={selectedCities}
+              />
             ))}
           </div>
           <Pagination totalPages={totalPages} currentPage={currentPage} />
