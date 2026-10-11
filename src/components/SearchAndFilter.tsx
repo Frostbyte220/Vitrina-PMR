@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useTransition, useEffect, useRef } from "react";
+import { useCallback, useState, useTransition, useEffect, useRef, useMemo } from "react";
 import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
@@ -49,7 +49,11 @@ export function SearchAndFilter() {
   const currentMinPrice    = searchParams.get("minPrice") || "";
   const currentMaxPrice    = searchParams.get("maxPrice") || "";
 
-  const currentCity        = searchParams.get("city") || "";
+  const currentCitiesRaw   = searchParams.get("cities") || "";
+  const currentCities      = useMemo(
+    () => (currentCitiesRaw ? currentCitiesRaw.split(",") : []),
+    [currentCitiesRaw]
+  );
 
   const [searchQuery, setSearchQuery] = useState(currentQuery);
   const [minPrice, setMinPrice] = useState(currentMinPrice);
@@ -110,7 +114,7 @@ export function SearchAndFilter() {
   }, [searchQuery]);
 
   const updateParams = useCallback(
-    (updates: { category?: string; q?: string; sub?: string | null; sort?: string; minPrice?: string; maxPrice?: string; city?: string | null }) => {
+    (updates: { category?: string; q?: string; sub?: string | null; sort?: string; minPrice?: string; maxPrice?: string; cities?: string[] | null }) => {
       const params = new URLSearchParams(searchParams.toString());
 
       if (updates.category !== undefined) {
@@ -156,9 +160,9 @@ export function SearchAndFilter() {
         else params.set("maxPrice", updates.maxPrice);
       }
 
-      if (updates.city !== undefined) {
-        if (!updates.city) params.delete("city");
-        else params.set("city", updates.city);
+      if (updates.cities !== undefined) {
+        if (!updates.cities || updates.cities.length === 0) params.delete("cities");
+        else params.set("cities", updates.cities.join(","));
       }
 
       params.delete("page");
@@ -168,6 +172,14 @@ export function SearchAndFilter() {
     },
     [searchParams, router]
   );
+
+  // Переключает один город в/из набора выбранных
+  const toggleCity = useCallback((city: string) => {
+    const next = currentCities.includes(city)
+      ? currentCities.filter((c) => c !== city)
+      : [...currentCities, city];
+    updateParams({ cities: next.length > 0 ? next : null });
+  }, [currentCities, updateParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,24 +288,30 @@ export function SearchAndFilter() {
             type="button"
             onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
-              currentCity
+              currentCities.length > 0
                 ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
                 : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
             }`}
           >
-            <MapPin className={`h-3.5 w-3.5 ${currentCity ? "text-rose-600" : "text-gray-500"}`} />
-            <span>{currentCity || "Город"}</span>
-            {currentCity ? (
+            <MapPin className={`h-3.5 w-3.5 shrink-0 ${currentCities.length > 0 ? "text-rose-600" : "text-gray-500"}`} />
+            <span>
+              {currentCities.length === 0
+                ? "Город"
+                : currentCities.length === 1
+                ? currentCities[0]
+                : `${currentCities.length} города`}
+            </span>
+            {currentCities.length > 0 ? (
               <span
                 role="button"
                 tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateParams({ city: null });
+                  updateParams({ cities: null });
                   setIsCityOpen(false);
                 }}
                 className="ml-1 rounded-full p-0.5 text-rose-500 hover:bg-rose-200 hover:text-rose-800 transition-colors"
-                title="Сбросить город"
+                title="Сбросить города"
               >
                 <X className="h-3.5 w-3.5" />
               </span>
@@ -309,30 +327,46 @@ export function SearchAndFilter() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 6, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 w-52 rounded-2xl bg-white p-2 shadow-xl border border-gray-100"
+                className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 w-56 rounded-2xl bg-white py-2 shadow-xl border border-gray-100"
               >
-                <div className="mb-1.5 px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                  Выберите город
+                <div className="flex items-center justify-between px-3 pb-1.5 pt-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Город</span>
+                  {currentCities.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => updateParams({ cities: null })}
+                      className="text-[11px] font-medium text-rose-500 hover:text-rose-700 transition-colors"
+                    >
+                      Сбросить
+                    </button>
+                  )}
                 </div>
-                {CITIES.map((city) => (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => {
-                      updateParams({ city: currentCity === city ? null : city });
-                      setIsCityOpen(false);
-                    }}
-                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${
-                      currentCity === city
-                        ? "bg-rose-50 text-rose-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <MapPin className={`h-3.5 w-3.5 shrink-0 ${currentCity === city ? "text-rose-500" : "text-gray-400"}`} />
-                    {city}
-                    {currentCity === city && <X className="ml-auto h-3 w-3 text-rose-400" />}
-                  </button>
-                ))}
+                {CITIES.map((city) => {
+                  const isChecked = currentCities.includes(city);
+                  return (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => toggleCity(city)}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                        isChecked ? "text-rose-700" : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {/* Чекбокс */}
+                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                        isChecked ? "border-rose-500 bg-rose-500" : "border-gray-300 bg-white"
+                      }`}>
+                        {isChecked && (
+                          <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-white">
+                            <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
+                      <MapPin className={`h-3.5 w-3.5 shrink-0 ${isChecked ? "text-rose-500" : "text-gray-400"}`} />
+                      {city}
+                    </button>
+                  );
+                })}
               </motion.div>
             )}
           </AnimatePresence>

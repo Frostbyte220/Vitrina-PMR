@@ -126,7 +126,7 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, minPrice, maxPrice, city, ...otherFilters } = params;
+  const { category, sub, q, page, sort, minPrice, maxPrice, cities, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -179,9 +179,11 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
     ];
   }
 
-  if (city) {
+  const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
+
+  if (selectedCities.length > 0) {
     whereClause.store = {
-      cities: { has: city },
+      cities: { hasSome: selectedCities },
     };
   }
 
