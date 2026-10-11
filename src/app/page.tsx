@@ -9,7 +9,6 @@ import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
-import { MatchingStores } from "@/components/home/MatchingStores";
 import { getProducts } from "@/lib/cache";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 
@@ -115,18 +114,15 @@ export default async function HomePage({
 // Компонент загрузки (Скелетон)
 function ProductsSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="h-28 w-full rounded-3xl bg-white p-4 shadow-sm border border-gray-100 animate-pulse" />
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 animate-pulse">
-            <div className="aspect-[4/5] w-full rounded-xl bg-gray-200" />
-            <div className="h-4 w-3/4 rounded bg-gray-200 mt-2" />
-            <div className="h-4 w-1/2 rounded bg-gray-200" />
-            <div className="h-8 w-full rounded-xl bg-gray-200 mt-2" />
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 animate-pulse">
+          <div className="aspect-[4/5] w-full rounded-xl bg-gray-200" />
+          <div className="h-4 w-3/4 rounded bg-gray-200 mt-2" />
+          <div className="h-4 w-1/2 rounded bg-gray-200" />
+          <div className="h-8 w-full rounded-xl bg-gray-200 mt-2" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -211,10 +207,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
 
   return (
     <>
-      {/* 1. Блок магазинов по выбранному городу (или топ магазинов) */}
-      <MatchingStores cities={cities} />
-
-      {/* 2. Заголовок секции товаров */}
+      {/* Заголовок секции товаров */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base sm:text-lg font-bold text-gray-900">
           {selectedCities.length > 0 ? (
