@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
@@ -25,6 +25,17 @@ const SORT_OPTIONS = [
 
 type SortValue = typeof SORT_OPTIONS[number]["value"];
 
+const CITIES = [
+  "Тирасполь",
+  "Бендеры",
+  "Рыбница",
+  "Дубоссары",
+  "Григориополь",
+  "Слободзея",
+  "Каменка",
+  "Днестровск",
+];
+
 export function SearchAndFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +48,8 @@ export function SearchAndFilter() {
   
   const currentMinPrice    = searchParams.get("minPrice") || "";
   const currentMaxPrice    = searchParams.get("maxPrice") || "";
+
+  const currentCity        = searchParams.get("city") || "";
 
   const [searchQuery, setSearchQuery] = useState(currentQuery);
   const [minPrice, setMinPrice] = useState(currentMinPrice);
@@ -52,6 +65,10 @@ export function SearchAndFilter() {
   const [isPriceOpen, setIsPriceOpen] = useState(false);
   const pricePopoverRef = useRef<HTMLDivElement>(null);
 
+  // Выпадающее меню выбора города
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const cityPopoverRef = useRef<HTMLDivElement>(null);
+
   // Закрытие подсказок и меню цены при клике вне
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -60,6 +77,9 @@ export function SearchAndFilter() {
       }
       if (pricePopoverRef.current && !pricePopoverRef.current.contains(event.target as Node)) {
         setIsPriceOpen(false);
+      }
+      if (cityPopoverRef.current && !cityPopoverRef.current.contains(event.target as Node)) {
+        setIsCityOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -90,7 +110,7 @@ export function SearchAndFilter() {
   }, [searchQuery]);
 
   const updateParams = useCallback(
-    (updates: { category?: string; q?: string; sub?: string | null; sort?: string; minPrice?: string; maxPrice?: string }) => {
+    (updates: { category?: string; q?: string; sub?: string | null; sort?: string; minPrice?: string; maxPrice?: string; city?: string | null }) => {
       const params = new URLSearchParams(searchParams.toString());
 
       if (updates.category !== undefined) {
@@ -134,6 +154,11 @@ export function SearchAndFilter() {
       if (updates.maxPrice !== undefined) {
         if (!updates.maxPrice) params.delete("maxPrice");
         else params.set("maxPrice", updates.maxPrice);
+      }
+
+      if (updates.city !== undefined) {
+        if (!updates.city) params.delete("city");
+        else params.set("city", updates.city);
       }
 
       params.delete("page");
@@ -245,11 +270,79 @@ export function SearchAndFilter() {
       {/* 2. Фильтры и сортировка (Лаконичный объединенный ряд) */}
       <div className="mx-auto max-w-4xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
         
+        {/* Кнопка фильтра по городу (выпадающий popover) */}
+        <div className="relative" ref={cityPopoverRef}>
+          <button
+            type="button"
+            onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); }}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
+              currentCity
+                ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
+                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+            }`}
+          >
+            <MapPin className={`h-3.5 w-3.5 ${currentCity ? "text-rose-600" : "text-gray-500"}`} />
+            <span>{currentCity || "Город"}</span>
+            {currentCity ? (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateParams({ city: null });
+                  setIsCityOpen(false);
+                }}
+                className="ml-1 rounded-full p-0.5 text-rose-500 hover:bg-rose-200 hover:text-rose-800 transition-colors"
+                title="Сбросить город"
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            ) : (
+              <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isCityOpen ? "rotate-180" : ""}`} />
+            )}
+          </button>
+
+          <AnimatePresence>
+            {isCityOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 w-52 rounded-2xl bg-white p-2 shadow-xl border border-gray-100"
+              >
+                <div className="mb-1.5 px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                  Выберите город
+                </div>
+                {CITIES.map((city) => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      updateParams({ city: currentCity === city ? null : city });
+                      setIsCityOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${
+                      currentCity === city
+                        ? "bg-rose-50 text-rose-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <MapPin className={`h-3.5 w-3.5 shrink-0 ${currentCity === city ? "text-rose-500" : "text-gray-400"}`} />
+                    {city}
+                    {currentCity === city && <X className="ml-auto h-3 w-3 text-rose-400" />}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Кнопка фильтра по цене (выпадающий popover) */}
         <div className="relative" ref={pricePopoverRef}>
           <button
             type="button"
-            onClick={() => setIsPriceOpen(!isPriceOpen)}
+            onClick={() => { setIsPriceOpen(!isPriceOpen); setIsCityOpen(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
               minPrice || maxPrice
                 ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
