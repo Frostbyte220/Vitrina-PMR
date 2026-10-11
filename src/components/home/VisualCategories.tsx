@@ -37,8 +37,8 @@ export function VisualCategories() {
   const currentCategory = searchParams.get("category");
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-      <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
+    <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+      <div className="flex space-x-4 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
         {categoryMap.map((cat) => {
           const isActive = currentCategory === cat.name;
           const params = new URLSearchParams(searchParams.toString());
@@ -57,13 +57,13 @@ export function VisualCategories() {
               key={cat.name}
               href={href}
               scroll={false}
-              className={`flex min-w-[72px] flex-col items-center gap-2 transition-transform hover:scale-105 snap-start ${
+              className={`flex min-w-[72px] flex-col items-center gap-2 p-1 transition-transform hover:scale-105 snap-start ${
                 isActive ? "scale-105" : ""
               }`}
             >
               <div
                 className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${cat.color} shadow-sm transition-all ${
-                  isActive ? "ring-2 ring-rose-500 ring-offset-2 font-bold shadow-md" : ""
+                  isActive ? "ring-2 ring-rose-500 shadow-md ring-offset-1" : ""
                 }`}
               >
                 <cat.icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 1.5} />
