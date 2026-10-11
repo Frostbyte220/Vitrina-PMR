@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { 
   Shirt, 
   Footprints, 
@@ -30,23 +33,51 @@ const categoryMap = [
 ];
 
 export function VisualCategories() {
+  const searchParams = useSearchParams();
+  const currentCategory = searchParams.get("category");
+
   return (
     <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
       <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
-        {categoryMap.map((cat) => (
-          <Link
-            key={cat.name}
-            href={`/?category=${encodeURIComponent(cat.name)}`}
-            className="flex min-w-[72px] flex-col items-center gap-2 transition-transform hover:scale-105 snap-start"
-          >
-            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${cat.color} shadow-sm`}>
-              <cat.icon className="h-6 w-6" strokeWidth={1.5} />
-            </div>
-            <span className="text-center text-[11px] font-medium leading-tight text-gray-700 md:text-xs">
-              {cat.name}
-            </span>
-          </Link>
-        ))}
+        {categoryMap.map((cat) => {
+          const isActive = currentCategory === cat.name;
+          const params = new URLSearchParams(searchParams.toString());
+          if (isActive) {
+            params.delete("category");
+          } else {
+            params.set("category", cat.name);
+          }
+          params.delete("page");
+          params.delete("sub");
+
+          const href = params.toString() ? `/?${params.toString()}` : "/";
+
+          return (
+            <Link
+              key={cat.name}
+              href={href}
+              scroll={false}
+              className={`flex min-w-[72px] flex-col items-center gap-2 transition-transform hover:scale-105 snap-start ${
+                isActive ? "scale-105" : ""
+              }`}
+            >
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${cat.color} shadow-sm transition-all ${
+                  isActive ? "ring-2 ring-rose-500 ring-offset-2 font-bold shadow-md" : ""
+                }`}
+              >
+                <cat.icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 1.5} />
+              </div>
+              <span
+                className={`text-center text-[11px] font-medium leading-tight md:text-xs ${
+                  isActive ? "font-bold text-rose-700" : "text-gray-700"
+                }`}
+              >
+                {cat.name}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

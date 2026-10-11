@@ -9,6 +9,7 @@ import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
+import { MatchingStores } from "@/components/home/MatchingStores";
 import { getProducts } from "@/lib/cache";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 
@@ -35,15 +36,18 @@ export default async function HomePage({
 }) {
   const session = await getServerSession(authOptions);
   const params = await searchParams;
+  const shopsHref = params.cities
+    ? `/shops?cities=${encodeURIComponent(params.cities)}`
+    : "/shops";
 
   return (
     <main className="relative min-h-screen bg-gray-50 pb-24">
       
       {/* Контейнер для кнопок в правом верхнем углу */}
       <div className="absolute right-4 top-4 z-50 flex items-center gap-2 md:right-8 md:top-6 md:gap-3">
-        {/* Кнопка Магазинов (десктоп) */}
+        {/* Кнопка Магазинов (десктоп) с сохранением фильтра городов */}
         <Link
-          href="/shops"
+          href={shopsHref}
           className="hidden sm:flex items-center gap-2 rounded-full bg-white px-4 py-2.5 sm:px-5 text-sm font-medium text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-gray-50 hover:text-rose-800 hover:shadow-md"
         >
           <Store className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -111,15 +115,18 @@ export default async function HomePage({
 // Компонент загрузки (Скелетон)
 function ProductsSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 animate-pulse">
-          <div className="aspect-[4/5] w-full rounded-xl bg-gray-200" />
-          <div className="h-4 w-3/4 rounded bg-gray-200 mt-2" />
-          <div className="h-4 w-1/2 rounded bg-gray-200" />
-          <div className="h-8 w-full rounded-xl bg-gray-200 mt-2" />
-        </div>
-      ))}
+    <div className="space-y-6">
+      <div className="h-28 w-full rounded-3xl bg-white p-4 shadow-sm border border-gray-100 animate-pulse" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 animate-pulse">
+            <div className="aspect-[4/5] w-full rounded-xl bg-gray-200" />
+            <div className="h-4 w-3/4 rounded bg-gray-200 mt-2" />
+            <div className="h-4 w-1/2 rounded bg-gray-200" />
+            <div className="h-8 w-full rounded-xl bg-gray-200 mt-2" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -136,23 +143,16 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
 
-  const dynamicFilters = Object.keys(otherFilters)
-    .filter((key) => Boolean(otherFilters[key]))
-    .map((key) => ({
-      description: { contains: otherFilters[key]!, mode: "insensitive" as const },
-    }));
+  const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
 
-  const whereClause: any = {
-    deletedAt: null,
-    status: "Активен",
-  };
+  const conditions: any[] = [];
 
   if (category && category !== "Все") {
-    whereClause.category = category;
+    conditions.push({ category });
   }
 
   if (sub) {
-    whereClause.subCategory = sub;
+    conditions.push({ subCategory: sub });
   }
 
   if (minPrice || maxPrice) {
@@ -164,57 +164,98 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
     if (max !== null && !isNaN(max)) priceFilter.lte = max;
     
     if (Object.keys(priceFilter).length > 0) {
-      whereClause.price = priceFilter;
+      conditions.push({ price: priceFilter });
     }
   }
 
-  if (dynamicFilters.length > 0) {
-    whereClause.AND = dynamicFilters;
-  }
-
   if (q) {
-    whereClause.OR = [
-      { title: { contains: q, mode: "insensitive" as const } },
-      { description: { contains: q, mode: "insensitive" as const } },
-    ];
+    conditions.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" as const } },
+        { description: { contains: q, mode: "insensitive" as const } },
+      ],
+    });
   }
-
-  const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
 
   if (selectedCities.length > 0) {
-    whereClause.store = {
-      cities: { hasSome: selectedCities },
-    };
+    conditions.push({
+      OR: [
+        { store: { cities: { hasSome: selectedCities } } },
+        { user: { store: { cities: { hasSome: selectedCities } } } },
+      ],
+    });
+  }
+
+  const dynamicFilters = Object.keys(otherFilters)
+    .filter((key) => Boolean(otherFilters[key]))
+    .map((key) => ({
+      description: { contains: otherFilters[key]!, mode: "insensitive" as const },
+    }));
+
+  if (dynamicFilters.length > 0) {
+    conditions.push(...dynamicFilters);
+  }
+
+  const whereClause: any = {
+    deletedAt: null,
+    status: "Активен",
+  };
+
+  if (conditions.length > 0) {
+    whereClause.AND = conditions;
   }
 
   // Используем кэшированную версию запроса
   const [products, totalCount] = await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  if (products.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {q ? `По запросу «${q}» ничего не найдено` : "По вашим фильтрам ничего не найдено"}
-        </h3>
-        <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
-          Попробуйте изменить параметры или сбросить фильтры.
-        </p>
-        <Link href="/" className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800">
-          Сбросить фильтры
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((product, i) => (
-          <ProductCard key={product.id} product={product as any} priority={i < 4} />
-        ))}
+      {/* 1. Блок магазинов по выбранному городу (или топ магазинов) */}
+      <MatchingStores cities={cities} />
+
+      {/* 2. Заголовок секции товаров */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900">
+          {selectedCities.length > 0 ? (
+            <>
+              Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
+            </>
+          ) : (
+            "Каталог товаров"
+          )}
+        </h2>
+        <span className="text-xs sm:text-sm text-gray-500">
+          {totalCount} {totalCount === 1 ? "товар" : totalCount < 5 ? "товара" : "товаров"}
+        </span>
       </div>
-      <Pagination totalPages={totalPages} currentPage={currentPage} />
+
+      {products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {selectedCities.length > 0
+              ? `В ${selectedCities.join(", ")} пока нет товаров по вашим фильтрам`
+              : q
+              ? `По запросу «${q}» ничего не найдено`
+              : "По вашим фильтрам ничего не найдено"}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
+            Попробуйте изменить параметры или сбросить фильтры.
+          </p>
+          <Link href="/" className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800">
+            Сбросить фильтры
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product, i) => (
+              <ProductCard key={product.id} product={product as any} priority={i < 4} />
+            ))}
+          </div>
+          <Pagination totalPages={totalPages} currentPage={currentPage} />
+        </>
+      )}
     </>
   );
 }

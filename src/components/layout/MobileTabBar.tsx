@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Home, Heart, Store, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
 
   // Не показываем бар на страницах авторизации и дэшборде (чтобы не мешать)
@@ -22,18 +23,22 @@ export function MobileTabBar() {
     return null;
   }
 
+  const cities = searchParams.get("cities");
+  const homeHref = cities ? `/?cities=${encodeURIComponent(cities)}` : "/";
+  const shopsHref = cities ? `/shops?cities=${encodeURIComponent(cities)}` : "/shops";
+
   const tabs = [
-    { name: "Главная", href: "/", icon: Home },
-    { name: "Избранное", href: "/favorites", icon: Heart },
-    { name: "Магазины", href: "/shops", icon: Store },
-    { name: "Профиль", href: session ? "/dashboard" : "/login", icon: User },
+    { name: "Главная", href: homeHref, match: "/" as const, icon: Home },
+    { name: "Избранное", href: "/favorites", match: "/favorites" as const, icon: Heart },
+    { name: "Магазины", href: shopsHref, match: "/shops" as const, icon: Store },
+    { name: "Профиль", href: session ? "/dashboard" : "/login", match: "/dashboard" as const, icon: User },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 z-50 h-16 w-full border-t border-gray-200 bg-white pb-safe md:hidden">
       <div className="mx-auto flex h-full max-w-md items-center justify-around px-2">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href));
+          const isActive = tab.match === "/" ? pathname === "/" : pathname.startsWith(tab.match);
           return (
             <Link
               key={tab.name}
