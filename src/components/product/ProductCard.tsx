@@ -42,9 +42,16 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
   const shopHref = cleanInstagram ? `/shop/${cleanInstagram}` : "#";
 
-  // Реальный город из данных магазина (первый из массива cities)
   const storeCities: string[] | undefined = prod.store?.cities || prod.user?.store?.cities;
   const cityLabel = storeCities && storeCities.length > 0 ? storeCities[0] : null;
+
+  const storeData = product.store || prod.user?.store;
+  const storeContacts = {
+    instagram: cleanInstagram || null,
+    telegram: storeData?.telegram || null,
+    viber: storeData?.viber || null,
+    phone: storeData?.phone || null,
+  };
 
   const imageUrl = 
     (Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : null) || 
@@ -138,6 +145,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             productName={product.title}
             productPrice={product.price}
             shopUsername={cleanInstagram}
+            contacts={storeContacts}
             isCardView={true} 
           />
 

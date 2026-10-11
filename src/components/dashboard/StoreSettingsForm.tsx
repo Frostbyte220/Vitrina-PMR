@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { Phone, Send, MessageCircle } from "lucide-react";
 
 const CITIES = [
   "Тирасполь",
@@ -22,6 +23,8 @@ type StoreFormData = {
   description: string;
   instagram: string;
   phone: string;
+  telegram: string;
+  viber: string;
   cities: string[];
 };
 
@@ -65,6 +68,8 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
       description: initialData?.description || "",
       instagram: cleanInsta,
       phone: initialData?.phone || "",
+      telegram: (initialData?.telegram || "").replace(/^@/, ""),
+      viber: initialData?.viber || "",
       cities: initialData?.cities || [],
     }
   });
@@ -74,9 +79,13 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
 
     try {
       const cleanInstaForm = data.instagram.replace(/^@/, "").trim();
+      const cleanTelegram = (data.telegram || "").replace(/^@/, "").trim();
       const payload = { 
         ...data, 
         instagram: cleanInstaForm,
+        telegram: cleanTelegram,
+        viber: data.viber?.trim() || "",
+        phone: data.phone?.trim() || "",
         slug: cleanInstaForm, 
         avatarUrl, 
         coverUrl 
@@ -210,14 +219,64 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
       <section className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-2 text-lg font-semibold text-text-main">Контакты и логистика</h2>
         
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-text-main">Телефон / Viber / TG</label>
-          <input 
-            {...register("phone")}
-            type="text" 
-            className="w-full rounded-lg border border-gray-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500" 
-            placeholder="+373 (77X) XX-XX-XX" 
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Телефон IDC */}
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-text-main">
+              <Phone className="h-4 w-4 text-emerald-600" />
+              <span>Номер телефона (IDC)</span>
+            </label>
+            <input 
+              {...register("phone")}
+              type="text" 
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200" 
+              placeholder="+373 (77X) XX-XX-XX" 
+            />
+            <span className="text-[11px] text-gray-500">
+              Для прямых звонков от покупателей
+            </span>
+          </div>
+
+          {/* Telegram */}
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-text-main">
+              <Send className="h-4 w-4 text-sky-500" />
+              <span>Telegram</span>
+            </label>
+            <div className="flex items-center">
+              <span className="rounded-l-lg border border-r-0 border-gray-300 bg-gray-100 px-2.5 py-2.5 text-xs text-gray-500">t.me/</span>
+              <input 
+                {...register("telegram", {
+                  onChange: (e) => {
+                    e.target.value = e.target.value.replace(/@/g, "").replace(/https?:\/\/t\.me\//, "");
+                  }
+                })}
+                type="text" 
+                className="w-full rounded-r-lg border border-gray-300 p-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200" 
+                placeholder="username" 
+              />
+            </div>
+            <span className="text-[11px] text-gray-500">
+              Юзернейм без знака @
+            </span>
+          </div>
+
+          {/* Viber */}
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-text-main">
+              <MessageCircle className="h-4 w-4 text-purple-600" />
+              <span>Viber</span>
+            </label>
+            <input 
+              {...register("viber")}
+              type="text" 
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-200" 
+              placeholder="+373 77X XXXXX" 
+            />
+            <span className="text-[11px] text-gray-500">
+              Номер телефона с кодом страны
+            </span>
+          </div>
         </div>
 
         <div className="mt-2 flex flex-col gap-2">

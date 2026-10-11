@@ -22,6 +22,23 @@ export interface Product {
     id: string;
     name: string;
     instagram: string;
+    store?: {
+      name?: string | null;
+      slug?: string | null;
+      instagram?: string | null;
+      telegram?: string | null;
+      viber?: string | null;
+      phone?: string | null;
+    } | null;
+  } | null;
+
+  store?: {
+    name?: string | null;
+    slug?: string | null;
+    instagram?: string | null;
+    telegram?: string | null;
+    viber?: string | null;
+    phone?: string | null;
   } | null;
 
   // Даты создания и обновления

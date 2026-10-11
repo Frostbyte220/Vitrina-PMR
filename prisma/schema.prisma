@@ -42,6 +42,8 @@ model Store {
   description String?  
   instagram   String?  
   phone       String?  
+  telegram    String?  
+  viber       String?  
   cities      String[] 
   
   avatarUrl   String?  

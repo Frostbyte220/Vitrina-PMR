@@ -110,6 +110,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
       price: true,
       images: true,
       status: true,
+      store: {
+        select: {
+          name: true,
+          slug: true,
+          instagram: true,
+          phone: true,
+          telegram: true,
+          viber: true,
+        }
+      },
       user: {
         select: {
           name: true,
@@ -119,6 +129,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               name: true,
               slug: true,
               instagram: true,
+              phone: true,
+              telegram: true,
+              viber: true,
             }
           }
         }
@@ -137,9 +150,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const rawInstagram = (product.user as any)?.store?.instagram || product.user?.instagram || "";
   const storeSlug = (product.user as any)?.store?.slug || "";
   
-  // Очищаем от '@' для правильной ссылки внутри приложения.
-  // Если instagram не заполнен — используем slug магазина.
   const cleanUsername = rawInstagram.replace(/^@/, '') || storeSlug;
+
+  const storeData = product.store || (product.user as any)?.store;
+  const storeContacts = {
+    instagram: storeData?.instagram || product.user?.instagram || "",
+    telegram: storeData?.telegram || null,
+    viber: storeData?.viber || null,
+    phone: storeData?.phone || null,
+  };
 
   // Структурированные данные JSON-LD для Google Rich Snippets
   const jsonLd = {
@@ -213,6 +232,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               productName={product.title}
               productPrice={product.price}
               shopUsername={cleanUsername}
+              contacts={storeContacts}
+              isCardView={true}
             />
           </div>
         </div>
@@ -224,6 +245,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           productName={product.title}
           productPrice={product.price}
           shopUsername={cleanUsername}
+          contacts={storeContacts}
+          isCardView={true}
         />
       </div>
     </>
