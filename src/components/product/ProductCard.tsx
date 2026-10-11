@@ -152,10 +152,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           {cleanInstagram && (
             <Link
               href={shopHref}
-              className="flex items-center justify-center gap-2 w-full rounded-xl bg-gray-100 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+              className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-gray-100 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
             >
-              <Store className="h-4 w-4" />
-              В магазин
+              <Store className="h-4 w-4 shrink-0" />
+              <span>В магазин</span>
             </Link>
           )}
         </div>
