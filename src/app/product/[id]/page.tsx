@@ -1,4 +1,4 @@
-import { Store } from "lucide-react";
+import { Store, ShoppingBag, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import {
 } from "@/components/layout/ProductPageHeader";
 import { ContactSellerButton } from "@/components/product/ContactSellerButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
+import { ProductCarousel } from "@/components/product/ProductCarousel";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
@@ -110,6 +111,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       price: true,
       images: true,
       status: true,
+      category: true,
+      subCategory: true,
+      storeId: true,
+      userId: true,
       store: {
         select: {
           name: true,
@@ -118,12 +123,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
           phone: true,
           telegram: true,
           viber: true,
+          avatarUrl: true,
+          cities: true,
         }
       },
       user: {
         select: {
           name: true,
           instagram: true,
+          avatar: true,
           store: {
             select: {
               name: true,
@@ -132,6 +140,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               phone: true,
               telegram: true,
               viber: true,
+              avatarUrl: true,
+              cities: true,
             }
           }
         }
@@ -146,9 +156,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? product.images
     : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"];
     
-  const shopName = (product.user as any)?.store?.name || product.user?.name || "Магазин";
-  const rawInstagram = (product.user as any)?.store?.instagram || product.user?.instagram || "";
-  const storeSlug = (product.user as any)?.store?.slug || "";
+  const shopName = product.store?.name || (product.user as any)?.store?.name || product.user?.name || "Магазин";
+  const rawInstagram = product.store?.instagram || (product.user as any)?.store?.instagram || product.user?.instagram || "";
+  const storeSlug = product.store?.slug || (product.user as any)?.store?.slug || "";
   
   const cleanUsername = rawInstagram.replace(/^@/, '') || storeSlug;
 
@@ -159,6 +169,103 @@ export default async function ProductPage({ params }: ProductPageProps) {
     viber: storeData?.viber || null,
     phone: storeData?.phone || null,
   };
+
+  // Поля выбора для связанных товаров (включая магазины и города)
+  const productCardSelect = {
+    id: true,
+    title: true,
+    price: true,
+    images: true,
+    category: true,
+    subCategory: true,
+    store: {
+      select: {
+        name: true,
+        slug: true,
+        instagram: true,
+        avatarUrl: true,
+        cities: true,
+        phone: true,
+        telegram: true,
+        viber: true,
+      },
+    },
+    user: {
+      select: {
+        name: true,
+        instagram: true,
+        avatar: true,
+        store: {
+          select: {
+            name: true,
+            slug: true,
+            instagram: true,
+            avatarUrl: true,
+            cities: true,
+            phone: true,
+            telegram: true,
+            viber: true,
+          },
+        },
+      },
+    },
+  };
+
+  const sellerConditions: any[] = [];
+  if (product.storeId) sellerConditions.push({ storeId: product.storeId });
+  if (product.userId) sellerConditions.push({ userId: product.userId });
+
+  // Запрашиваем другие товары того же продавца и похожие товары в категории
+  const [storeProducts, similarProducts] = await Promise.all([
+    sellerConditions.length > 0
+      ? prisma.product.findMany({
+          where: {
+            id: { not: product.id },
+            deletedAt: null,
+            status: "Активен",
+            OR: sellerConditions,
+          },
+          take: 8,
+          orderBy: { createdAt: "desc" },
+          select: productCardSelect,
+        })
+      : Promise.resolve([]),
+    prisma.product.findMany({
+      where: {
+        id: { not: product.id },
+        deletedAt: null,
+        status: "Активен",
+        category: product.category,
+        ...(sellerConditions.length > 0
+          ? {
+              NOT: {
+                OR: sellerConditions,
+              },
+            }
+          : {}),
+      },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: productCardSelect,
+    }),
+  ]);
+
+  // Если у других продавцов в категории нет товаров, показываем товары того же продавца в категории, не дублируя
+  let categoryProducts = similarProducts;
+  if (categoryProducts.length === 0) {
+    const storeProductIds = new Set([product.id, ...storeProducts.map((p) => p.id)]);
+    categoryProducts = await prisma.product.findMany({
+      where: {
+        id: { notIn: Array.from(storeProductIds) },
+        deletedAt: null,
+        status: "Активен",
+        category: product.category,
+      },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: productCardSelect,
+    });
+  }
 
   // Структурированные данные JSON-LD для Google Rich Snippets
   const jsonLd = {
@@ -190,54 +297,74 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductPageHeader />
       <ProductPageHeaderDesktop title={product.title} />
 
-      <main className="mx-auto max-w-3xl px-4 pb-32 pt-4 md:px-6 md:pb-12">
-        <ProductGallery images={images} title={product.title} />
+      <main className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-6 md:pb-16">
+        <div className="mx-auto max-w-3xl">
+          <ProductGallery images={images} title={product.title} />
 
-        <div className="mt-6 flex flex-col gap-4">
-          <div>
-            <h1 className="text-2xl font-bold leading-tight text-text-main md:text-3xl">
-              {product.title}
-            </h1>
-            <p className="mt-2 text-2xl font-bold text-primary">
-              {formatPrice(product.price)}
-            </p>
-          </div>
-
-          {/* Добавлен whitespace-pre-wrap для сохранения переносов строк в описании */}
-          <p className="text-sm leading-relaxed text-text-muted md:text-base whitespace-pre-wrap">
-            {product.description}
-          </p>
-
-          <Link
-            href={`/shop/${cleanUsername}`}
-            className="group mt-2 flex items-center gap-4 rounded-2xl bg-surface p-4 border border-gray-100 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-              <Store className="h-6 w-6 text-primary" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-text-muted">Продавец</p>
-              <p className="truncate font-semibold text-text-main group-hover:text-primary transition-colors">
-                {shopName}
+          <div className="mt-6 flex flex-col gap-4">
+            <div>
+              <h1 className="text-2xl font-bold leading-tight text-text-main md:text-3xl">
+                {product.title}
+              </h1>
+              <p className="mt-2 text-2xl font-bold text-primary">
+                {formatPrice(product.price)}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-semibold text-primary transition-opacity group-hover:opacity-80">
-              В магазин →
-            </span>
-          </Link>
 
-          {/* Десктопная версия кнопки связи */}
-          <div className="hidden md:block mt-4">
-            <ContactSellerButton
-              productId={product.id}
-              productName={product.title}
-              productPrice={product.price}
-              shopUsername={cleanUsername}
-              contacts={storeContacts}
-              isCardView={true}
-            />
+            {/* Добавлен whitespace-pre-wrap для сохранения переносов строк в описании */}
+            <p className="text-sm leading-relaxed text-text-muted md:text-base whitespace-pre-wrap">
+              {product.description}
+            </p>
+
+            <Link
+              href={`/shop/${cleanUsername}`}
+              className="group mt-2 flex items-center gap-4 rounded-2xl bg-surface p-4 border border-gray-100 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                <Store className="h-6 w-6 text-primary" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-text-muted">Продавец</p>
+                <p className="truncate font-semibold text-text-main group-hover:text-primary transition-colors">
+                  {shopName}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-primary transition-opacity group-hover:opacity-80">
+                В магазин →
+              </span>
+            </Link>
+
+            {/* Десктопная версия кнопки связи */}
+            <div className="hidden md:block mt-4">
+              <ContactSellerButton
+                productId={product.id}
+                productName={product.title}
+                productPrice={product.price}
+                shopUsername={cleanUsername}
+                contacts={storeContacts}
+                isCardView={true}
+              />
+            </div>
           </div>
         </div>
+
+        {/* 1. Еще от этого продавца */}
+        <ProductCarousel
+          title={shopName ? `Еще от «${shopName}»` : "Еще от этого продавца"}
+          icon={<ShoppingBag className="h-5 w-5" />}
+          viewAllHref={cleanUsername ? `/shop/${cleanUsername}` : undefined}
+          viewAllText="В магазин"
+          products={storeProducts}
+        />
+
+        {/* 2. Похожие товары в категории */}
+        <ProductCarousel
+          title={`Похожие товары в категории «${product.category}»`}
+          icon={<Sparkles className="h-5 w-5" />}
+          viewAllHref={`/?category=${encodeURIComponent(product.category)}`}
+          viewAllText="Вся категория"
+          products={categoryProducts}
+        />
       </main>
 
       {/* Мобильная версия кнопки связи */}
