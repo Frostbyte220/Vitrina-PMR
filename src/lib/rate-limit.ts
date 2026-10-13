@@ -1,8 +1,8 @@
 import { Redis } from '@upstash/redis';
 
 const getRedis = () => {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
   // Проверяем, что URL — реальный (начинается с https://), а не заглушка
   if (url && token && url.startsWith('https://')) {
     return new Redis({ url, token });
