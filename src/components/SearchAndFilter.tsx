@@ -2,11 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef, useMemo } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X, MapPin } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
 import Image from "next/image";
+import { formatPrice, cloudinaryLoader } from "@/lib/utils";
 import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 
 const SUBCATEGORIES_MAP: Record<string, string[]> = {
@@ -70,7 +71,9 @@ export function SearchAndFilter() {
   const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
   
   // Автокомплит (Live Search)
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [productSuggestions, setProductSuggestions] = useState<any[]>([]);
+  const [storeSuggestions, setStoreSuggestions] = useState<any[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
@@ -109,23 +112,28 @@ export function SearchAndFilter() {
 
   // Fetch suggestions with debounce
   useEffect(() => {
-    if (searchQuery.trim().length < 2) {
-      setSuggestions([]);
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2) {
+      setProductSuggestions([]);
+      setStoreSuggestions([]);
+      setCategorySuggestions([]);
       return;
     }
     
     setIsDebouncing(true);
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search-suggestions?q=${encodeURIComponent(searchQuery)}`);
+        const res = await fetch(`/api/search-suggestions?q=${encodeURIComponent(trimmed)}`);
         const data = await res.json();
-        setSuggestions(data.suggestions || []);
+        setProductSuggestions(data.products || data.suggestions || []);
+        setStoreSuggestions(data.stores || []);
+        setCategorySuggestions(data.categories || []);
       } catch (e) {
         console.error(e);
       } finally {
         setIsDebouncing(false);
       }
-    }, 400);
+    }, 250);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
@@ -224,8 +232,8 @@ export function SearchAndFilter() {
     updateParams({ sizes: next.length > 0 ? next : null });
   }, [currentSizes, updateParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setShowSuggestions(false);
     if (searchQuery.trim()) {
       trackEvent("search", { query: searchQuery.trim() });
@@ -250,71 +258,194 @@ export function SearchAndFilter() {
   return (
     <div className="w-full space-y-4 relative">
 
-      {/* 1. Поисковая строка с автокомплитом */}
+      {/* 1. Поисковая строка с «живым» автокомплитом */}
       <form ref={searchRef} onSubmit={handleSearch} className="relative mx-auto max-w-2xl px-4 sm:px-0 z-40">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          placeholder="Поиск товаров, брендов или магазинов..."
-          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-sm text-gray-900 shadow-sm outline-none transition-all focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-        />
-        {isPending || isDebouncing ? (
-          <Loader2 className="absolute left-8 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-rose-500 sm:left-4" />
-        ) : (
-          <Search className="absolute left-8 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-4" />
-        )}
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Поиск товаров, брендов или магазинов..."
+            className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-10 text-sm text-gray-900 shadow-sm outline-none transition-all focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+          />
+          {isPending || isDebouncing ? (
+            <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
+          ) : (
+            <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+          )}
+
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setProductSuggestions([]);
+                setStoreSuggestions([]);
+                setCategorySuggestions([]);
+                updateParams({ q: "" });
+              }}
+              className="absolute right-3.5 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              title="Очистить поиск"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <button type="submit" className="hidden" aria-label="Искать" />
         
-        {/* Выпадающий список подсказок */}
+        {/* Выпадающий список «живого» поиска */}
         <AnimatePresence>
-          {showSuggestions && suggestions.length > 0 && (
+          {showSuggestions && (productSuggestions.length > 0 || storeSuggestions.length > 0 || categorySuggestions.length > 0) && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
             >
-              <ul className="py-2">
-                {suggestions.map((product) => (
-                  <li key={product.id}>
-                    <Link 
-                      href={`/product/${product.id}`}
-                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
-                      onClick={() => setShowSuggestions(false)}
-                    >
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-400">
-                        {product.images && product.images.length > 0 ? (
-                          <Image 
-                            src={product.images[0]} 
-                            alt={product.title || "Товар"} 
-                            width={40} 
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Search className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div className="flex-1 truncate">
-                        <p className="truncate text-sm font-medium text-gray-900">{product.title}</p>
-                        <p className="text-xs text-gray-500">{product.category || "Без категории"}</p>
-                      </div>
-                      <span className="font-semibold text-rose-600 shrink-0">{product.price} ₽</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <div className="border-t border-gray-100 p-2 bg-gray-50 text-center">
+              {/* Категории */}
+              {categorySuggestions.length > 0 && (
+                <div className="p-3 bg-gray-50/60">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 px-1">
+                    Категории
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {categorySuggestions.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          updateParams({ category: cat, q: "" });
+                          setShowSuggestions(false);
+                          setSearchQuery("");
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-xs"
+                      >
+                        <Tag className="h-3 w-3 text-rose-500" />
+                        <span>{cat}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Магазины */}
+              {storeSuggestions.length > 0 && (
+                <div className="p-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 px-2 py-1">
+                    <Store className="h-3 w-3 text-rose-500" />
+                    Магазины
+                  </span>
+                  <ul className="space-y-0.5">
+                    {storeSuggestions.map((s) => {
+                      const shopHref = `/shop/${s.instagram?.replace(/^@/, '') || s.slug}`;
+                      return (
+                        <li key={s.id}>
+                          <Link 
+                            href={shopHref}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition-colors group"
+                            onClick={() => setShowSuggestions(false)}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-rose-50 border border-gray-200 flex items-center justify-center font-bold text-xs text-rose-600">
+                                {s.avatarUrl ? (
+                                  <Image 
+                                    src={s.avatarUrl} 
+                                    alt={s.name} 
+                                    fill 
+                                    loader={cloudinaryLoader}
+                                    sizes="36px"
+                                    className="object-cover" 
+                                  />
+                                ) : (
+                                  s.name.charAt(0).toUpperCase()
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 group-hover:text-rose-600 transition-colors truncate">
+                                  {s.name}
+                                </p>
+                                <p className="text-xs text-gray-400 truncate">
+                                  {s.cities && s.cities.length > 0 ? s.cities.join(", ") : "Магазин"}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-400 shrink-0 font-medium">
+                              {s._count?.products || 0} тов. →
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {/* Товары */}
+              {productSuggestions.length > 0 && (
+                <div className="p-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-2 py-1">
+                    Товары
+                  </span>
+                  <ul className="space-y-0.5">
+                    {productSuggestions.map((product) => {
+                      const shopName = product.store?.name || product.user?.store?.name || product.user?.name;
+                      const imageUrl = product.images?.[0];
+                      return (
+                        <li key={product.id}>
+                          <Link 
+                            href={`/product/${product.id}`}
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group"
+                            onClick={() => setShowSuggestions(false)}
+                          >
+                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400">
+                              {imageUrl ? (
+                                <Image 
+                                  src={imageUrl} 
+                                  alt={product.title || "Товар"} 
+                                  fill 
+                                  loader={cloudinaryLoader}
+                                  sizes="48px"
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <Search className="h-4 w-4" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate text-sm font-medium text-gray-900 group-hover:text-rose-600 transition-colors">
+                                {product.title}
+                              </p>
+                              <p className="text-xs text-gray-400 truncate">
+                                {product.category}{shopName ? ` · ${shopName}` : ""}
+                              </p>
+                            </div>
+                            <span className="font-bold text-sm text-primary shrink-0 whitespace-nowrap">
+                              {formatPrice(product.price)}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {/* Футер: перейти ко всем результатам */}
+              <div className="p-2.5 bg-gray-50 text-center">
                 <button 
-                  onClick={handleSearch}
-                  className="text-xs font-medium text-rose-600 hover:text-rose-700"
+                  type="button"
+                  onClick={() => {
+                    handleSearch();
+                    setShowSuggestions(false);
+                  }}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
                 >
-                  Смотреть все результаты
+                  Смотреть все результаты по запросу «{searchQuery}» →
                 </button>
               </div>
             </motion.div>
