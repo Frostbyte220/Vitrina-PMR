@@ -1,22 +1,47 @@
 import { Redis } from '@upstash/redis';
 
 const getRedis = () => {
+  // Поддерживаем все возможные имена переменных, которые Vercel / Upstash создают автоматически
   const url =
     process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_KV_URL ||
     process.env.KV_REST_API_URL ||
+    process.env.KV_URL ||
     process.env.STORAGE_REST_API_URL ||
     process.env.STORAGE_URL;
+
   const token =
     process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_KV_TOKEN ||
     process.env.KV_REST_API_TOKEN ||
     process.env.STORAGE_REST_API_TOKEN ||
     process.env.STORAGE_TOKEN;
+
   // Проверяем, что URL — реальный (начинается с https://), а не заглушка
   if (url && token && url.startsWith('https://')) {
     return new Redis({ url, token });
   }
+
+  // Fallback: ищем динамически любую переменную Upstash REST URL / TOKEN
+  if (typeof process !== 'undefined' && process.env) {
+    const dynamicUrlKey = Object.keys(process.env).find(
+      (k) => (k.includes('UPSTASH') || k.includes('KV')) && (k.endsWith('_URL') || k.includes('REST_API_URL')) && process.env[k]?.startsWith('https://')
+    );
+    const dynamicTokenKey = Object.keys(process.env).find(
+      (k) => (k.includes('UPSTASH') || k.includes('KV')) && (k.endsWith('_TOKEN') || k.includes('REST_API_TOKEN')) && !k.includes('READ_ONLY')
+    );
+    if (dynamicUrlKey && dynamicTokenKey) {
+      const dynamicUrl = process.env[dynamicUrlKey];
+      const dynamicToken = process.env[dynamicTokenKey];
+      if (dynamicUrl && dynamicToken) {
+        return new Redis({ url: dynamicUrl, token: dynamicToken });
+      }
+    }
+  }
+
   // ⚠️ ВАЖНО: Без Redis rate limiting не работает на Vercel (serverless = нет общей памяти)
-  // Подключите Upstash Redis в https://upstash.com/ и добавьте переменные в Vercel
   if (process.env.NODE_ENV === 'production') {
     console.warn('[RateLimit] ВНИМАНИЕ: Redis не настроен! Rate limiting работает только в памяти и неэффективен на Vercel. Добавьте UPSTASH_REDIS_REST_URL и UPSTASH_REDIS_REST_TOKEN.');
   }
