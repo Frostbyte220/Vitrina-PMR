@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
 import Image from "next/image";
+import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 
 const SUBCATEGORIES_MAP: Record<string, string[]> = {
   "Одежда": ["Для женщин", "Для мужчин", "Для детей"],
@@ -55,6 +56,15 @@ export function SearchAndFilter() {
     [currentCitiesRaw]
   );
 
+  const currentSizesRaw    = searchParams.get("sizes") || "";
+  const currentSizes       = useMemo(
+    () => (currentSizesRaw ? currentSizesRaw.split(",") : []),
+    [currentSizesRaw]
+  );
+
+  const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
+  const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
+
   const [searchQuery, setSearchQuery] = useState(currentQuery);
   const [minPrice, setMinPrice] = useState(currentMinPrice);
   const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
@@ -73,6 +83,10 @@ export function SearchAndFilter() {
   const [isCityOpen, setIsCityOpen] = useState(false);
   const cityPopoverRef = useRef<HTMLDivElement>(null);
 
+  // Всплывающее меню выбора размера (для Одежда и Обувь)
+  const [isSizeOpen, setIsSizeOpen] = useState(false);
+  const sizePopoverRef = useRef<HTMLDivElement>(null);
+
   // Закрытие подсказок и меню цены при клике вне
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -84,6 +98,9 @@ export function SearchAndFilter() {
       }
       if (cityPopoverRef.current && !cityPopoverRef.current.contains(event.target as Node)) {
         setIsCityOpen(false);
+      }
+      if (sizePopoverRef.current && !sizePopoverRef.current.contains(event.target as Node)) {
+        setIsSizeOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -114,7 +131,16 @@ export function SearchAndFilter() {
   }, [searchQuery]);
 
   const updateParams = useCallback(
-    (updates: { category?: string; q?: string; sub?: string | null; sort?: string; minPrice?: string; maxPrice?: string; cities?: string[] | null }) => {
+    (updates: {
+      category?: string;
+      q?: string;
+      sub?: string | null;
+      sort?: string;
+      minPrice?: string;
+      maxPrice?: string;
+      cities?: string[] | null;
+      sizes?: string[] | null;
+    }) => {
       const params = new URLSearchParams(searchParams.toString());
 
       if (updates.category !== undefined) {
@@ -124,6 +150,10 @@ export function SearchAndFilter() {
           params.set("category", updates.category);
         }
         params.delete("sub");
+        // Если переключились на категорию, где нет размеров — удаляем фильтр размеров
+        if (updates.category !== "Одежда" && updates.category !== "Обувь") {
+          params.delete("sizes");
+        }
       }
 
       if (updates.q !== undefined) {
@@ -165,6 +195,11 @@ export function SearchAndFilter() {
         else params.set("cities", updates.cities.join(","));
       }
 
+      if (updates.sizes !== undefined) {
+        if (!updates.sizes || updates.sizes.length === 0) params.delete("sizes");
+        else params.set("sizes", updates.sizes.join(","));
+      }
+
       params.delete("page");
       startTransition(() => {
         router.push(`/?${params.toString()}`, { scroll: false });
@@ -180,6 +215,14 @@ export function SearchAndFilter() {
       : [...currentCities, city];
     updateParams({ cities: next.length > 0 ? next : null });
   }, [currentCities, updateParams]);
+
+  // Переключает один размер в/из набора выбранных
+  const toggleSize = useCallback((size: string) => {
+    const next = currentSizes.includes(size)
+      ? currentSizes.filter((s) => s !== size)
+      : [...currentSizes, size];
+    updateParams({ sizes: next.length > 0 ? next : null });
+  }, [currentSizes, updateParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,7 +329,7 @@ export function SearchAndFilter() {
         <div className="relative" ref={cityPopoverRef}>
           <button
             type="button"
-            onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); }}
+            onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); setIsSizeOpen(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
               currentCities.length > 0
                 ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
@@ -372,11 +415,105 @@ export function SearchAndFilter() {
           </AnimatePresence>
         </div>
 
+        {/* Кнопка фильтра по размеру (только для категорий Одежда и Обувь) */}
+        {isCategoryWithSize && (
+          <div className="relative" ref={sizePopoverRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSizeOpen(!isSizeOpen);
+                setIsCityOpen(false);
+                setIsPriceOpen(false);
+              }}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
+                currentSizes.length > 0
+                  ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+              }`}
+            >
+              <span>
+                {currentSizes.length === 0
+                  ? "Размер"
+                  : currentSizes.length === 1
+                  ? `Размер: ${currentSizes[0]}`
+                  : `Размеры (${currentSizes.length})`}
+              </span>
+              {currentSizes.length > 0 ? (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateParams({ sizes: null });
+                    setIsSizeOpen(false);
+                  }}
+                  className="ml-1 rounded-full p-0.5 text-rose-500 hover:bg-rose-200 hover:text-rose-800 transition-colors"
+                  title="Сбросить размеры"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </span>
+              ) : (
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
+                    isSizeOpen ? "rotate-180" : ""
+                  }`}
+                />
+              )}
+            </button>
+
+            <AnimatePresence>
+              {isSizeOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 w-64 max-w-[90vw] rounded-2xl bg-white p-3 shadow-xl border border-gray-100"
+                >
+                  <div className="flex items-center justify-between px-1 pb-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                      {currentCategory === "Обувь" ? "Размер обуви" : "Размер одежды"}
+                    </span>
+                    {currentSizes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => updateParams({ sizes: null })}
+                        className="text-[11px] font-medium text-rose-500 hover:text-rose-700 transition-colors"
+                      >
+                        Сбросить
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto p-0.5">
+                    {categorySizes.map((size) => {
+                      const isChecked = currentSizes.includes(size);
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => toggleSize(size)}
+                          className={`flex items-center justify-center rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                            isChecked
+                              ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200"
+                              : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         {/* Кнопка фильтра по цене (выпадающий popover) */}
         <div className="relative" ref={pricePopoverRef}>
           <button
             type="button"
-            onClick={() => { setIsPriceOpen(!isPriceOpen); setIsCityOpen(false); }}
+            onClick={() => { setIsPriceOpen(!isPriceOpen); setIsCityOpen(false); setIsSizeOpen(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
               minPrice || maxPrice
                 ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"

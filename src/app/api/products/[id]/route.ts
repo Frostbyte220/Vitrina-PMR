@@ -40,6 +40,7 @@ export async function PATCH(
         price: validatedData.price,
         category: validatedData.category,
         subCategory: validatedData.subCategory || null,
+        sizes: validatedData.sizes || [],
         images: validatedData.images,
       },
     });

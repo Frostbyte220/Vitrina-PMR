@@ -32,6 +32,7 @@ interface ContactSellerButtonProps {
   shopUsername?: string | null;
   contacts?: StoreContacts | null;
   isCardView?: boolean;
+  selectedSize?: string | null;
 }
 
 // Универсальная функция копирования текста в буфер обмена
@@ -73,6 +74,7 @@ export function ContactSellerButton({
   shopUsername,
   contacts,
   isCardView = false,
+  selectedSize,
 }: ContactSellerButtonProps) {
   const { showToast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
@@ -117,9 +119,10 @@ export function ContactSellerButton({
       : "";
 
   const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
+  const sizeText = selectedSize ? ` (размер: ${selectedSize})` : "";
   const greetingMessage = productUrl
-    ? `Здравствуйте! Меня интересует товар «${productName}» (${formattedPrice}).\nСсылка на товар: ${productUrl}`
-    : `Здравствуйте! Меня интересует товар «${productName}» (${formattedPrice}) на E-Vitrina PMR.`;
+    ? `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}).\nСсылка на товар: ${productUrl}`
+    : `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}) на E-Vitrina PMR.`;
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
@@ -281,7 +284,7 @@ export function ContactSellerButton({
               <div className="pr-4">
                 <h3 className="text-lg font-bold text-gray-900 leading-snug">Связаться с продавцом</h3>
                 <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
-                  {productName} · <span className="font-semibold text-rose-600">{formattedPrice} руб.</span>
+                  {productName}{selectedSize ? ` · Размер: ${selectedSize}` : ""} · <span className="font-semibold text-rose-600">{formattedPrice}</span>
                 </p>
               </div>
               <button

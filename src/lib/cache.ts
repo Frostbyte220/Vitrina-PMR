@@ -16,6 +16,7 @@ export const getProducts = unstable_cache(
           images: true,
           category: true,
           subCategory: true,
+          sizes: true,
           user: {
             select: {
               name: true,

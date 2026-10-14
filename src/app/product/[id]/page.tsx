@@ -7,7 +7,7 @@ import {
   ProductPageHeader,
   ProductPageHeaderDesktop,
 } from "@/components/layout/ProductPageHeader";
-import { ContactSellerButton } from "@/components/product/ContactSellerButton";
+import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductCarousel } from "@/components/product/ProductCarousel";
 import { prisma } from "@/lib/prisma";
@@ -113,6 +113,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       status: true,
       category: true,
       subCategory: true,
+      sizes: true,
       storeId: true,
       userId: true,
       store: {
@@ -334,17 +335,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </span>
             </Link>
 
-            {/* Десктопная версия кнопки связи */}
-            <div className="hidden md:block mt-4">
-              <ContactSellerButton
-                productId={product.id}
-                productName={product.title}
-                productPrice={product.price}
-                shopUsername={cleanUsername}
-                contacts={storeContacts}
-                isCardView={true}
-              />
-            </div>
+            {/* Секция покупки: выбор размера, десктопная и мобильная кнопки связи */}
+            <ProductPurchaseSection
+              productId={product.id}
+              productName={product.title}
+              productPrice={product.price}
+              shopUsername={cleanUsername}
+              contacts={storeContacts}
+              sizes={product.sizes || []}
+              category={product.category}
+            />
           </div>
         </div>
 
@@ -366,18 +366,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
           products={categoryProducts}
         />
       </main>
-
-      {/* Мобильная версия кнопки связи */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white p-4 md:hidden pb-safe">
-        <ContactSellerButton
-          productId={product.id}
-          productName={product.title}
-          productPrice={product.price}
-          shopUsername={cleanUsername}
-          contacts={storeContacts}
-          isCardView={true}
-        />
-      </div>
     </>
   );
 }

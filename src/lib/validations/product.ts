@@ -44,11 +44,25 @@ price: z
     .string()
     .optional(),
   
+  sizes: z
+    .array(z.string().trim().min(1))
+    .default([])
+    .optional(),
+
   images: z
     .array(
       z.string().url("Некорректная ссылка на изображение")
     )
     .min(1, "Добавьте хотя бы одно изображение"),
 });
+
+export const CLOTHING_SIZES = [
+  "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "One Size",
+  "40", "42", "44", "46", "48", "50", "52", "54", "56"
+];
+
+export const SHOE_SIZES = [
+  "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
+];
 
 export type ProductFormData = z.infer<typeof productSchema>;

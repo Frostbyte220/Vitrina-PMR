@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         price: validatedData.price,
         category: validatedData.category,
         subCategory: validatedData.subCategory || null,
+        sizes: validatedData.sizes || [],
         images: validatedData.images,
         userId: session.user.id,
         // Привязываем storeId, если магазин найден

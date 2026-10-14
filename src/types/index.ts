@@ -8,6 +8,7 @@ export interface Product {
   shopName: string;
   shopUsername: string;
   description?: string | null; 
+  sizes?: string[]; 
   
   // --- Новые поля из базы данных ---
 

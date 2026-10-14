@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { productSchema, ProductFormData, CATEGORIES } from "@/lib/validations/product";
+import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import toast from "react-hot-toast";
 
 interface AddProductFormProps {
@@ -68,6 +68,11 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const [isUploading, setIsUploading] = useState(false);
   // Подставляем подкатегорию, если редактируем, иначе "Нет"
   const [subCategory, setSubCategory] = useState(initialData?.subCategory || "Нет");
+  // Состояние выбранных размеров
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(
+    Array.isArray(initialData?.sizes) ? initialData.sizes : []
+  );
+  const [customSizeInput, setCustomSizeInput] = useState("");
 
   // 1. Инициализация React Hook Form
   const {
@@ -98,6 +103,28 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const selectedCategory = watch("category");
   const imageUrls: string[] = watch("images") || [];
   const currentSubCategories = getSubCategories(selectedCategory);
+  const isSizeCategory = ["Одежда", "Обувь"].includes(selectedCategory);
+  const availablePresetSizes = selectedCategory === "Одежда" ? CLOTHING_SIZES : selectedCategory === "Обувь" ? SHOE_SIZES : [];
+
+  const toggleSize = (size: string) => {
+    setSelectedSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
+
+  const handleAddCustomSize = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = customSizeInput.trim();
+    if (!trimmed) return;
+    if (!selectedSizes.includes(trimmed)) {
+      setSelectedSizes((prev) => [...prev, trimmed]);
+    }
+    setCustomSizeInput("");
+  };
+
+  const removeSize = (sizeToRemove: string) => {
+    setSelectedSizes((prev) => prev.filter((s) => s !== sizeToRemove));
+  };
 
   // 2. Обработчик отправки
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
@@ -105,6 +132,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       const payload = {
         ...data,
         subCategory: subCategory !== "Нет" ? subCategory : undefined,
+        sizes: isSizeCategory ? selectedSizes : [],
       };
 
       const url = isEditing ? `/api/products/${initialData.id}` : "/api/products";
@@ -129,6 +157,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       } else {
         reset();
         setSubCategory("Нет");
+        setSelectedSizes([]);
+        setCustomSizeInput("");
         if (onSuccess) onSuccess();
         router.refresh();
       }
@@ -221,6 +251,95 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
               <option key={sub} value={sub}>{sub}</option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* РАЗМЕРЫ ТОВАРА (для Одежды и Обуви) */}
+      {isSizeCategory && (
+        <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-gray-800">
+              Размеры в наличии {selectedCategory === "Одежда" ? "(одежда)" : "(обувь)"}
+            </label>
+            {selectedSizes.length > 0 && (
+              <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                Выбрано: {selectedSizes.length}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">
+            Укажите размеры, которые есть у вас в наличии. Покупатели смогут выбрать нужный размер перед обращением.
+          </p>
+
+          {/* Предустановленные размеры */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {availablePresetSizes.map((size) => {
+              const isSelected = selectedSizes.includes(size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSize(size)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                    isSelected
+                      ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Добавление нестандартного размера */}
+          <div className="mt-1.5 flex items-center gap-2">
+            <input
+              type="text"
+              value={customSizeInput}
+              onChange={(e) => setCustomSizeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddCustomSize();
+                }
+              }}
+              placeholder={selectedCategory === "Обувь" ? "Свой размер (например: 38.5, 41.5)" : "Свой размер (например: 46-48, 110-116)"}
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+            />
+            <button
+              type="button"
+              onClick={handleAddCustomSize}
+              disabled={!customSizeInput.trim()}
+              className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50 shrink-0"
+            >
+              + Добавить
+            </button>
+          </div>
+
+          {/* Выбранные кастомные размеры */}
+          {selectedSizes.filter((s) => !availablePresetSizes.includes(s)).length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+              <span className="text-[11px] text-gray-400">Пользовательские:</span>
+              {selectedSizes
+                .filter((s) => !availablePresetSizes.includes(s))
+                .map((customSize) => (
+                  <span
+                    key={customSize}
+                    className="inline-flex items-center gap-1 rounded-lg bg-rose-50 border border-rose-200 px-2 py-0.5 text-xs font-semibold text-rose-700"
+                  >
+                    {customSize}
+                    <button
+                      type="button"
+                      onClick={() => removeSize(customSize)}
+                      className="text-rose-400 hover:text-rose-700 font-bold ml-0.5"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+            </div>
+          )}
         </div>
       )}
 

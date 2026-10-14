@@ -64,6 +64,7 @@ model Product {
   subCategory String?   
   images      String[]  
   description String?
+  sizes       String[]  @default([])
   status      String?   @default("Активен")
   deletedAt   DateTime? 
 

@@ -129,7 +129,7 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, minPrice, maxPrice, cities, ...otherFilters } = params;
+  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -140,6 +140,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   if (sort === "price_desc") orderBy = { price: "desc" };
 
   const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
+  const selectedSizes = sizes ? sizes.split(",").map((s) => s.trim()).filter(Boolean) : [];
 
   const conditions: any[] = [];
 
@@ -149,6 +150,14 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
 
   if (sub) {
     conditions.push({ subCategory: sub });
+  }
+
+  if (selectedSizes.length > 0) {
+    conditions.push({
+      sizes: {
+        hasSome: selectedSizes,
+      },
+    });
   }
 
   if (minPrice || maxPrice) {
@@ -213,6 +222,15 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
           {selectedCities.length > 0 ? (
             <>
               Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
+              {selectedSizes.length > 0 && (
+                <span className="text-gray-500 font-normal text-sm ml-2">
+                  (размер: {selectedSizes.join(", ")})
+                </span>
+              )}
+            </>
+          ) : selectedSizes.length > 0 ? (
+            <>
+              Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
             </>
           ) : (
             "Каталог товаров"
@@ -228,6 +246,8 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
           <h3 className="text-lg font-semibold text-gray-900">
             {selectedCities.length > 0
               ? `В ${selectedCities.join(", ")} пока нет товаров по вашим фильтрам`
+              : selectedSizes.length > 0
+              ? `В выбранных размерах (${selectedSizes.join(", ")}) пока нет товаров`
               : q
               ? `По запросу «${q}» ничего не найдено`
               : "По вашим фильтрам ничего не найдено"}
