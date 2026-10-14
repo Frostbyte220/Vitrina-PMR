@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Store, MapPin } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
@@ -107,6 +107,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               src={avatarSrc} 
               alt={displayName} 
               fill 
+              loader={cloudinaryLoader}
               sizes="32px"
               className="object-cover" 
             />
@@ -142,8 +143,11 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               src={imageUrl}
               alt={product.title}
               fill
+              loader={cloudinaryLoader}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (

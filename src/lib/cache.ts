@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 
 export const getProducts = unstable_cache(
   async (whereClause: any, skip: number, take: number, orderBy: any = { createdAt: "desc" }) => {
-    return prisma.$transaction([
+    return Promise.all([
       prisma.product.findMany({
         where: whereClause,
         skip,

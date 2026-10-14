@@ -179,6 +179,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     images: true,
     category: true,
     subCategory: true,
+    sizes: true,
     store: {
       select: {
         name: true,
