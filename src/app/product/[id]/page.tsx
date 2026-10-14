@@ -179,8 +179,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <ProductPageHeader />
-      <ProductPageHeaderDesktop title={product.title} />
+      <ProductPageHeader
+        title={product.title}
+        price={product.price}
+        productId={product.id}
+      />
+      <ProductPageHeaderDesktop
+        title={product.title}
+        price={product.price}
+      />
 
       <main className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-6 md:pb-16">
         <div className="mx-auto max-w-3xl">
