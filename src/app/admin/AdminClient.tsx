@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Trash2, Store, Package, RefreshCw, AlertTriangle } from "lucide-react";
-import { deleteProductAdmin, restoreProductAdmin, deleteStoreAdmin, migrateProductsAction } from "./actions";
+import { deleteProductAdmin, restoreProductAdmin, deleteStoreAdmin, migrateProductsAction, fillRandomSizesAction } from "./actions";
 import toast from "react-hot-toast";
 
 type StoreData = {
@@ -35,6 +35,8 @@ export function AdminClient({
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [migrating, setMigrating] = useState(false);
   const [migrateResult, setMigrateResult] = useState<{ storeId: number; subCategory: number; total: number } | null>(null);
+  const [fillingSizes, setFillingSizes] = useState(false);
+  const [fillSizesResult, setFillSizesResult] = useState<{ updated: number; total: number } | null>(null);
 
   const handleMigrate = async () => {
     if (!confirm("Запустить миграцию данных? Это обновит storeId и subCategory для всех товаров.")) return;
@@ -48,6 +50,21 @@ export function AdminClient({
       toast.error("Ошибка миграции");
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const handleFillSizes = async () => {
+    if (!confirm("Добавить случайные размеры всем товарам Одежда/Обувь/Спорт у которых нет размеров?")) return;
+    setFillingSizes(true);
+    setFillSizesResult(null);
+    try {
+      const result = await fillRandomSizesAction();
+      setFillSizesResult(result);
+      toast.success(`Готово! Заполнено ${result.updated} товаров из ${result.total}`);
+    } catch {
+      toast.error("Ошибка заполнения размеров");
+    } finally {
+      setFillingSizes(false);
     }
   };
 
@@ -86,16 +103,17 @@ export function AdminClient({
   return (
     <div className="space-y-6">
       {/* Баннер миграции данных */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+        {/* Строка 1: Миграция storeId и subCategory */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-amber-800">🔄 Миграция существующих товаров</p>
+            <p className="text-sm font-semibold text-amber-800">🔄 Привязка магазинов и подкатегорий</p>
             <p className="mt-0.5 text-xs text-amber-700">
               Привязывает товары к магазину (storeId) и устанавливает подкатегорию по умолчанию. Запустить один раз.
             </p>
             {migrateResult && (
               <p className="mt-1 text-xs font-medium text-green-700">
-                ✅ Обновлено {migrateResult.storeId} storeId, {migrateResult.subCategory} subCategory из {migrateResult.total} товаров
+                ✅ storeId: {migrateResult.storeId}, subCategory: {migrateResult.subCategory} из {migrateResult.total} товаров
               </p>
             )}
           </div>
@@ -105,7 +123,32 @@ export function AdminClient({
             className="flex shrink-0 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${migrating ? "animate-spin" : ""}`} />
-            {migrating ? "Выполняется..." : "Запустить миграцию"}
+            {migrating ? "Выполняется..." : "Запустить"}
+          </button>
+        </div>
+
+        <div className="border-t border-amber-200" />
+
+        {/* Строка 2: Заполнить размеры */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-amber-800">👗 Добавить размеры товарам (Одежда / Обувь / Спорт)</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              Заполняет реалистичные случайные размеры товарам, у которых поле sizes пустое. Продавцы смогут уточнить потом.
+            </p>
+            {fillSizesResult && (
+              <p className="mt-1 text-xs font-medium text-green-700">
+                ✅ Заполнено {fillSizesResult.updated} из {fillSizesResult.total} товаров
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleFillSizes}
+            disabled={fillingSizes}
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${fillingSizes ? "animate-spin" : ""}`} />
+            {fillingSizes ? "Выполняется..." : "Добавить размеры"}
           </button>
         </div>
       </div>

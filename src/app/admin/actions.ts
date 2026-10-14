@@ -92,6 +92,50 @@ export async function migrateProductsAction(): Promise<{ storeId: number; subCat
   return { storeId: updatedStoreId, subCategory: updatedSubCategory, total: products.length };
 }
 
+const CLOTHING_SIZES_ALL = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
+const SHOE_SIZES_ALL = ["36", "37", "38", "39", "40", "41", "42", "43", "44"];
+
+function pickRandomSizes(pool: string[]): string[] {
+  // Берём 2–5 случайных размеров из пула (смежных, как в реальном магазине)
+  const count = 2 + Math.floor(Math.random() * 4); // 2-5
+  const start = Math.floor(Math.random() * Math.max(1, pool.length - count));
+  return pool.slice(start, start + count);
+}
+
+export async function fillRandomSizesAction(): Promise<{ updated: number; total: number }> {
+  await checkAdmin();
+
+  const products = await prisma.product.findMany({
+    where: {
+      deletedAt: null,
+      category: { in: ["Одежда", "Обувь", "Спорт и отдых"] },
+    },
+    select: { id: true, category: true, sizes: true },
+  });
+
+  let updated = 0;
+
+  for (const product of products) {
+    // Обновляем только те, у которых sizes пустой
+    if (product.sizes && product.sizes.length > 0) continue;
+
+    const pool = product.category === "Обувь" ? SHOE_SIZES_ALL : CLOTHING_SIZES_ALL;
+    const sizes = pickRandomSizes(pool);
+
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { sizes },
+    });
+    updated++;
+  }
+
+  revalidateTag("products");
+  revalidatePath("/");
+  revalidatePath("/admin");
+
+  return { updated, total: products.length };
+}
+
 export async function deleteStoreAdmin(storeId: string) {
   await checkAdmin();
   // Жесткое удаление магазина
