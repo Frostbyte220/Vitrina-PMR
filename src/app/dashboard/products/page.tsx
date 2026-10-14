@@ -48,8 +48,27 @@ export default async function DashboardProductsPage({
       skip: skip,
       take: ITEMS_PER_PAGE,
       orderBy: { createdAt: "desc" },
-      include: {
-        user: true,
+      // select вместо include: user:true — избегаем over-fetching (password hash и т.д.)
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        category: true,
+        subCategory: true,
+        sizes: true,
+        images: true,
+        description: true,
+        status: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+        user: {
+          select: {
+            name: true,
+            instagram: true,
+          },
+        },
       },
     }),
     prisma.product.count({

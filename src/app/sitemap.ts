@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vitrina-pmr.vercel.app";
 
+// Размеры, для которых создаём отдельные URL в sitemap
+const CLOTHING_SIZES_SEO = ["XS", "S", "M", "L", "XL", "2XL", "42", "44", "46", "48", "50"];
+const SHOE_SIZES_SEO = ["36", "37", "38", "39", "40", "41", "42", "43", "44"];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Статические страницы
   const staticPages: MetadataRoute.Sitemap = [
@@ -24,7 +28,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+    // Страницы категорий
+    {
+      url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
   ];
+
+  // SEO-страницы одежда+размер (высокий коммерческий спрос)
+  const clothingSizePages: MetadataRoute.Sitemap = CLOTHING_SIZES_SEO.map((size) => ({
+    url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}&sizes=${encodeURIComponent(size)}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.65,
+  }));
+
+  // SEO-страницы обувь+размер
+  const shoeSizePages: MetadataRoute.Sitemap = SHOE_SIZES_SEO.map((size) => ({
+    url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}&sizes=${encodeURIComponent(size)}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.65,
+  }));
 
   // Динамические страницы товаров
   let productPages: MetadataRoute.Sitemap = [];
@@ -63,5 +96,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("[SITEMAP] Ошибка загрузки магазинов:", error);
   }
 
-  return [...staticPages, ...productPages, ...storePages];
+  return [
+    ...staticPages,
+    ...clothingSizePages,
+    ...shoeSizePages,
+    ...productPages,
+    ...storePages,
+  ];
 }

@@ -165,6 +165,25 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               {product.title}
             </h3>
           </Link>
+
+          {/* Бейджи размеров (только если есть и категория одежда/обувь) */}
+          {Array.isArray(prod.sizes) && prod.sizes.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1" aria-label="Доступные размеры">
+              {(prod.sizes as string[]).slice(0, 5).map((size: string) => (
+                <span
+                  key={size}
+                  className="inline-block rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 leading-tight"
+                >
+                  {size}
+                </span>
+              ))}
+              {prod.sizes.length > 5 && (
+                <span className="inline-block rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 leading-tight">
+                  +{prod.sizes.length - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 mt-auto pt-1">

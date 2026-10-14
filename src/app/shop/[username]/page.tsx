@@ -93,7 +93,28 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
         { user: { instagram: `@${username}` } },
       ]
     },
-    include: { user: true }
+    // select вместо include: { user: true } — только нужные поля
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      slug: true,
+      instagram: true,
+      description: true,
+      avatarUrl: true,
+      coverUrl: true,
+      cities: true,
+      telegram: true,
+      viber: true,
+      phone: true,
+      user: {
+        select: {
+          name: true,
+          instagram: true,
+          avatar: true,
+        },
+      },
+    },
   });
 
   if (!store) notFound();
@@ -116,6 +137,21 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
       orderBy,
       skip,
       take: ITEMS_PER_PAGE,
+      // select — только нужные поля, без over-fetching
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        category: true,
+        subCategory: true,
+        sizes: true,
+        images: true,
+        description: true,
+        status: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     }),
     prisma.product.count({ where: productWhere }),
     prisma.product.findMany({
@@ -135,6 +171,8 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     title: item.title,
     price: item.price,
     category: item.category,
+    subCategory: item.subCategory,
+    sizes: item.sizes || [],
     images: item.images && item.images.length > 0 ? item.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"],
     shopName: store.name,
     shopUsername: cleanInstagram, 
