@@ -136,6 +136,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         <Link 
           href={`/product/${product.id}`} 
           className="block h-full w-full"
+          prefetch={true}
           suppressHydrationWarning
         >
           {imageUrl ? (
@@ -164,7 +165,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
           <p className="text-lg font-bold text-primary">
             {formatPrice(product.price)}
           </p>
-          <Link href={`/product/${product.id}`}>
+          <Link href={`/product/${product.id}`} prefetch={true}>
             <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
               {product.title}
             </h3>

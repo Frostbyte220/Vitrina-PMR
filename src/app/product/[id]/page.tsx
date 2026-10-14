@@ -1,6 +1,6 @@
+import { cache, Suspense } from "react";
 import { Store, ShoppingBag, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -14,52 +14,79 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
 // Включаем ISR (кэширование). Страница будет обновляться раз в час (3600 сек),
-// что идеально для маркетплейса: сервер не перегружается, а данные свежие.
+// что идеально для маркетплейса: сервер не перегружается, а данные отдаются мгновенно.
 export const revalidate = 3600;
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Вспомогательная функция для получения базового URL проекта
-async function getAppUrl() {
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  return `${protocol}://${host}`;
-}
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vitrina-pmr.vercel.app";
+
+// React.cache дедуплицирует запрос: generateMetadata и ProductPage делают ровно 1 запрос к БД, а не 2!
+const getProduct = cache(async (id: string) => {
+  return prisma.product.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      price: true,
+      images: true,
+      status: true,
+      category: true,
+      subCategory: true,
+      sizes: true,
+      storeId: true,
+      userId: true,
+      store: {
+        select: {
+          name: true,
+          slug: true,
+          instagram: true,
+          phone: true,
+          telegram: true,
+          viber: true,
+          avatarUrl: true,
+          cities: true,
+        },
+      },
+      user: {
+        select: {
+          name: true,
+          instagram: true,
+          avatar: true,
+          store: {
+            select: {
+              name: true,
+              slug: true,
+              instagram: true,
+              phone: true,
+              telegram: true,
+              viber: true,
+              avatarUrl: true,
+              cities: true,
+            },
+          },
+        },
+      },
+    },
+  });
+});
 
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id },
-    select: {
-      title: true,
-      description: true,
-      images: true,
-      user: {
-        select: {
-          name: true,
-          store: {
-            select: {
-              name: true,
-            }
-          }
-        }
-      }
-    }
-  });
+  const product = await getProduct(id);
 
   if (!product) {
     return { title: "Товар не найден | E-Vitrina PMR" };
   }
 
-  const appUrl = await getAppUrl();
-  const productUrl = `${appUrl}/product/${id}`;
+  const productUrl = `${BASE_URL}/product/${id}`;
   const images = product.images?.length > 0 ? product.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"];
-  const shopName = product.user?.store?.name || product.user?.name || "E-Vitrina PMR";
+  const shopName = product.store?.name || product.user?.store?.name || product.user?.name || "E-Vitrina PMR";
   
   // Обрезаем описание для мета-тегов до 160 символов (стандарт поисковиков)
   const cleanDescription =
@@ -102,53 +129,7 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      price: true,
-      images: true,
-      status: true,
-      category: true,
-      subCategory: true,
-      sizes: true,
-      storeId: true,
-      userId: true,
-      store: {
-        select: {
-          name: true,
-          slug: true,
-          instagram: true,
-          phone: true,
-          telegram: true,
-          viber: true,
-          avatarUrl: true,
-          cities: true,
-        }
-      },
-      user: {
-        select: {
-          name: true,
-          instagram: true,
-          avatar: true,
-          store: {
-            select: {
-              name: true,
-              slug: true,
-              instagram: true,
-              phone: true,
-              telegram: true,
-              viber: true,
-              avatarUrl: true,
-              cities: true,
-            }
-          }
-        }
-      }
-    }
-  });
+  const product = await getProduct(id);
 
   if (!product) {
     notFound();
@@ -170,104 +151,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     viber: storeData?.viber || null,
     phone: storeData?.phone || null,
   };
-
-  // Поля выбора для связанных товаров (включая магазины и города)
-  const productCardSelect = {
-    id: true,
-    title: true,
-    price: true,
-    images: true,
-    category: true,
-    subCategory: true,
-    sizes: true,
-    store: {
-      select: {
-        name: true,
-        slug: true,
-        instagram: true,
-        avatarUrl: true,
-        cities: true,
-        phone: true,
-        telegram: true,
-        viber: true,
-      },
-    },
-    user: {
-      select: {
-        name: true,
-        instagram: true,
-        avatar: true,
-        store: {
-          select: {
-            name: true,
-            slug: true,
-            instagram: true,
-            avatarUrl: true,
-            cities: true,
-            phone: true,
-            telegram: true,
-            viber: true,
-          },
-        },
-      },
-    },
-  };
-
-  const sellerConditions: any[] = [];
-  if (product.storeId) sellerConditions.push({ storeId: product.storeId });
-  if (product.userId) sellerConditions.push({ userId: product.userId });
-
-  // Запрашиваем другие товары того же продавца и похожие товары в категории
-  const [storeProducts, similarProducts] = await Promise.all([
-    sellerConditions.length > 0
-      ? prisma.product.findMany({
-          where: {
-            id: { not: product.id },
-            deletedAt: null,
-            status: "Активен",
-            OR: sellerConditions,
-          },
-          take: 8,
-          orderBy: { createdAt: "desc" },
-          select: productCardSelect,
-        })
-      : Promise.resolve([]),
-    prisma.product.findMany({
-      where: {
-        id: { not: product.id },
-        deletedAt: null,
-        status: "Активен",
-        category: product.category,
-        ...(sellerConditions.length > 0
-          ? {
-              NOT: {
-                OR: sellerConditions,
-              },
-            }
-          : {}),
-      },
-      take: 8,
-      orderBy: { createdAt: "desc" },
-      select: productCardSelect,
-    }),
-  ]);
-
-  // Если у других продавцов в категории нет товаров, показываем товары того же продавца в категории, не дублируя
-  let categoryProducts = similarProducts;
-  if (categoryProducts.length === 0) {
-    const storeProductIds = new Set([product.id, ...storeProducts.map((p) => p.id)]);
-    categoryProducts = await prisma.product.findMany({
-      where: {
-        id: { notIn: Array.from(storeProductIds) },
-        deletedAt: null,
-        status: "Активен",
-        category: product.category,
-      },
-      take: 8,
-      orderBy: { createdAt: "desc" },
-      select: productCardSelect,
-    });
-  }
 
   // Структурированные данные JSON-LD для Google Rich Snippets
   const jsonLd = {
@@ -349,24 +232,175 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
         </div>
 
-        {/* 1. Еще от этого продавца */}
-        <ProductCarousel
-          title={shopName ? `Еще от «${shopName}»` : "Еще от этого продавца"}
-          icon={<ShoppingBag className="h-5 w-5" />}
-          viewAllHref={cleanUsername ? `/shop/${cleanUsername}` : undefined}
-          viewAllText="В магазин"
-          products={storeProducts}
-        />
-
-        {/* 2. Похожие товары в категории */}
-        <ProductCarousel
-          title={`Похожие товары в категории «${product.category}»`}
-          icon={<Sparkles className="h-5 w-5" />}
-          viewAllHref={`/?category=${encodeURIComponent(product.category)}`}
-          viewAllText="Вся категория"
-          products={categoryProducts}
-        />
+        {/* Секция связанных товаров стримится через Suspense — не блокирует показ товара */}
+        <Suspense fallback={<RelatedProductsSkeleton />}>
+          <RelatedProductsSection
+            productId={product.id}
+            category={product.category}
+            storeId={product.storeId}
+            userId={product.userId}
+            shopName={shopName}
+            cleanUsername={cleanUsername}
+          />
+        </Suspense>
       </main>
+    </>
+  );
+}
+
+// Поля выбора для связанных товаров (включая магазины и города)
+const productCardSelect = {
+  id: true,
+  title: true,
+  price: true,
+  images: true,
+  category: true,
+  subCategory: true,
+  sizes: true,
+  store: {
+    select: {
+      name: true,
+      slug: true,
+      instagram: true,
+      avatarUrl: true,
+      cities: true,
+      phone: true,
+      telegram: true,
+      viber: true,
+    },
+  },
+  user: {
+    select: {
+      name: true,
+      instagram: true,
+      avatar: true,
+      store: {
+        select: {
+          name: true,
+          slug: true,
+          instagram: true,
+          avatarUrl: true,
+          cities: true,
+          phone: true,
+          telegram: true,
+          viber: true,
+        },
+      },
+    },
+  },
+};
+
+// Скелетон каруселей для мгновенного ответа страницы
+function RelatedProductsSkeleton() {
+  return (
+    <div className="mt-12 sm:mt-16 space-y-8 animate-pulse">
+      <div>
+        <div className="h-6 w-48 rounded-lg bg-gray-200 mb-2" />
+        <div className="h-4 w-24 rounded bg-gray-100" />
+      </div>
+      <div className="flex gap-4 overflow-hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-[210px] min-w-[210px] sm:w-[250px] sm:min-w-[250px] h-72 rounded-2xl bg-gray-100 shrink-0"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Асинхронный компонент связанных товаров (загружается в фоновом стриме)
+async function RelatedProductsSection({
+  productId,
+  category,
+  storeId,
+  userId,
+  shopName,
+  cleanUsername,
+}: {
+  productId: string;
+  category: string;
+  storeId: string | null;
+  userId: string | null;
+  shopName: string;
+  cleanUsername: string;
+}) {
+  const sellerConditions: any[] = [];
+  if (storeId) sellerConditions.push({ storeId });
+  if (userId) sellerConditions.push({ userId });
+
+  // Запрашиваем другие товары того же продавца и похожие товары в категории
+  const [storeProducts, similarProducts] = await Promise.all([
+    sellerConditions.length > 0
+      ? prisma.product.findMany({
+          where: {
+            id: { not: productId },
+            deletedAt: null,
+            status: "Активен",
+            OR: sellerConditions,
+          },
+          take: 8,
+          orderBy: { createdAt: "desc" },
+          select: productCardSelect,
+        })
+      : Promise.resolve([]),
+    prisma.product.findMany({
+      where: {
+        id: { not: productId },
+        deletedAt: null,
+        status: "Активен",
+        category,
+        ...(sellerConditions.length > 0
+          ? {
+              NOT: {
+                OR: sellerConditions,
+              },
+            }
+          : {}),
+      },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: productCardSelect,
+    }),
+  ]);
+
+  // Если у других продавцов в категории нет товаров, показываем товары того же продавца в категории, не дублируя
+  let categoryProducts = similarProducts;
+  if (categoryProducts.length === 0) {
+    const storeProductIds = new Set([productId, ...storeProducts.map((p) => p.id)]);
+    categoryProducts = await prisma.product.findMany({
+      where: {
+        id: { notIn: Array.from(storeProductIds) },
+        deletedAt: null,
+        status: "Активен",
+        category,
+      },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: productCardSelect,
+    });
+  }
+
+  return (
+    <>
+      {/* 1. Еще от этого продавца */}
+      <ProductCarousel
+        title={shopName ? `Еще от «${shopName}»` : "Еще от этого продавца"}
+        icon={<ShoppingBag className="h-5 w-5" />}
+        viewAllHref={cleanUsername ? `/shop/${cleanUsername}` : undefined}
+        viewAllText="В магазин"
+        products={storeProducts}
+      />
+
+      {/* 2. Похожие товары в категории */}
+      <ProductCarousel
+        title={`Похожие товары в категории «${category}»`}
+        icon={<Sparkles className="h-5 w-5" />}
+        viewAllHref={`/?category=${encodeURIComponent(category)}`}
+        viewAllText="Вся категория"
+        products={categoryProducts}
+      />
     </>
   );
 }

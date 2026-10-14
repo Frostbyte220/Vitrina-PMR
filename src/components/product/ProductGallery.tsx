@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 
 interface ProductGalleryProps {
   images: string[];
@@ -20,6 +20,9 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           alt={title}
           fill
           priority
+          loader={cloudinaryLoader}
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           sizes="(max-width: 768px) 100vw, 768px"
           className="object-cover"
         />
@@ -43,6 +46,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
                 src={image}
                 alt=""
                 fill
+                loader={cloudinaryLoader}
                 sizes="64px"
                 className="object-cover"
               />
