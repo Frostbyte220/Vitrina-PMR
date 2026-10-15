@@ -76,6 +76,9 @@ model Product {
   storeId     String?
   store       Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
+  // Связь с жалобами на товар
+  reports     ProductReport[]
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -84,4 +87,19 @@ model Product {
   @@index([category, status, deletedAt])
   @@index([userId])
   @@index([storeId])
+}
+
+// Модель жалобы на товар (модерация контента)
+model ProductReport {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  reason      String   // Причина жалобы
+  details     String?  // Дополнительный комментарий
+  status      String   @default("PENDING") // PENDING (Ожидает), RESOLVED (Товар скрыт/решено), DISMISSED (Отклонено)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([productId])
 }

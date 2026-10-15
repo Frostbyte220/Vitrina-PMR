@@ -24,7 +24,7 @@ export default async function AdminDashboardPage() {
   }
 
   // Запрашиваем данные для дашборда
-  const [stores, products, totalUsers] = await Promise.all([
+  const [stores, products, totalUsers, reports] = await Promise.all([
     prisma.store.findMany({
       include: {
         _count: { select: { products: true } }
@@ -33,12 +33,30 @@ export default async function AdminDashboardPage() {
     }),
     prisma.product.findMany({
       include: {
-        store: { select: { name: true } }
+        store: { select: { name: true, slug: true } }
       },
       orderBy: { createdAt: "desc" }
     }),
-    prisma.user.count()
+    prisma.user.count(),
+    prisma.productReport.findMany({
+      include: {
+        product: {
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            images: true,
+            status: true,
+            deletedAt: true,
+            store: { select: { name: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
+
+  const pendingReportsCount = reports.filter((r) => r.status === "PENDING").length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -55,7 +73,7 @@ export default async function AdminDashboardPage() {
             Панель Супер-Админа
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Управление магазинами и товарами на E-Vitrina PMR
+            Управление магазинами, товарами и модерацией жалоб на E-Vitrina PMR
           </p>
         </div>
         <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
@@ -64,7 +82,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Сводка */}
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="flex flex-col rounded-2xl bg-white p-5 shadow-sm outline outline-1 outline-gray-200">
           <div className="flex items-center gap-3 text-gray-500 mb-2">
             <Store className="h-5 w-5" />
@@ -79,16 +97,34 @@ export default async function AdminDashboardPage() {
           </div>
           <span className="text-3xl font-extrabold text-gray-900">{products.length}</span>
         </div>
-        <div className="col-span-2 sm:col-span-1 flex flex-col rounded-2xl bg-white p-5 shadow-sm outline outline-1 outline-gray-200">
+        <div className="flex flex-col rounded-2xl bg-white p-5 shadow-sm outline outline-1 outline-gray-200">
           <div className="flex items-center gap-3 text-gray-500 mb-2">
             <Users className="h-5 w-5" />
             <span className="text-sm font-medium">Пользователи</span>
           </div>
           <span className="text-3xl font-extrabold text-gray-900">{totalUsers}</span>
         </div>
+        <div className={`flex flex-col rounded-2xl p-5 shadow-sm outline outline-1 transition-all ${
+          pendingReportsCount > 0 
+            ? "bg-rose-50/70 outline-rose-200 text-rose-900" 
+            : "bg-white outline-gray-200 text-gray-900"
+        }`}>
+          <div className="flex items-center gap-3 text-gray-500 mb-2">
+            <ShieldAlert className={`h-5 w-5 ${pendingReportsCount > 0 ? "text-rose-600" : ""}`} />
+            <span className="text-sm font-medium">Жалобы</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className={`text-3xl font-extrabold ${pendingReportsCount > 0 ? "text-rose-600" : ""}`}>
+              {pendingReportsCount}
+            </span>
+            <span className="text-xs font-semibold text-gray-500">
+              {pendingReportsCount > 0 ? "новых" : "нет новых"} (всего: {reports.length})
+            </span>
+          </div>
+        </div>
       </div>
 
-      <AdminClient stores={stores} products={products as any} />
+      <AdminClient stores={stores} products={products as any} reports={reports as any} />
     </div>
   );
 }

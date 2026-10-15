@@ -146,3 +146,52 @@ export async function deleteStoreAdmin(storeId: string) {
   revalidatePath("/admin");
   revalidatePath("/shops");
 }
+
+export async function resolveReportAdmin(reportId: string, hideProduct = true) {
+  await checkAdmin();
+  
+  const report = await prisma.productReport.findUnique({
+    where: { id: reportId },
+    select: { id: true, productId: true },
+  });
+
+  if (!report) throw new Error("Жалоба не найдена");
+
+  if (hideProduct) {
+    await prisma.product.update({
+      where: { id: report.productId },
+      data: {
+        deletedAt: new Date(),
+        status: "Скрыт модератором",
+      },
+    });
+  }
+
+  await prisma.productReport.update({
+    where: { id: reportId },
+    data: { status: "RESOLVED" },
+  });
+
+  revalidateTag("products");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/product/${report.productId}`);
+}
+
+export async function dismissReportAdmin(reportId: string) {
+  await checkAdmin();
+  await prisma.productReport.update({
+    where: { id: reportId },
+    data: { status: "DISMISSED" },
+  });
+  revalidatePath("/admin");
+}
+
+export async function deleteReportAdmin(reportId: string) {
+  await checkAdmin();
+  await prisma.productReport.delete({
+    where: { id: reportId },
+  });
+  revalidatePath("/admin");
+}
+

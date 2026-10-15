@@ -10,6 +10,7 @@ import {
 import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductCarousel } from "@/components/product/ProductCarousel";
+import { ReportProductModal } from "@/components/product/ReportProductModal";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
@@ -236,6 +237,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
               sizes={product.sizes || []}
               category={product.category}
             />
+
+            {/* Кнопка «Пожаловаться на товар» */}
+            <div className="mt-2 flex items-center justify-center pt-2">
+              <ReportProductModal
+                productId={product.id}
+                productTitle={product.title}
+              />
+            </div>
           </div>
         </div>
 
