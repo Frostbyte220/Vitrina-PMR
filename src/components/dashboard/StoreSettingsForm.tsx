@@ -28,29 +28,7 @@ type StoreFormData = {
   cities: string[];
 };
 
-async function uploadToCloudinary(file: File): Promise<string> {
-  const signRes = await fetch("/api/cloudinary/sign");
-  if (!signRes.ok) throw new Error("Не удалось получить подпись");
-  
-  const { signature, timestamp, apiKey, uploadPreset } = await signRes.json();
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("api_key", apiKey);
-  formData.append("timestamp", timestamp.toString());
-  formData.append("signature", signature);
-  formData.append("upload_preset", uploadPreset);
-
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) throw new Error("Ошибка при загрузке в Cloudinary");
-  return (await response.json()).secure_url;
-}
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export function StoreSettingsForm({ initialData }: { initialData: any }) {
   const [isSaving, setIsSaving] = useState(false);
@@ -113,14 +91,26 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "cover") => {
     if (!e.target.files || e.target.files.length === 0) return;
     
+    const file = e.target.files[0];
+    const isAvatar = type === "avatar";
+    const label = isAvatar ? "логотип" : "обложку";
+
     setUploadingType(type);
+    const toastId = toast.loading(`Сжатие и загрузка ${label}а...`);
+
     try {
-      const url = await uploadToCloudinary(e.target.files[0]);
-      if (type === "avatar") setAvatarUrl(url);
-      if (type === "cover") setCoverUrl(url);
+      const url = await uploadToCloudinary(file, {
+        maxDimension: isAvatar ? 512 : 1920,
+        quality: 0.85,
+      });
+
+      if (isAvatar) setAvatarUrl(url);
+      if (!isAvatar) setCoverUrl(url);
+
+      toast.success(`${isAvatar ? "Логотип" : "Обложка"} успешно обновлена!`, { id: toastId });
     } catch (err: any) {
       console.error("Cloudinary upload error:", err);
-      alert(`Не удалось загрузить ${type === "avatar" ? "логотип" : "обложку"}: ${err.message || "Ошибка загрузки"}`);
+      toast.error(err.message || `Не удалось загрузить ${label}`, { id: toastId });
     } finally {
       setUploadingType(null);
       e.target.value = ""; 
@@ -142,7 +132,7 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
                 <div className="flex h-full items-center justify-center text-xs text-gray-400">Пусто</div>
               )}
               {uploadingType === "avatar" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs text-white">Загрузка...</div>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-white font-medium text-center px-1">Сжатие и загрузка...</div>
               )}
             </div>
             <label className="mt-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
@@ -160,7 +150,7 @@ export function StoreSettingsForm({ initialData }: { initialData: any }) {
                 <div className="flex h-full items-center justify-center text-sm text-gray-400">Рекомендуемый размер 1200x400</div>
               )}
               {uploadingType === "cover" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white">Загрузка...</div>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white font-medium">Сжатие и загрузка...</div>
               )}
             </div>
             <label className="mt-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">

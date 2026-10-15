@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import toast from "react-hot-toast";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 interface AddProductFormProps {
   onSuccess?: () => void;
@@ -31,41 +33,12 @@ const getSubCategories = (category: string) => {
   return ["Нет"];
 };
 
-async function uploadToCloudinary(file: File): Promise<string> {
-  // Получаем подпись с сервера (защищенный эндпоинт)
-  const signRes = await fetch("/api/cloudinary/sign");
-  if (!signRes.ok) throw new Error("Не удалось получить подпись для загрузки");
-  
-  const { signature, timestamp, apiKey, uploadPreset } = await signRes.json();
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("api_key", apiKey);
-  formData.append("timestamp", timestamp.toString());
-  formData.append("signature", signature);
-  formData.append("upload_preset", uploadPreset);
-
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Cloudinary Error: ${errorData?.error?.message || response.statusText || "Ошибка загрузки"}`);
-  }
-  
-  const data = await response.json();
-  return data.secure_url;
-}
-
 export default function AddProductForm({ onSuccess, initialData }: AddProductFormProps) {
   const router = useRouter();
   const isEditing = !!initialData; // Флаг: если есть initialData, значит это режим редактирования
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
   // Подставляем подкатегорию, если редактируем, иначе "Нет"
   const [subCategory, setSubCategory] = useState(initialData?.subCategory || "Нет");
   // Состояние выбранных размеров
@@ -177,19 +150,50 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
-    setIsUploading(true);
     const files = Array.from(e.target.files);
     
+    // Ограничение на общее количество фотографий (макс. 10)
+    if (imageUrls.length + files.length > 10) {
+      toast.error(
+        `Максимум 10 фотографий (уже добавлено: ${imageUrls.length}, выбрано: ${files.length})`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus(`Оптимизация ${files.length} фото...`);
+    const toastId = toast.loading(
+      files.length === 1
+        ? "Сжатие и подготовка фото..."
+        : `Сжатие и подготовка ${files.length} фото...`
+    );
+    
     try {
-      const uploadPromises = files.map((file) => uploadToCloudinary(file));
+      const uploadPromises = files.map((file, idx) =>
+        uploadToCloudinary(file, {
+          maxDimension: 1600,
+          quality: 0.82,
+          onStatusChange: (status) => {
+            setUploadStatus(`${status} (${idx + 1}/${files.length})`);
+          },
+        })
+      );
       const urls = await Promise.all(uploadPromises);
       
       setValue("images", [...imageUrls, ...urls], { shouldValidate: true });
+      toast.success(
+        files.length === 1
+          ? "Фото успешно оптимизировано и загружено!"
+          : `Все ${files.length} фото успешно сжаты и загружены!`,
+        { id: toastId }
+      );
     } catch (err: any) {
       console.error("Cloudinary upload error:", err);
-      alert(`Не удалось загрузить фото: ${err.message || "Проверьте настройки Cloudinary."}`);
+      toast.error(err.message || "Не удалось загрузить фото", { id: toastId });
     } finally {
       setIsUploading(false);
+      setUploadStatus("");
       e.target.value = ""; 
     }
   };
@@ -364,9 +368,19 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           </div>
         )}
         
-        <label className={`flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-          <span className="text-sm text-gray-600 font-medium">
-            {isUploading ? "Загрузка в облако..." : "+ Выбрать фотографии"}
+        <label className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span>{uploadStatus || "Оптимизация и загрузка..."}</span>
+              </>
+            ) : (
+              <span>+ Выбрать фотографии</span>
+            )}
+          </div>
+          <span className="mt-1 text-xs text-gray-400">
+            Автоматическое сжатие фото (JPG, PNG, WebP до 30 МБ, макс. 10 фото)
           </span>
           <input 
             type="file" multiple accept="image/*" 
