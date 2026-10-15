@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { ReportProductModal } from "@/components/product/ReportProductModal";
 
 interface ProductPageHeaderProps {
   title?: string;
@@ -13,7 +14,7 @@ interface ProductPageHeaderProps {
   productId?: string;
 }
 
-export function ProductPageHeader({ title = "Товар", price }: ProductPageHeaderProps) {
+export function ProductPageHeader({ title = "Товар", price, productId }: ProductPageHeaderProps) {
   const router = useRouter();
   const [isCopied, setIsCopied] = useState(false);
 
@@ -70,6 +71,13 @@ export function ProductPageHeader({ title = "Товар", price }: ProductPageHe
         <ChevronLeft className="h-6 w-6" />
       </button>
       <div className="flex items-center gap-1">
+        {productId && (
+          <ReportProductModal
+            productId={productId}
+            productTitle={title}
+            variant="icon"
+          />
+        )}
         <button
           type="button"
           onClick={handleShare}
@@ -99,9 +107,11 @@ export function ProductPageHeader({ title = "Товар", price }: ProductPageHe
 export function ProductPageHeaderDesktop({
   title = "Товар",
   price,
+  productId,
 }: {
   title?: string;
   price?: number;
+  productId?: string;
 }) {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -161,24 +171,33 @@ export function ProductPageHeaderDesktop({
             {title}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={handleShare}
-          className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shrink-0 ml-4 shadow-2xs active:scale-95"
-          title="Поделиться товаром"
-        >
-          {isCopied ? (
-            <>
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-emerald-700">Скопировано!</span>
-            </>
-          ) : (
-            <>
-              <Share2 className="h-3.5 w-3.5 text-gray-500" />
-              <span>Поделиться</span>
-            </>
+        <div className="flex items-center gap-2.5 shrink-0 ml-4">
+          {productId && (
+            <ReportProductModal
+              productId={productId}
+              productTitle={title}
+              variant="header"
+            />
           )}
-        </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-2xs active:scale-95"
+            title="Поделиться товаром"
+          >
+            {isCopied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="text-emerald-700">Скопировано!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5 text-gray-500" />
+                <span>Поделиться</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </header>
   );

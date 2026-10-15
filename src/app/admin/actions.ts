@@ -195,3 +195,19 @@ export async function deleteReportAdmin(reportId: string) {
   revalidatePath("/admin");
 }
 
+export async function touchAndRevalidateAllProductsAction(): Promise<{ count: number }> {
+  await checkAdmin();
+  // 1. Обновляем метку времени всех активных товаров в БД
+  const result = await prisma.product.updateMany({
+    where: { deletedAt: null },
+    data: { updatedAt: new Date() },
+  });
+
+  // 2. Сбрасываем кэш Next.js App Router для всех страниц
+  revalidateTag("products");
+  revalidatePath("/", "layout");
+
+  return { count: result.count };
+}
+
+

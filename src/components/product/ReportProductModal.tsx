@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 interface ReportProductModalProps {
   productId: string;
   productTitle: string;
+  variant?: "button" | "icon" | "header";
 }
 
 const REPORT_REASONS = [
@@ -18,7 +19,11 @@ const REPORT_REASONS = [
   { id: "other", label: "Другая причина", icon: "💬" },
 ];
 
-export function ReportProductModal({ productId, productTitle }: ReportProductModalProps) {
+export function ReportProductModal({ 
+  productId, 
+  productTitle, 
+  variant = "button" 
+}: ReportProductModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [details, setDetails] = useState<string>("");
@@ -97,15 +102,37 @@ export function ReportProductModal({ productId, productTitle }: ReportProductMod
   return (
     <>
       {/* Кнопка вызова модального окна на странице товара */}
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="group inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-500 transition-colors py-1"
-        title="Сообщить о нарушении или неактуальной информации"
-      >
-        <Flag className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-        <span>Пожаловаться на товар</span>
-      </button>
+      {variant === "icon" ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="rounded-full p-2 text-gray-700 transition-colors hover:bg-surface hover:text-rose-600 active:scale-95"
+          aria-label="Пожаловаться на товар"
+          title="Пожаловаться на товар"
+        >
+          <Flag className="h-5 w-5" />
+        </button>
+      ) : variant === "header" ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 transition-all shrink-0 shadow-2xs active:scale-95"
+          title="Пожаловаться на товар"
+        >
+          <Flag className="h-3.5 w-3.5 text-gray-400 group-hover:text-rose-500" />
+          <span>Пожаловаться</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="group inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-rose-600 transition-colors py-1"
+          title="Сообщить о нарушении или неактуальной информации"
+        >
+          <Flag className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+          <span>Пожаловаться на товар</span>
+        </button>
+      )}
 
       {/* Модальное окно */}
       {isOpen && (

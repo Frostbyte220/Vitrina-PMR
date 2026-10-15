@@ -12,7 +12,8 @@ import {
   fillRandomSizesAction,
   resolveReportAdmin,
   dismissReportAdmin,
-  deleteReportAdmin
+  deleteReportAdmin,
+  touchAndRevalidateAllProductsAction
 } from "./actions";
 import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -70,6 +71,23 @@ export function AdminClient({
   const [migrateResult, setMigrateResult] = useState<{ storeId: number; subCategory: number; total: number } | null>(null);
   const [fillingSizes, setFillingSizes] = useState(false);
   const [fillSizesResult, setFillSizesResult] = useState<{ updated: number; total: number } | null>(null);
+  const [revalidating, setRevalidating] = useState(false);
+  const [revalidateCount, setRevalidateCount] = useState<number | null>(null);
+
+  const handleRevalidateAll = async () => {
+    if (!confirm("Сбросить кэш и обновить все товары на витрине?")) return;
+    setRevalidating(true);
+    setRevalidateCount(null);
+    try {
+      const res = await touchAndRevalidateAllProductsAction();
+      setRevalidateCount(res.count);
+      toast.success(`Успешно! Обновлено и сброшен кэш для ${res.count} товаров`);
+    } catch {
+      toast.error("Ошибка при обновлении товаров");
+    } finally {
+      setRevalidating(false);
+    }
+  };
 
   const handleMigrate = async () => {
     if (!confirm("Запустить миграцию данных? Это обновит storeId и subCategory для всех товаров.")) return;
@@ -232,6 +250,31 @@ export function AdminClient({
           >
             <RefreshCw className={`h-4 w-4 ${fillingSizes ? "animate-spin" : ""}`} />
             {fillingSizes ? "Выполняется..." : "Добавить размеры"}
+          </button>
+        </div>
+
+        <div className="border-t border-amber-200" />
+
+        {/* Строка 3: Обновить все товары и сбросить кэш */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-amber-800">⚡ Обновить все товары и сбросить кэш</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              Сбрасывает кэш страниц Next.js и обновляет товары в базе данных, гарантируя показ кнопки «Пожаловаться на товар» у всех посетителей.
+            </p>
+            {revalidateCount !== null && (
+              <p className="mt-1 text-xs font-medium text-green-700">
+                ✅ Обновлено и сброшен кэш для {revalidateCount} товаров
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleRevalidateAll}
+            disabled={revalidating}
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${revalidating ? "animate-spin" : ""}`} />
+            {revalidating ? "Обновляется..." : "Обновить все товары"}
           </button>
         </div>
       </div>

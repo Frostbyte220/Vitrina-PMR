@@ -188,6 +188,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductPageHeaderDesktop
         title={product.title}
         price={product.price}
+        productId={product.id}
       />
 
       <main className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-6 md:pb-16">
