@@ -2,16 +2,13 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next"; 
 import Image from "next/image";
 import { Header } from "@/components/layout/Header";
-import { ProductGrid } from "@/components/product/ProductGrid";
-import { ShopFilters } from "@/components/shop/ShopFilters";
-import { Pagination } from "@/components/Pagination";
+import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { prisma } from "@/lib/prisma";
 import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { isHiddenStore } from "@/lib/storeFilter";
 
 export const revalidate = 60;
-const ITEMS_PER_PAGE = 12;
 
 interface ShopPageProps {
   params: Promise<{ username: string }>;
@@ -73,15 +70,10 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   const resolvedSearchParams = await searchParams;
   const { username } = resolvedParams;
 
-  // 1. Параметры фильтрации
-  const categoryFilter = typeof resolvedSearchParams.category === "string" ? resolvedSearchParams.category : undefined;
+  // 1. Параметры фильтрации из URL (для синхронизации начального состояния)
+  const categoryFilter = typeof resolvedSearchParams.category === "string" ? resolvedSearchParams.category : "all";
   const sortFilter = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : "newest";
   const currentPage = Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1;
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  let orderBy: any = { createdAt: "desc" };
-  if (sortFilter === "price_asc") orderBy = { price: "asc" };
-  if (sortFilter === "price_desc") orderBy = { price: "desc" };
 
   // 2. Ищем магазин по instagram или slug (проверяем и таблицу Store, и таблицу User)
   const store = await prisma.store.findFirst({
@@ -120,50 +112,39 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
 
   if (!store || isHiddenStore(store)) notFound();
 
-  // 3. Товары привязаны к userId (владельцу магазина)
-  const productWhere: any = { 
-    deletedAt: null, 
-    userId: store.userId, 
-    status: "Активен" 
-  };
-  
-  if (categoryFilter && categoryFilter !== "all") {
-    productWhere.category = categoryFilter;
+  // 3. Загружаем ВСЕ активные товары магазина одним быстрым запросом.
+  // Это обеспечивает мгновенную фильтрацию и сортировку на клиенте (0ms задержки).
+  const rawProducts = await prisma.product.findMany({
+    where: {
+      deletedAt: null,
+      userId: store.userId,
+      status: "Активен",
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      category: true,
+      subCategory: true,
+      sizes: true,
+      images: true,
+      description: true,
+      status: true,
+      userId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  // Автоматический подсчет категорий и количества товаров в каждой
+  const categoryCounts: Record<string, number> = {};
+  for (const item of rawProducts) {
+    if (item.category) {
+      categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+    }
   }
-
-  // 4. Запрос товаров
-  const [rawProducts, totalCount, distinctCategories] = await Promise.all([
-    prisma.product.findMany({
-      where: productWhere,
-      orderBy,
-      skip,
-      take: ITEMS_PER_PAGE,
-      // select — только нужные поля, без over-fetching
-      select: {
-        id: true,
-        title: true,
-        price: true,
-        category: true,
-        subCategory: true,
-        sizes: true,
-        images: true,
-        description: true,
-        status: true,
-        userId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.product.count({ where: productWhere }),
-    prisma.product.findMany({
-      where: { deletedAt: null, userId: store.userId, status: "Активен" },
-      select: { category: true },
-      distinct: ["category"],
-    })
-  ]);
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-  const availableCategories = distinctCategories.map((p) => p.category).filter(Boolean) as string[];
+  const availableCategories = Object.keys(categoryCounts).sort();
 
   const cleanInstagram = store.instagram ? store.instagram.replace(/^@/, '') : store.user.instagram?.replace(/^@/, '');
 
@@ -182,6 +163,16 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     userId: item.userId,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+    store: {
+      name: store.name,
+      slug: store.slug,
+      instagram: store.instagram,
+      avatarUrl: store.avatarUrl,
+      cities: store.cities,
+      telegram: store.telegram,
+      viber: store.viber,
+      phone: store.phone,
+    },
   }));
 
   const storeInitial = store.name.charAt(0).toUpperCase();
@@ -300,29 +291,14 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
 
           <div className="mb-8 h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
 
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Товары продавца ({totalCount})</h2>
-          </div>
-
-          {availableCategories.length > 0 && <ShopFilters categories={availableCategories} />}
-
-          {products.length > 0 ? (
-            <>
-              <ProductGrid products={products} />
-              <Pagination totalPages={totalPages} currentPage={currentPage} />
-            </>
-          ) : (
-            <div className="rounded-2xl bg-gray-50 py-16 text-center">
-              {categoryFilter ? (
-                <div>
-                  <p className="mb-2 font-medium text-gray-500">В этой категории пока нет товаров.</p>
-                  <a href={`/shop/${username}`} className="text-sm font-medium text-rose-600 underline hover:text-rose-700">Сбросить фильтры</a>
-                </div>
-              ) : (
-                <p className="text-gray-500">Этот магазин пока не добавил товары.</p>
-              )}
-            </div>
-          )}
+          <ShopCatalog
+            products={products}
+            categories={availableCategories}
+            categoryCounts={categoryCounts}
+            initialCategory={categoryFilter}
+            initialSort={sortFilter}
+            initialPage={currentPage}
+          />
         </div>
       </main>
     </>
