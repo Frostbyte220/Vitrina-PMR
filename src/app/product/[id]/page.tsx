@@ -86,13 +86,14 @@ export async function generateMetadata({
   }
 
   const productUrl = `${BASE_URL}/product/${id}`;
-  const images = product.images?.length > 0 ? product.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"];
   const shopName = product.store?.name || product.user?.store?.name || product.user?.name || "E-Vitrina PMR";
   
   // Обрезаем описание для мета-тегов до 160 символов (стандарт поисковиков)
   const cleanDescription =
     product.description?.substring(0, 140) ||
     `Купить ${product.title} в ПМР — магазин ${shopName} на Витрине ПМР. Доставка по всему Приднестровью.`;
+
+  const ogImageUrl = `${BASE_URL}/api/og/product?id=${id}`;
 
   return {
     title: `${product.title} — купить в ПМР | ${shopName}`,
@@ -109,20 +110,27 @@ export async function generateMetadata({
       canonical: productUrl,
     },
     openGraph: {
-      title: `${product.title} — купить в ПМР`,
+      title: `${product.title} — ${product.price.toLocaleString("ru-RU")} Руб | ${shopName}`,
       description: cleanDescription,
       url: productUrl,
       siteName: "E-Vitrina PMR",
       images: [
         {
-          url: images[0],
-          width: 800,
-          height: 800,
-          alt: product.title,
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${product.title} — ${shopName}`,
         },
       ],
       locale: "ru_RU",
       type: "website",
+    },
+    // Twitter/X card (также используется Telegram при недоступности og:image)
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.title} — ${product.price.toLocaleString("ru-RU")} Руб`,
+      description: cleanDescription,
+      images: [ogImageUrl],
     },
   };
 }
