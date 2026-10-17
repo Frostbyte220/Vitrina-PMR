@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/validations/product";
+import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -59,6 +60,7 @@ export async function GET(request: Request) {
       // 2. Поиск магазинов по названию или instagram
       prisma.store.findMany({
         where: {
+          NOT: HIDDEN_STORE_PRISMA_NOT,
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { slug: { contains: q, mode: "insensitive" } },
@@ -87,7 +89,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       products,
-      stores,
+      stores: stores.filter((s) => !isHiddenStore(s)),
       categories: matchingCategories,
       suggestions: products, // обратная совместимость
     });

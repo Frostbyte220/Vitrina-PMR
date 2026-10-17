@@ -6,6 +6,7 @@ import { Store as StoreIcon, MapPin } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/ui/BackButton";
 import { ShopCityFilter } from "@/components/shops/ShopCityFilter";
+import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
 
 export const metadata: Metadata = {
   title: "Магазины и бренды",
@@ -25,10 +26,13 @@ export default async function ShopsPage({
 
   const whereClause =
     selectedCities.length > 0
-      ? { cities: { hasSome: selectedCities } }
-      : undefined;
+      ? {
+          cities: { hasSome: selectedCities },
+          NOT: HIDDEN_STORE_PRISMA_NOT,
+        }
+      : { NOT: HIDDEN_STORE_PRISMA_NOT };
 
-  const stores = await prisma.store.findMany({
+  const rawStores = await prisma.store.findMany({
     where: whereClause,
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -49,6 +53,8 @@ export default async function ShopsPage({
       },
     },
   });
+
+  const stores = rawStores.filter((s) => !isHiddenStore(s));
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">

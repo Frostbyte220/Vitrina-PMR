@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vitrina-pmr.vercel.app";
 
@@ -82,16 +83,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let storePages: MetadataRoute.Sitemap = [];
   try {
     const stores = await prisma.store.findMany({
-      select: { slug: true, updatedAt: true },
+      where: {
+        NOT: HIDDEN_STORE_PRISMA_NOT,
+      },
+      select: { name: true, slug: true, instagram: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });
 
-    storePages = stores.map((store) => ({
-      url: `${BASE_URL}/shop/${store.slug}`,
-      lastModified: store.updatedAt,
-      changeFrequency: "daily" as const,
-      priority: 0.7,
-    }));
+    storePages = stores
+      .filter((store) => !isHiddenStore(store))
+      .map((store) => ({
+        url: `${BASE_URL}/shop/${store.slug}`,
+        lastModified: store.updatedAt,
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      }));
   } catch (error) {
     console.error("[SITEMAP] Ошибка загрузки магазинов:", error);
   }

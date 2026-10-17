@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Store, MapPin, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
 
 interface MatchingStoresProps {
   cities?: string;
@@ -12,10 +13,13 @@ export async function MatchingStores({ cities }: MatchingStoresProps) {
 
   const whereClause =
     selectedCities.length > 0
-      ? { cities: { hasSome: selectedCities } }
-      : undefined;
+      ? {
+          cities: { hasSome: selectedCities },
+          NOT: HIDDEN_STORE_PRISMA_NOT,
+        }
+      : { NOT: HIDDEN_STORE_PRISMA_NOT };
 
-  const stores = await prisma.store.findMany({
+  const rawStores = await prisma.store.findMany({
     where: whereClause,
     orderBy: { createdAt: "desc" },
     take: 12,
@@ -35,6 +39,8 @@ export async function MatchingStores({ cities }: MatchingStoresProps) {
       },
     },
   });
+
+  const stores = rawStores.filter((s) => !isHiddenStore(s));
 
   if (stores.length === 0 && selectedCities.length === 0) {
     return null;

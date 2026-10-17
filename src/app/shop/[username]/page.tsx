@@ -8,6 +8,7 @@ import { Pagination } from "@/components/Pagination";
 import { prisma } from "@/lib/prisma";
 import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
+import { isHiddenStore } from "@/lib/storeFilter";
 
 export const revalidate = 60;
 const ITEMS_PER_PAGE = 12;
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
     include: { user: true }
   });
 
-  if (!store) return { title: "Магазин не найден | E-Vitrina PMR" };
+  if (!store || isHiddenStore(store)) return { title: "Магазин не найден | E-Vitrina PMR" };
 
   const baseUrl = "https://vitrina-pmr.vercel.app";
   const cityText = store.cities?.length ? `в ${store.cities[0]}` : "в ПМР";
@@ -117,7 +118,7 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     },
   });
 
-  if (!store) notFound();
+  if (!store || isHiddenStore(store)) notFound();
 
   // 3. Товары привязаны к userId (владельцу магазина)
   const productWhere: any = { 
