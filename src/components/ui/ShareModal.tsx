@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import {
   X,
   Send,
@@ -69,13 +68,17 @@ export function ShareModal({
   const [mounted, setMounted] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState(shareData.url || "");
 
   useEffect(() => {
     setMounted(true);
+    if (!shareData.url && typeof window !== "undefined") {
+      setCurrentUrl(window.location.href);
+    }
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       setCanNativeShare(true);
     }
-  }, []);
+  }, [shareData.url]);
 
   // Блокировка прокрутки страницы при открытой модалке
   useEffect(() => {
@@ -99,17 +102,14 @@ export function ShareModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const finalUrl = useMemo(() => {
-    if (shareData.url) return shareData.url;
-    if (typeof window !== "undefined") return window.location.href;
-    return "https://vitrina-pmr.vercel.app";
-  }, [shareData.url]);
+  const finalUrl = shareData.url || currentUrl || "https://vitrina-pmr.vercel.app";
+  const displayTitle = shareData.title || "Товар";
 
   const shareText = useMemo(() => {
     if (shareData.text) return shareData.text;
     const sub = shareData.subtitle ? ` (${shareData.subtitle})` : "";
-    return `Посмотри «${shareData.title}»${sub} на E-Vitrina PMR:`;
-  }, [shareData.text, shareData.title, shareData.subtitle]);
+    return `Посмотри «${displayTitle}»${sub} на E-Vitrina PMR:`;
+  }, [shareData.text, displayTitle, shareData.subtitle]);
 
   // Обработка копирования ссылки
   const handleCopy = async () => {
@@ -117,7 +117,7 @@ export function ShareModal({
     if (success) {
       setIsCopied(true);
       toast.success("Ссылка скопирована в буфер обмена!");
-      trackEvent("share", { channel: "copy_link", title: shareData.title, url: finalUrl });
+      trackEvent("share", { channel: "copy_link", title: displayTitle, url: finalUrl });
       setTimeout(() => setIsCopied(false), 2500);
     } else {
       toast.error("Не удалось скопировать ссылку");
@@ -128,9 +128,9 @@ export function ShareModal({
   const handleNativeShare = async () => {
     if (!navigator.share) return;
     try {
-      trackEvent("share", { channel: "web_share_api", title: shareData.title, url: finalUrl });
+      trackEvent("share", { channel: "web_share_api", title: displayTitle, url: finalUrl });
       await navigator.share({
-        title: shareData.title,
+        title: displayTitle,
         text: shareText,
         url: finalUrl,
       });
@@ -176,7 +176,10 @@ export function ShareModal({
     },
   ];
 
-  if (!mounted) return null;
+  // Если модалка закрыта или компонент ещё не смонтирован на клиенте — не рендерим ничего
+  if (!isOpen || !mounted || typeof document === "undefined" || !document.body) {
+    return null;
+  }
 
   const modalNode = (
     <AnimatePresence>
@@ -227,22 +230,22 @@ export function ShareModal({
             <div className="my-3.5 flex items-center gap-3 rounded-2xl bg-gray-50 border border-gray-200/70 p-3">
               {shareData.imageUrl ? (
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-white">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={shareData.imageUrl}
-                    alt={shareData.title}
-                    fill
-                    sizes="56px"
-                    className="object-cover"
+                    alt={displayTitle}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
                   />
                 </div>
               ) : (
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-orange-100 text-rose-700 font-bold text-lg">
-                  {shareData.title.charAt(0).toUpperCase()}
+                  {displayTitle.charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm text-gray-900 line-clamp-1 leading-snug">
-                  {shareData.title}
+                  {displayTitle}
                 </p>
                 {shareData.subtitle && (
                   <p className="text-xs font-medium text-rose-600 mt-0.5 line-clamp-1">
@@ -292,7 +295,7 @@ export function ShareModal({
                     onClick={() => {
                       trackEvent("share", {
                         channel: ch.id,
-                        title: shareData.title,
+                        title: displayTitle,
                         url: finalUrl,
                       });
                       onClose();
@@ -362,5 +365,5 @@ export function ShareModal({
     </AnimatePresence>
   );
 
-  return typeof document !== "undefined" ? createPortal(modalNode, document.body) : null;
+  return createPortal(modalNode, document.body);
 }

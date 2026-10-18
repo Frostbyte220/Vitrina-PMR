@@ -40,7 +40,7 @@ export function ProductPurchaseSection({
     setSelectedSize((prev) => (prev === size ? null : size));
   };
 
-  const formattedPrice = formatPrice(productPrice);
+  const formattedPrice = typeof productPrice === "number" ? formatPrice(productPrice) : "";
   const shareSubtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
 
   return (

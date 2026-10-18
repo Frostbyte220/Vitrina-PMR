@@ -8,7 +8,6 @@ import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
-import { ShareButton } from "@/components/ui/ShareButton";
 
 interface ProductCardProps {
   product: Product & {
@@ -131,21 +130,8 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         </div>
       </Link>
 
-      {/* 2. Фото товара + Кнопки Избранного и Поделиться */}
+      {/* 2. Фото товара + Кнопка Избранного */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface/50">
-        <div className="absolute left-3 top-3 z-10">
-          <ShareButton
-            title={product.title}
-            subtitle={`${formatPrice(product.price)} · ${displayName}`}
-            text={`Товар «${product.title}» (${formatPrice(product.price)}) на E-Vitrina PMR:`}
-            url={typeof window !== "undefined" ? `${window.location.origin}/product/${product.id}` : undefined}
-            imageUrl={imageUrl}
-            variant="icon"
-            label="Поделиться товаром"
-            modalTitle="Поделиться товаром"
-            className="bg-white/80 text-gray-500 hover:text-gray-900 hover:bg-white backdrop-blur-md shadow-sm transition-all hover:scale-110 active:scale-95"
-          />
-        </div>
         <FavoriteButton productId={product.id} />
         <Link 
           href={`/product/${product.id}`} 

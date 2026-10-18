@@ -68,23 +68,25 @@ export function ProductPageHeader({
         </div>
       </header>
 
-      <ShareModal
-        isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
-        modalTitle="Поделиться товаром"
-        shareData={{
-          title,
-          subtitle,
-          imageUrl,
-          text: `Товар «${title}»${formattedPrice ? ` (${formattedPrice})` : ""} на E-Vitrina PMR:`,
-          url:
-            typeof window !== "undefined"
-              ? window.location.href
-              : productId
-              ? `https://vitrina-pmr.vercel.app/product/${productId}`
-              : undefined,
-        }}
-      />
+      {isShareOpen && (
+        <ShareModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          modalTitle="Поделиться товаром"
+          shareData={{
+            title,
+            subtitle,
+            imageUrl,
+            text: `Товар «${title}»${formattedPrice ? ` (${formattedPrice})` : ""} на E-Vitrina PMR:`,
+            url:
+              typeof window !== "undefined"
+                ? window.location.href
+                : productId
+                ? `https://vitrina-pmr.vercel.app/product/${productId}`
+                : undefined,
+          }}
+        />
+      )}
     </>
   );
 }
@@ -144,23 +146,25 @@ export function ProductPageHeaderDesktop({
         </div>
       </header>
 
-      <ShareModal
-        isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
-        modalTitle="Поделиться товаром"
-        shareData={{
-          title,
-          subtitle,
-          imageUrl,
-          text: `Товар «${title}»${formattedPrice ? ` (${formattedPrice})` : ""} на E-Vitrina PMR:`,
-          url:
-            typeof window !== "undefined"
-              ? window.location.href
-              : productId
-              ? `https://vitrina-pmr.vercel.app/product/${productId}`
-              : undefined,
-        }}
-      />
+      {isShareOpen && (
+        <ShareModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          modalTitle="Поделиться товаром"
+          shareData={{
+            title,
+            subtitle,
+            imageUrl,
+            text: `Товар «${title}»${formattedPrice ? ` (${formattedPrice})` : ""} на E-Vitrina PMR:`,
+            url:
+              typeof window !== "undefined"
+                ? window.location.href
+                : productId
+                ? `https://vitrina-pmr.vercel.app/product/${productId}`
+                : undefined,
+          }}
+        />
+      )}
     </>
   );
 }

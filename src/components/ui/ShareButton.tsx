@@ -99,12 +99,14 @@ export function ShareButton({
         )}
       </button>
 
-      <ShareModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        shareData={shareData}
-        modalTitle={modalTitle}
-      />
+      {isOpen && (
+        <ShareModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          shareData={shareData}
+          modalTitle={modalTitle}
+        />
+      )}
     </>
   );
 }
