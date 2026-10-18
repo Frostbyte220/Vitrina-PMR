@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef, useMemo } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ArrowDownAZ, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
@@ -23,6 +23,7 @@ const SORT_OPTIONS = [
   { value: "oldest",     label: "Сначала старые",      Icon: ArrowUpDown },
   { value: "price_asc",  label: "Сначала дешевые",     Icon: ArrowUp },
   { value: "price_desc", label: "Сначала дорогие",     Icon: ArrowDown },
+  { value: "title_asc",  label: "По названию",         Icon: ArrowDownAZ },
 ] as const;
 
 type SortValue = typeof SORT_OPTIONS[number]["value"];

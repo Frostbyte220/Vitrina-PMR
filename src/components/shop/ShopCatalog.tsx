@@ -38,7 +38,7 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Сначала новые" },
   { value: "price_asc", label: "Сначала дешевые" },
   { value: "price_desc", label: "Сначала дорогие" },
-  { value: "title_asc", label: "По названию (А–Я)" },
+  { value: "title_asc", label: "По названию" },
 ] as const;
 
 type SortValue = typeof SORT_OPTIONS[number]["value"];

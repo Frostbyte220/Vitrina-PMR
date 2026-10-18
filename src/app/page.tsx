@@ -138,6 +138,7 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   if (sort === "oldest") orderBy = { createdAt: "asc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
+  if (sort === "title_asc" || sort === "title") orderBy = { title: "asc" };
 
   const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
   const selectedSizes = sizes ? sizes.split(",").map((s) => s.trim()).filter(Boolean) : [];
