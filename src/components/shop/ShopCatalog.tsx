@@ -317,7 +317,7 @@ export function ShopCatalog({
               setCurrentPage(1);
             }}
             placeholder="Поиск в этом магазине..."
-            className="w-full rounded-full border border-gray-200/90 bg-white py-2 pl-9.5 pr-8 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-xs transition-all focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+            className="w-full rounded-full border border-gray-200/90 bg-white py-2 pl-10 pr-9 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-xs transition-all focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
           />
           {searchQuery && (
             <button
