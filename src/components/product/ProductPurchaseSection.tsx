@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ContactSellerButton, StoreContacts } from "./ContactSellerButton";
 import { Check } from "lucide-react";
+import { ShareButton } from "@/components/ui/ShareButton";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductPurchaseSectionProps {
   productId: string;
@@ -12,6 +14,8 @@ interface ProductPurchaseSectionProps {
   contacts?: StoreContacts | null;
   sizes?: string[];
   category?: string;
+  imageUrl?: string | null;
+  shopName?: string | null;
 }
 
 export function ProductPurchaseSection({
@@ -22,6 +26,8 @@ export function ProductPurchaseSection({
   contacts,
   sizes = [],
   category,
+  imageUrl,
+  shopName,
 }: ProductPurchaseSectionProps) {
   // Выбранный размер (по умолчанию первый размер, если есть, либо null)
   const hasSizes = Array.isArray(sizes) && sizes.length > 0;
@@ -33,6 +39,9 @@ export function ProductPurchaseSection({
     // Если нажимаем на уже выбранный — переключаем (или оставляем)
     setSelectedSize((prev) => (prev === size ? null : size));
   };
+
+  const formattedPrice = formatPrice(productPrice);
+  const shareSubtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
 
   return (
     <>
@@ -87,20 +96,32 @@ export function ProductPurchaseSection({
         </div>
       )}
 
-      {/* 2. Десктопная кнопка связи */}
-      <div className="hidden md:block mt-2">
-        <ContactSellerButton
-          productId={productId}
-          productName={productName}
-          productPrice={productPrice}
-          shopUsername={shopUsername}
-          contacts={contacts}
-          isCardView={true}
-          selectedSize={selectedSize}
+      {/* 2. Десктопная секция связи + кнопка «Поделиться» */}
+      <div className="hidden md:flex items-center gap-2.5 mt-2">
+        <div className="flex-1">
+          <ContactSellerButton
+            productId={productId}
+            productName={productName}
+            productPrice={productPrice}
+            shopUsername={shopUsername}
+            contacts={contacts}
+            isCardView={true}
+            selectedSize={selectedSize}
+          />
+        </div>
+        <ShareButton
+          title={productName}
+          subtitle={shareSubtitle}
+          imageUrl={imageUrl}
+          variant="outline"
+          size="md"
+          label="Поделиться"
+          modalTitle="Поделиться товаром"
+          className="h-[46px] px-4 shrink-0 rounded-xl"
         />
       </div>
 
-      {/* 3. Мобильная фиксированная панель связи */}
+      {/* 3. Мобильная фиксированная панель связи + кнопка «Поделиться» */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md p-3.5 md:hidden pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         {hasSizes && selectedSize && (
           <div className="mb-2 flex items-center justify-between text-xs px-1">
@@ -116,15 +137,29 @@ export function ProductPurchaseSection({
             </button>
           </div>
         )}
-        <ContactSellerButton
-          productId={productId}
-          productName={productName}
-          productPrice={productPrice}
-          shopUsername={shopUsername}
-          contacts={contacts}
-          isCardView={true}
-          selectedSize={selectedSize}
-        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <ContactSellerButton
+              productId={productId}
+              productName={productName}
+              productPrice={productPrice}
+              shopUsername={shopUsername}
+              contacts={contacts}
+              isCardView={true}
+              selectedSize={selectedSize}
+            />
+          </div>
+          <ShareButton
+            title={productName}
+            subtitle={shareSubtitle}
+            imageUrl={imageUrl}
+            variant="icon"
+            size="md"
+            label="Поделиться"
+            modalTitle="Поделиться товаром"
+            className="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 shadow-sm"
+          />
+        </div>
       </div>
     </>
   );

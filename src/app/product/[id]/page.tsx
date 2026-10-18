@@ -192,11 +192,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
         title={product.title}
         price={product.price}
         productId={product.id}
+        imageUrl={images[0]}
+        shopName={shopName}
       />
       <ProductPageHeaderDesktop
         title={product.title}
         price={product.price}
         productId={product.id}
+        imageUrl={images[0]}
+        shopName={shopName}
       />
 
       <main className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-6 md:pb-16">
@@ -236,7 +240,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </span>
             </Link>
 
-            {/* Секция покупки: выбор размера, десктопная и мобильная кнопки связи */}
+            {/* Секция покупки: выбор размера, десктопная и мобильная кнопки связи, кнопка поделиться */}
             <ProductPurchaseSection
               productId={product.id}
               productName={product.title}
@@ -245,6 +249,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               contacts={storeContacts}
               sizes={product.sizes || []}
               category={product.category}
+              imageUrl={images[0]}
+              shopName={shopName}
             />
 
             {/* Кнопка «Пожаловаться на товар» */}

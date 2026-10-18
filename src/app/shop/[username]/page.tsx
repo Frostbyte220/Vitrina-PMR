@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { isHiddenStore } from "@/lib/storeFilter";
+import { ShareButton } from "@/components/ui/ShareButton";
 
 export const revalidate = 60;
 
@@ -279,6 +280,17 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
                   <span>{store.phone}</span>
                 </a>
               )}
+
+              <ShareButton
+                title={store.name}
+                text={`Магазин «${store.name}» на E-Vitrina PMR — каталог товаров локального бренда`}
+                subtitle={store.cities && store.cities.length > 0 ? store.cities.join(", ") : "Магазин в ПМР"}
+                imageUrl={store.avatarUrl || store.coverUrl}
+                variant="pill"
+                label="Поделиться"
+                modalTitle="Поделиться магазином"
+                className="bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 shadow-sm"
+              />
             </div>
 
             {/* Описание */}
