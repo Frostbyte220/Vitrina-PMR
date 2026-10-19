@@ -11,6 +11,7 @@ import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
+import { getBanners } from "@/lib/banners";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 
@@ -37,6 +38,7 @@ export default async function HomePage({
 }) {
   const session = await getServerSession(authOptions);
   const params = await searchParams;
+  const banners = await getBanners();
   const shopsHref = params.cities
     ? `/shops?cities=${encodeURIComponent(params.cities)}`
     : "/shops";
@@ -100,8 +102,8 @@ export default async function HomePage({
         <VisualCategories />
       </div>
 
-      {/* Рекламная карусель — Баннер #1 */}
-      <AdBannerCarousel />
+      {/* Рекламная карусель — Баннер #1 (динамический из БД) */}
+      <AdBannerCarousel banners={banners} />
 
       {/* Сетка товаров с Suspense */}
       <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">

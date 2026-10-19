@@ -210,4 +210,88 @@ export async function touchAndRevalidateAllProductsAction(): Promise<{ count: nu
   return { count: result.count };
 }
 
+export type BannerInput = {
+  title: string;
+  sub?: string;
+  label?: string;
+  cta?: string;
+  href?: string;
+  bg?: string;
+  emoji?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+  order?: number;
+};
+
+export async function createBannerAdmin(data: BannerInput) {
+  await checkAdmin();
+  const count = await prisma.banner.count();
+  const banner = await prisma.banner.create({
+    data: {
+      title: data.title.trim(),
+      sub: data.sub?.trim() || null,
+      label: data.label?.trim() || null,
+      cta: data.cta?.trim() || "Подробнее",
+      href: data.href?.trim() || "/",
+      bg: data.bg?.trim() || "from-rose-600 to-rose-800",
+      emoji: data.emoji?.trim() || "✨",
+      imageUrl: data.imageUrl?.trim() || null,
+      isActive: data.isActive ?? true,
+      order: data.order ?? count,
+    },
+  });
+
+  revalidateTag("banners");
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return banner;
+}
+
+export async function updateBannerAdmin(id: string, data: BannerInput) {
+  await checkAdmin();
+  const banner = await prisma.banner.update({
+    where: { id },
+    data: {
+      title: data.title.trim(),
+      sub: data.sub?.trim() || null,
+      label: data.label?.trim() || null,
+      cta: data.cta?.trim() || "Подробнее",
+      href: data.href?.trim() || "/",
+      bg: data.bg?.trim() || "from-rose-600 to-rose-800",
+      emoji: data.emoji?.trim() || "✨",
+      imageUrl: data.imageUrl?.trim() || null,
+      isActive: data.isActive,
+      order: data.order,
+    },
+  });
+
+  revalidateTag("banners");
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return banner;
+}
+
+export async function toggleBannerActiveAdmin(id: string, isActive: boolean) {
+  await checkAdmin();
+  await prisma.banner.update({
+    where: { id },
+    data: { isActive },
+  });
+
+  revalidateTag("banners");
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function deleteBannerAdmin(id: string) {
+  await checkAdmin();
+  await prisma.banner.delete({
+    where: { id },
+  });
+
+  revalidateTag("banners");
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
 

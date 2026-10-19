@@ -2,59 +2,31 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-const SLIDES = [
-  {
-    id: 1,
-    bg: "from-rose-600 to-rose-800",
-    label: "Реклама",
-    title: "Разместите магазин бесплатно",
-    sub: "Тысячи покупателей ПМР увидят ваши товары уже сегодня",
-    cta: "Зарегистрироваться",
-    href: "/login",
-    emoji: "🏪",
-  },
-  {
-    id: 2,
-    bg: "from-violet-600 to-violet-800",
-    label: "Партнёр",
-    title: "SneakerHub PMR",
-    sub: "Новая коллекция кроссовок — Nike, Adidas, New Balance",
-    cta: "Смотреть товары",
-    href: "/shop/sneakershub",
-    emoji: "👟",
-  },
-  {
-    id: 3,
-    bg: "from-emerald-600 to-emerald-800",
-    label: "Акция",
-    title: "BeautiBox — косметика ПМР",
-    sub: "Уходовая косметика с доставкой по всему Приднестровью",
-    cta: "Перейти в магазин",
-    href: "/shop/beautibox",
-    emoji: "💄",
-  },
-  {
-    id: 4,
-    bg: "from-amber-500 to-orange-600",
-    label: "Новинка",
-    title: "Modny Shkaf — одежда",
-    sub: "Стильная одежда для всей семьи — доставка по ПМР",
-    cta: "Открыть каталог",
-    href: "/shop/modny_shkaf",
-    emoji: "👗",
-  },
-];
+import { BannerItem, FALLBACK_BANNERS } from "@/lib/banners";
 
 const INTERVAL_MS = 4500;
 
-export function AdBannerCarousel() {
+interface AdBannerCarouselProps {
+  banners?: BannerItem[];
+}
+
+export function AdBannerCarousel({ banners }: AdBannerCarouselProps) {
+  const slides = banners && banners.length > 0 ? banners : FALLBACK_BANNERS;
+
   const [current, setCurrent] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Сбрасываем текущий слайд, если кол-во слайдов изменилось
+  useEffect(() => {
+    if (current >= slides.length) {
+      setCurrent(0);
+    }
+  }, [slides.length, current]);
 
   const goTo = useCallback((index: number, dir: "left" | "right" = "right") => {
     setDirection(dir);
@@ -63,20 +35,26 @@ export function AdBannerCarousel() {
   }, []);
 
   const next = useCallback(() => {
-    goTo((current + 1) % SLIDES.length, "right");
-  }, [current, goTo]);
+    if (slides.length <= 1) return;
+    goTo((current + 1) % slides.length, "right");
+  }, [current, goTo, slides.length]);
 
   const prev = useCallback(() => {
-    goTo((current - 1 + SLIDES.length) % SLIDES.length, "left");
-  }, [current, goTo]);
+    if (slides.length <= 1) return;
+    goTo((current - 1 + slides.length) % slides.length, "left");
+  }, [current, goTo, slides.length]);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || slides.length <= 1) return;
     timerRef.current = setInterval(next, INTERVAL_MS);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [paused, next]);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [paused, next, slides.length]);
 
-  const slide = SLIDES[current];
+  if (!slides || slides.length === 0) return null;
+
+  const slide = slides[current] || slides[0];
 
   return (
     <>
@@ -103,44 +81,62 @@ export function AdBannerCarousel() {
         onMouseLeave={() => setPaused(false)}
       >
         {/* ── Слайд ── */}
-        <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${slide.bg} shadow-md`}>
+        <div
+          className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${slide.bg || "from-rose-600 to-rose-800"} shadow-md`}
+        >
+          {/* Фоновое изображение, если задано */}
+          {slide.imageUrl && (
+            <div className="absolute inset-0 opacity-20 mix-blend-overlay">
+              <Image
+                src={slide.imageUrl}
+                alt={slide.title}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+          )}
 
           {/* Анимированный контент */}
           <div
             key={animKey}
             className={direction === "right" ? "slide-in-right" : "slide-in-left"}
           >
-            <div className="flex items-center justify-between px-5 py-4 sm:px-8 sm:py-5">
+            <div className="relative z-10 flex items-center justify-between px-5 py-4 sm:px-8 sm:py-5">
               {/* Левая часть: текст */}
               <div className="flex-1 min-w-0 pr-4">
                 {slide.label && (
-                  <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white mb-2">
+                  <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white mb-2 backdrop-blur-xs">
                     {slide.label}
                   </span>
                 )}
                 <h3 className="text-base font-extrabold text-white leading-tight sm:text-lg line-clamp-1">
                   {slide.title}
                 </h3>
-                <p className="mt-0.5 text-xs text-white/80 line-clamp-2 sm:text-sm">
-                  {slide.sub}
-                </p>
+                {slide.sub && (
+                  <p className="mt-0.5 text-xs text-white/85 line-clamp-2 sm:text-sm">
+                    {slide.sub}
+                  </p>
+                )}
                 <Link
-                  href={slide.href}
-                  className="mt-3 inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-900 shadow transition-opacity hover:opacity-90"
+                  href={slide.href || "/"}
+                  className="mt-3 inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-900 shadow transition-all hover:bg-gray-100 hover:shadow-md"
                 >
-                  {slide.cta} →
+                  {slide.cta || "Подробнее"} →
                 </Link>
               </div>
 
-              {/* Правая часть: эмодзи */}
-              <div className="flex-shrink-0 text-5xl sm:text-6xl select-none">
-                {slide.emoji}
-              </div>
+              {/* Правая часть: эмодзи или мини-изображение */}
+              {slide.emoji && (
+                <div className="flex-shrink-0 text-5xl sm:text-6xl select-none">
+                  {slide.emoji}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Прогресс-бар */}
-          {!paused && (
+          {!paused && slides.length > 1 && (
             <div
               key={`bar-${animKey}`}
               className="absolute bottom-0 left-0 h-[3px] rounded-full bg-white/40"
@@ -149,35 +145,39 @@ export function AdBannerCarousel() {
           )}
         </div>
 
-        {/* ── Стрелки ── */}
-        <button
-          onClick={prev}
-          className="absolute left-5 sm:left-8 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40"
-          aria-label="Предыдущий слайд"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          onClick={next}
-          className="absolute right-5 sm:right-8 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40"
-          aria-label="Следующий слайд"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        {/* ── Точки-индикаторы ── */}
-        <div className="mt-2.5 flex justify-center gap-1.5">
-          {SLIDES.map((s, i) => (
+        {/* ── Стрелки (только если > 1 слайда) ── */}
+        {slides.length > 1 && (
+          <>
             <button
-              key={s.id}
-              onClick={() => goTo(i, i > current ? "right" : "left")}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? "w-5 bg-rose-500" : "w-1.5 bg-gray-300"
-              }`}
-              aria-label={`Слайд ${i + 1}`}
-            />
-          ))}
-        </div>
+              onClick={prev}
+              className="absolute left-5 sm:left-8 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              aria-label="Предыдущий слайд"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-5 sm:right-8 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              aria-label="Следующий слайд"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            {/* ── Точки-индикаторы ── */}
+            <div className="mt-2.5 flex justify-center gap-1.5">
+              {slides.map((s, i) => (
+                <button
+                  key={s.id || i}
+                  onClick={() => goTo(i, i > current ? "right" : "left")}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === current ? "w-5 bg-rose-500" : "w-1.5 bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  aria-label={`Слайд ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </>
   );

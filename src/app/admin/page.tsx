@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminClient } from "./AdminClient";
-import { ShieldAlert, Users, Package, Store, ArrowLeft } from "lucide-react";
+import { ShieldAlert, Users, Package, Store, ArrowLeft, Megaphone } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -24,7 +24,7 @@ export default async function AdminDashboardPage() {
   }
 
   // Запрашиваем данные для дашборда
-  const [stores, products, totalUsers, reports] = await Promise.all([
+  const [stores, products, totalUsers, reports, banners] = await Promise.all([
     prisma.store.findMany({
       include: {
         _count: { select: { products: true } }
@@ -54,6 +54,9 @@ export default async function AdminDashboardPage() {
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.banner.findMany({
+      orderBy: { order: "asc" },
+    }),
   ]);
 
   const pendingReportsCount = reports.filter((r) => r.status === "PENDING").length;
@@ -82,7 +85,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Сводка */}
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="flex flex-col rounded-2xl bg-white p-5 shadow-sm outline outline-1 outline-gray-200">
           <div className="flex items-center gap-3 text-gray-500 mb-2">
             <Store className="h-5 w-5" />
@@ -104,6 +107,18 @@ export default async function AdminDashboardPage() {
           </div>
           <span className="text-3xl font-extrabold text-gray-900">{totalUsers}</span>
         </div>
+        <div className="flex flex-col rounded-2xl bg-white p-5 shadow-sm outline outline-1 outline-gray-200">
+          <div className="flex items-center gap-3 text-gray-500 mb-2">
+            <Megaphone className="h-5 w-5 text-rose-600" />
+            <span className="text-sm font-medium">Баннеры</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-gray-900">{banners.length}</span>
+            <span className="text-xs font-semibold text-emerald-600">
+              ({banners.filter((b) => b.isActive).length} акт.)
+            </span>
+          </div>
+        </div>
         <div className={`flex flex-col rounded-2xl p-5 shadow-sm outline outline-1 transition-all ${
           pendingReportsCount > 0 
             ? "bg-rose-50/70 outline-rose-200 text-rose-900" 
@@ -124,7 +139,12 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <AdminClient stores={stores} products={products as any} reports={reports as any} />
+      <AdminClient
+        stores={stores}
+        products={products as any}
+        reports={reports as any}
+        banners={banners as any}
+      />
     </div>
   );
 }
