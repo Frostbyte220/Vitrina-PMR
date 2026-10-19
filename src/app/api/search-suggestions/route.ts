@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/validations/product";
-import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
+import { isHiddenStore } from "@/lib/storeFilter";
+import { getFuzzySuggestions, getFuzzyStores, getRussianStem } from "@/lib/fuzzySearch";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,79 +13,23 @@ export async function GET(request: Request) {
 
   try {
     const [products, stores] = await Promise.all([
-      // 1. Поиск товаров по названию или категории
-      prisma.product.findMany({
-        where: {
-          status: "Активен",
-          deletedAt: null,
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { category: { contains: q, mode: "insensitive" } },
-            { subCategory: { contains: q, mode: "insensitive" } },
-          ],
-        },
-        select: {
-          id: true,
-          title: true,
-          price: true,
-          images: true,
-          category: true,
-          sizes: true,
-          store: {
-            select: {
-              name: true,
-              slug: true,
-              avatarUrl: true,
-            },
-          },
-          user: {
-            select: {
-              name: true,
-              instagram: true,
-              avatar: true,
-              store: {
-                select: {
-                  name: true,
-                  slug: true,
-                  avatarUrl: true,
-                },
-              },
-            },
-          },
-        },
-        take: 6,
-        orderBy: { createdAt: "desc" },
-      }),
+      // 1. Умный поиск товаров (с учётом опечаток, падежей и брендов)
+      getFuzzySuggestions(q, 6),
 
-      // 2. Поиск магазинов по названию или instagram
-      prisma.store.findMany({
-        where: {
-          NOT: HIDDEN_STORE_PRISMA_NOT,
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { slug: { contains: q, mode: "insensitive" } },
-            { instagram: { contains: q, mode: "insensitive" } },
-          ],
-        },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          instagram: true,
-          avatarUrl: true,
-          cities: true,
-          _count: {
-            select: { products: { where: { status: "Активен", deletedAt: null } } },
-          },
-        },
-        take: 3,
-      }),
+      // 2. Умный поиск магазинов
+      getFuzzyStores(q, 3),
     ]);
 
-    // 3. Подбор подходящих категорий
-    const matchingCategories = CATEGORIES.filter((cat) =>
-      cat.toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 3);
+    // 3. Подбор подходящих категорий (с учётом корня слова)
+    const stem = getRussianStem(q.toLowerCase());
+    const matchingCategories = CATEGORIES.filter((cat) => {
+      const lowerCat = cat.toLowerCase();
+      const lowerQ = q.toLowerCase();
+      return (
+        lowerCat.includes(lowerQ) ||
+        (stem.length >= 3 && lowerCat.includes(stem))
+      );
+    }).slice(0, 3);
 
     return NextResponse.json({
       products,

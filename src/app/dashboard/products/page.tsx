@@ -6,6 +6,7 @@ import type { Product } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { ProductsTableClient } from "./ProductsTableClient";
 import type { Metadata } from "next";
+import { getRussianStem, BRAND_SYNONYMS } from "@/lib/fuzzySearch";
 
 export const metadata: Metadata = {
   title: "Мои товары | E-Vitrina PMR",
@@ -25,9 +26,12 @@ export default async function DashboardProductsPage({
   }
 
   const params = await searchParams;
-  const q = params.q || "";
+  const q = (params.q || "").trim();
   const currentPage = Number(params.page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const stem = q ? getRussianStem(q.toLowerCase()) : "";
+  const synonym = q ? BRAND_SYNONYMS[q.toLowerCase()] : "";
 
   const whereClause = {
     deletedAt: null,
@@ -38,6 +42,18 @@ export default async function DashboardProductsPage({
       ? [
           { title: { contains: q, mode: "insensitive" as const } },
           { description: { contains: q, mode: "insensitive" as const } },
+          ...(stem.length >= 3 && stem !== q.toLowerCase()
+            ? [
+                { title: { contains: stem, mode: "insensitive" as const } },
+                { description: { contains: stem, mode: "insensitive" as const } },
+              ]
+            : []),
+          ...(synonym
+            ? [
+                { title: { contains: synonym, mode: "insensitive" as const } },
+                { description: { contains: synonym, mode: "insensitive" as const } },
+              ]
+            : []),
         ]
       : undefined,
   };

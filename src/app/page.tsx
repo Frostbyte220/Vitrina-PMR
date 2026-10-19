@@ -10,6 +10,7 @@ import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
 import { getProducts } from "@/lib/cache";
+import { getFuzzyProducts } from "@/lib/fuzzySearch";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 
@@ -188,15 +189,6 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
     }
   }
 
-  if (q) {
-    conditions.push({
-      OR: [
-        { title: { contains: q, mode: "insensitive" as const } },
-        { description: { contains: q, mode: "insensitive" as const } },
-      ],
-    });
-  }
-
   if (selectedCities.length > 0) {
     conditions.push({
       OR: [
@@ -225,8 +217,18 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
     whereClause.AND = conditions;
   }
 
-  // Используем кэшированную версию запроса
-  const [products, totalCount] = await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
+  // Проверяем, задал ли пользователь явную сортировку (например, по цене или дате)
+  const isCustomSort = Boolean(
+    sort && ["oldest", "price_asc", "price_desc", "title_asc", "title"].includes(sort)
+  );
+
+  // Если есть поисковый запрос `q` — используем умный нечёткий поиск pg_trgm
+  // с поддержкой опечаток, падежей и синонимов брендов.
+  // Иначе используем кэшированную выборку каталога.
+  const [products, totalCount] = q && q.trim()
+    ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
+    : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
+
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
