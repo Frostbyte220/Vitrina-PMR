@@ -10,6 +10,7 @@ interface ProductCarouselProps {
   icon?: ReactNode;
   viewAllHref?: string;
   viewAllText?: string;
+  extraAction?: ReactNode;
   products: any[];
 }
 
@@ -18,6 +19,7 @@ export function ProductCarousel({
   icon,
   viewAllHref,
   viewAllText = "Смотреть все",
+  extraAction,
   products,
 }: ProductCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -79,6 +81,7 @@ export function ProductCarousel({
         </div>
 
         <div className="flex items-center gap-2">
+          {extraAction}
           {viewAllHref && (
             <Link
               href={viewAllHref}

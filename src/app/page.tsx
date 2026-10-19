@@ -11,6 +11,7 @@ import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
 import { getProducts } from "@/lib/cache";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
+import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -106,6 +107,9 @@ export default async function HomePage({
         <Suspense key={JSON.stringify(params)} fallback={<ProductsSkeleton />}>
           <ProductCatalog params={params} />
         </Suspense>
+
+        {/* Недавно просмотренные товары */}
+        <RecentlyViewedSection className="mt-12 border-t border-gray-200/70 pt-8" />
       </section>
     </main>
   );

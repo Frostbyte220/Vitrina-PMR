@@ -11,6 +11,8 @@ import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSect
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductCarousel } from "@/components/product/ProductCarousel";
 import { ReportProductModal } from "@/components/product/ReportProductModal";
+import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
+import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
@@ -194,6 +196,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <RecentlyViewedTracker productId={product.id} />
+
       <ProductPageHeader
         title={product.title}
         price={product.price}
@@ -292,6 +296,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
             cleanUsername={cleanUsername}
           />
         </Suspense>
+
+        {/* Недавно просмотренные товары */}
+        <RecentlyViewedSection currentProductId={product.id} />
       </main>
     </>
   );
