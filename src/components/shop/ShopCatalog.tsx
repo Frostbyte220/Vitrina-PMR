@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import type { Product } from "@/types";
+import { fuzzyMatchText } from "@/lib/searchUtils";
 
 interface ShopCatalogProps {
   products: Product[];
@@ -222,13 +223,11 @@ export function ShopCatalog({
       result = result.filter((p) => p.subCategory === selectedSubCategory);
     }
 
-    // 3. Поиск по названию товара внутри магазина
+    // 3. Поиск по названию и описанию товара с поддержкой опечаток, падежей и брендов
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
+      const q = searchQuery.trim();
       result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q))
+        (p) => fuzzyMatchText(p.title, q) || fuzzyMatchText(p.description, q)
       );
     }
 

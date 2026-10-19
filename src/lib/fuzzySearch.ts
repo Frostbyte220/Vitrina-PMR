@@ -4,45 +4,9 @@
  * и транслитерации популярных брендов (найк -> nike, адидас -> adidas и др.).
  */
 import { prisma } from "@/lib/prisma";
+import { BRAND_SYNONYMS, getRussianStem } from "@/lib/searchUtils";
 
-/** Популярные бренды и их кириллические/латинские синонимы */
-export const BRAND_SYNONYMS: Record<string, string> = {
-  найк: "nike",
-  nike: "найк",
-  адидас: "adidas",
-  adidas: "адидас",
-  пума: "puma",
-  puma: "пума",
-  рибок: "reebok",
-  reebok: "рибок",
-  "нью баланс": "new balance",
-  "нью бэланс": "new balance",
-  "new balance": "нью баланс",
-  айфон: "iphone",
-  iphone: "айфон",
-  эппл: "apple",
-  apple: "эппл",
-  самсунг: "samsung",
-  samsung: "самсунг",
-  сяоми: "xiaomi",
-  ксиоми: "xiaomi",
-  xiaomi: "сяоми",
-  хуавей: "huawei",
-  huawei: "хуавей",
-};
-
-/**
- * Простой стеммер для русского языка:
- * удаляет падежные и числовые окончания для поиска по общему корню.
- * (куртки -> куртк, платья -> плат, кроссовки -> кроссовк).
- */
-export function getRussianStem(word: string): string {
-  if (word.length <= 3) return word;
-  return word.replace(
-    /(?:ами|ями|ов|ев|ей|ий|ый|ой|ая|яя|ое|ее|ые|ие|ам|ям|ом|ем|ах|ях|ую|юю|у|ю|а|я|е|и|ы|о)$/i,
-    ""
-  );
-}
+export { BRAND_SYNONYMS, getRussianStem };
 
 /** Нормализация строки запроса */
 function normalizeQuery(q: string): string {

@@ -6,7 +6,7 @@ import type { Product } from "@/types";
 import { Pagination } from "@/components/Pagination";
 import { ProductsTableClient } from "./ProductsTableClient";
 import type { Metadata } from "next";
-import { getRussianStem, BRAND_SYNONYMS } from "@/lib/fuzzySearch";
+import { getRussianStem, BRAND_SYNONYMS } from "@/lib/searchUtils";
 
 export const metadata: Metadata = {
   title: "Мои товары | E-Vitrina PMR",
