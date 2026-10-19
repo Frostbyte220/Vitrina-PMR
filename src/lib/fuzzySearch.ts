@@ -35,6 +35,7 @@ export type FuzzyProduct = {
       phone: string | null;
       telegram: string | null;
       viber: string | null;
+      isVerified: boolean;
     } | null;
   } | null;
   store: {
@@ -46,6 +47,7 @@ export type FuzzyProduct = {
     phone: string | null;
     telegram: string | null;
     viber: string | null;
+    isVerified: boolean;
   } | null;
 };
 
@@ -241,13 +243,13 @@ export async function getFuzzySuggestions(
       images: true,
       category: true,
       sizes: true,
-      store: { select: { name: true, slug: true, avatarUrl: true } },
+      store: { select: { name: true, slug: true, avatarUrl: true, isVerified: true } },
       user: {
         select: {
           name: true,
           instagram: true,
           avatar: true,
-          store: { select: { name: true, slug: true, avatarUrl: true } },
+          store: { select: { name: true, slug: true, avatarUrl: true, isVerified: true } },
         },
       },
     },
@@ -295,6 +297,7 @@ export async function getFuzzyStores(query: string, take = 3) {
       instagram: true,
       avatarUrl: true,
       cities: true,
+      isVerified: true,
       _count: {
         select: { products: { where: { status: "Активен", deletedAt: null } } },
       },
@@ -326,6 +329,7 @@ const productSelectFields = {
           phone: true,
           telegram: true,
           viber: true,
+          isVerified: true,
         },
       },
     },
@@ -340,6 +344,7 @@ const productSelectFields = {
       phone: true,
       telegram: true,
       viber: true,
+      isVerified: true,
     },
   },
 };

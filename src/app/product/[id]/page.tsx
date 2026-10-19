@@ -13,6 +13,7 @@ import { ProductCarousel } from "@/components/product/ProductCarousel";
 import { ReportProductModal } from "@/components/product/ReportProductModal";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ const getProduct = cache(async (id: string) => {
           viber: true,
           avatarUrl: true,
           cities: true,
+          isVerified: true,
         },
       },
       user: {
@@ -70,6 +72,7 @@ const getProduct = cache(async (id: string) => {
               viber: true,
               avatarUrl: true,
               cities: true,
+              isVerified: true,
             },
           },
         },
@@ -253,9 +256,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-text-muted">Продавец</p>
-                <p className="truncate font-semibold text-text-main group-hover:text-primary transition-colors">
-                  {shopName}
-                </p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="truncate font-semibold text-text-main group-hover:text-primary transition-colors">
+                    {shopName}
+                  </p>
+                  {(product.store?.isVerified || (product.user?.store as any)?.isVerified) && (
+                    <VerifiedBadge size="sm" showText />
+                  )}
+                </div>
               </div>
               <span className="shrink-0 text-sm font-semibold text-primary transition-opacity group-hover:opacity-80">
                 В магазин →
@@ -324,6 +332,7 @@ const productCardSelect = {
       phone: true,
       telegram: true,
       viber: true,
+      isVerified: true,
     },
   },
   user: {
@@ -341,6 +350,7 @@ const productCardSelect = {
           phone: true,
           telegram: true,
           viber: true,
+          isVerified: true,
         },
       },
     },

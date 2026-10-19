@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/ui/BackButton";
 import { ShopCityFilter } from "@/components/shops/ShopCityFilter";
 import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 export const metadata: Metadata = {
   title: "Магазины и бренды",
@@ -44,6 +45,7 @@ export default async function ShopsPage({
       cities: true,
       coverUrl: true,
       avatarUrl: true,
+      isVerified: true,
       _count: {
         select: {
           products: {
@@ -173,9 +175,12 @@ export default async function ShopsPage({
                       )}
                     </div>
 
-                    <h3 className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-rose-600 transition-colors line-clamp-1">
-                      {store.name}
-                    </h3>
+                    <div className="flex items-center justify-center gap-1.5 max-w-full px-2">
+                      <h3 className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-rose-600 transition-colors line-clamp-1">
+                        {store.name}
+                      </h3>
+                      {store.isVerified && <VerifiedBadge size="md" />}
+                    </div>
 
                     {cleanInstagram && (
                       <p className="mt-1 text-sm font-medium text-rose-500/80">

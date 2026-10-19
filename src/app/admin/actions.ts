@@ -294,4 +294,17 @@ export async function deleteBannerAdmin(id: string) {
   revalidatePath("/admin");
 }
 
+export async function toggleStoreVerifiedAdmin(storeId: string, isVerified: boolean) {
+  await checkAdmin();
+  await prisma.store.update({
+    where: { id: storeId },
+    data: { isVerified },
+  });
+
+  revalidateTag("products");
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/shops");
+}
+
 

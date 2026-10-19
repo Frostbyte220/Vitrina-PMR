@@ -49,6 +49,8 @@ model Store {
   avatarUrl   String?  
   coverUrl    String?  
 
+  isVerified  Boolean  @default(false) // Бейдж проверенного магазина
+
   // 🔥 Добавьте эту строку для связи с продуктами
   products    Product[] 
   

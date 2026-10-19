@@ -31,6 +31,7 @@ export interface Product {
       telegram?: string | null;
       viber?: string | null;
       phone?: string | null;
+      isVerified?: boolean | null;
     } | null;
   } | null;
 
@@ -41,9 +42,27 @@ export interface Product {
     telegram?: string | null;
     viber?: string | null;
     phone?: string | null;
+    isVerified?: boolean | null;
   } | null;
 
   // Даты создания и обновления
   createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface StoreType {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  instagram?: string | null;
+  phone?: string | null;
+  telegram?: string | null;
+  viber?: string | null;
+  cities: string[];
+  avatarUrl?: string | null;
+  coverUrl?: string | null;
+  isVerified: boolean;
+  createdAt: Date;
   updatedAt?: Date;
 }

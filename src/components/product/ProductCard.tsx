@@ -8,6 +8,7 @@ import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 interface ProductCardProps {
   product: Product & {
@@ -22,6 +23,7 @@ interface ProductCardProps {
       slug?: string | null;
       instagram?: string | null;
       avatarUrl?: string | null;
+      isVerified?: boolean | null;
     } | null;
     shopUsername?: string;
     shopName?: string;
@@ -93,6 +95,12 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     prod.user?.image || 
     null;
 
+  const isVerified = Boolean(
+    product.store?.isVerified || 
+    prod.store?.isVerified || 
+    prod.user?.store?.isVerified
+  );
+
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       
@@ -117,10 +125,13 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </div>
           )}
         </div>
-        <div className="flex flex-col overflow-hidden">
-          <span className="truncate text-sm font-semibold text-gray-900 group-hover/header:text-rose-700 transition-colors">
-            {displayUsername}
-          </span>
+        <div className="flex flex-col overflow-hidden min-w-0">
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="truncate text-sm font-semibold text-gray-900 group-hover/header:text-rose-700 transition-colors">
+              {displayUsername}
+            </span>
+            {isVerified && <VerifiedBadge size="sm" />}
+          </div>
           <span 
             className="truncate text-[11px] text-gray-500 flex items-center gap-0.5"
             title={storeCities && storeCities.length > 0 ? `Города доставки: ${storeCities.join(", ")}` : undefined}

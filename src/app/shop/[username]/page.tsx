@@ -8,6 +8,7 @@ import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { isHiddenStore } from "@/lib/storeFilter";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 export const revalidate = 60;
 
@@ -98,6 +99,7 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
       avatarUrl: true,
       coverUrl: true,
       cities: true,
+      isVerified: true,
       telegram: true,
       viber: true,
       phone: true,
@@ -224,7 +226,10 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
             </div>
 
             {/* Имя */}
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{store.name}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{store.name}</h1>
+              {store.isVerified && <VerifiedBadge size="lg" showText />}
+            </div>
             
             {/* Контакты / Теги */}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm font-medium">

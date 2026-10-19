@@ -17,7 +17,8 @@ import {
   Megaphone, 
   Plus, 
   Edit2, 
-  Link as LinkIcon
+  Link as LinkIcon,
+  BadgeCheck
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,10 +32,12 @@ import {
   createBannerAdmin,
   updateBannerAdmin,
   toggleBannerActiveAdmin,
-  deleteBannerAdmin
+  deleteBannerAdmin,
+  toggleStoreVerifiedAdmin
 } from "./actions";
 import { BannerItem } from "@/lib/banners";
 import { formatPrice } from "@/lib/utils";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import toast from "react-hot-toast";
 
 const GRADIENT_PRESETS = [
@@ -54,6 +57,7 @@ type StoreData = {
   name: string;
   slug: string;
   instagram: string | null;
+  isVerified?: boolean;
   createdAt: Date;
   _count: { products: number };
 };
@@ -100,6 +104,9 @@ export function AdminClient({
   const [activeTab, setActiveTab] = useState<"products" | "stores" | "reports" | "banners">("products");
   const [reportsFilter, setReportsFilter] = useState<"pending" | "all" | "resolved" | "dismissed">("pending");
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  // Состояние магазинов
+  const [storesList, setStoresList] = useState<StoreData[]>(stores);
 
   // Состояние управления баннерами
   const [bannersList, setBannersList] = useState<BannerItem[]>(banners);
@@ -229,11 +236,28 @@ export function AdminClient({
     }
   };
 
+  const handleToggleStoreVerified = async (store: StoreData) => {
+    const nextState = !store.isVerified;
+    setStoresList((prev) =>
+      prev.map((s) => (s.id === store.id ? { ...s, isVerified: nextState } : s))
+    );
+    try {
+      await toggleStoreVerifiedAdmin(store.id, nextState);
+      toast.success(nextState ? `Магазин «${store.name}» верифицирован!` : `Верификация магазина «${store.name}» снята`);
+    } catch {
+      setStoresList((prev) =>
+        prev.map((s) => (s.id === store.id ? { ...s, isVerified: store.isVerified } : s))
+      );
+      toast.error("Ошибка изменения статуса верификации");
+    }
+  };
+
   const handleDeleteStore = async (id: string) => {
     if (!confirm("ВНИМАНИЕ! Это удалит магазин и все его товары навсегда. Продолжить?")) return;
     setLoadingId(id);
     try {
       await deleteStoreAdmin(id);
+      setStoresList((prev) => prev.filter((s) => s.id !== id));
       toast.success("Магазин удален");
     } catch {
       toast.error("Ошибка удаления");
@@ -310,7 +334,7 @@ export function AdminClient({
             activeTab === "stores" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
           }`}
         >
-          <Store className="h-4 w-4" /> Магазины ({stores.length})
+          <Store className="h-4 w-4" /> Магазины ({storesList.length})
         </button>
         <button
           onClick={() => setActiveTab("reports")}
@@ -412,20 +436,38 @@ export function AdminClient({
                 <tr>
                   <th className="px-4 py-3 font-semibold">Магазин</th>
                   <th className="px-4 py-3 font-semibold">Instagram</th>
+                  <th className="px-4 py-3 font-semibold text-center">Верификация</th>
                   <th className="px-4 py-3 font-semibold text-center">Товаров</th>
                   <th className="px-4 py-3 font-semibold">Регистрация</th>
                   <th className="px-4 py-3 text-right font-semibold">Действие</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {stores.map((s) => (
+                {storesList.map((s) => (
                   <tr key={s.id} className="transition-colors hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{s.name}</div>
+                      <div className="flex items-center gap-1.5 font-medium text-gray-900">
+                        <span>{s.name}</span>
+                        {s.isVerified && <VerifiedBadge size="sm" />}
+                      </div>
                       <div className="text-xs text-gray-400">/{s.slug}</div>
                     </td>
                     <td className="px-4 py-3 text-blue-600">
                       {s.instagram ? `@${s.instagram.replace("@", "")}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => handleToggleStoreVerified(s)}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all shadow-xs ${
+                          s.isVerified
+                            ? "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200"
+                            : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200"
+                        }`}
+                        title={s.isVerified ? "Нажмите, чтобы снять статус проверенного магазина" : "Нажмите, чтобы сделать магазин проверенным"}
+                      >
+                        <BadgeCheck className={`h-4 w-4 ${s.isVerified ? "fill-sky-500 text-white" : "text-gray-400"}`} />
+                        <span>{s.isVerified ? "Проверен" : "Обычный"}</span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-center font-medium">
                       {s._count.products}
