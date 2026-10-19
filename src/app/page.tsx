@@ -129,7 +129,7 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, ...otherFilters } = params;
+  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, discount, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -144,6 +144,16 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
   const selectedSizes = sizes ? sizes.split(",").map((s) => s.trim()).filter(Boolean) : [];
 
   const conditions: any[] = [];
+
+  // Фильтр товаров со скидкой (где указана старая цена)
+  if (discount === "true") {
+    conditions.push({
+      oldPrice: {
+        not: null,
+        gt: 0,
+      },
+    });
+  }
 
   if (category && category !== "Все") {
     conditions.push({ category });
@@ -220,7 +230,14 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
       {/* Заголовок секции товаров */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base sm:text-lg font-bold text-gray-900">
-          {selectedCities.length > 0 ? (
+          {discount === "true" ? (
+            <>
+              Товары со скидкой{" "}
+              {selectedCities.length > 0 && (
+                <span className="text-rose-600 font-semibold">: {selectedCities.join(", ")}</span>
+              )}
+            </>
+          ) : selectedCities.length > 0 ? (
             <>
               Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
               {selectedSizes.length > 0 && (
@@ -245,7 +262,9 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
       {products.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
           <h3 className="text-lg font-semibold text-gray-900">
-            {selectedCities.length > 0
+            {discount === "true"
+              ? "Пока нет товаров со скидкой по вашим фильтрам"
+              : selectedCities.length > 0
               ? `В ${selectedCities.join(", ")} пока нет товаров по вашим фильтрам`
               : selectedSizes.length > 0
               ? `В выбранных размерах (${selectedSizes.join(", ")}) пока нет товаров`

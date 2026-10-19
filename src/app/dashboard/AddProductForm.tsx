@@ -62,18 +62,27 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       title: initialData.title,
       description: initialData.description || "",
       price: initialData.price.toString() as any, // Конвертируем число в строку для input
+      oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
       category: initialData.category as any,
       images: initialData.images || [],
     } : {
       title: "",
       description: "",
       price: "" as any,
+      oldPrice: "" as any,
       category: CATEGORIES[0] as any,
       images: [],
     },
   });
 
   const selectedCategory = watch("category");
+  const watchPrice = Number(watch("price")) || 0;
+  const watchOldPrice = Number(watch("oldPrice")) || 0;
+  const discountPercent =
+    watchOldPrice > watchPrice && watchPrice > 0
+      ? Math.round(((watchOldPrice - watchPrice) / watchOldPrice) * 100)
+      : null;
+
   const imageUrls: string[] = watch("images") || [];
   const currentSubCategories = getSubCategories(selectedCategory);
   const isSizeCategory = ["Одежда", "Обувь"].includes(selectedCategory);
@@ -218,16 +227,47 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="price" className="text-sm font-medium text-gray-700">Цена (руб.)</label>
-        <input
-          {...register("price")}
-          type="number"
-          step="0.01"
-          className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
-          placeholder="150"
-        />
-        {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="price" className="text-sm font-medium text-gray-700">
+            Текущая цена (руб.) <span className="text-rose-500">*</span>
+          </label>
+          <input
+            {...register("price")}
+            type="number"
+            step="0.01"
+            className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
+            placeholder="150"
+          />
+          {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
+              Старая цена (руб.)
+            </label>
+            {discountPercent !== null && (
+              <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                Скидка -{discountPercent}%
+              </span>
+            )}
+          </div>
+          <input
+            {...register("oldPrice")}
+            type="number"
+            step="0.01"
+            className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.oldPrice ? "border-red-500" : "border-gray-300"}`}
+            placeholder="200 (необязательно)"
+          />
+          {errors.oldPrice ? (
+            <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
+          ) : (
+            <span className="text-[11px] text-gray-400">
+              Укажите, чтобы показать скидку и зачеркнутую цену
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">

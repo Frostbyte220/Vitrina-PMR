@@ -9,6 +9,7 @@ interface ProductCardProps {
     id: string;
     title: string;
     price: number;
+    oldPrice?: number | null;
     category: string;
     image: string;
     description?: string | null;
@@ -16,6 +17,11 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
+  const discountPercent = hasDiscount
+    ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
+    : null;
+
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:shadow-md">
       {/* Блок с картинкой */}
@@ -32,6 +38,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Tag className="h-3 w-3" />
           {product.category}
         </div>
+        {hasDiscount && (
+          <div className="absolute right-3 top-3 rounded-lg bg-rose-600 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
+            -{discountPercent}%
+          </div>
+        )}
       </div>
 
       {/* Информация о товаре */}
@@ -44,10 +55,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.description}
           </p>
         )}
-        <div className="mt-auto pt-4 flex items-center justify-between">
-          <span className="text-lg font-bold text-black">
+        <div className="mt-auto pt-4 flex items-baseline gap-2">
+          <span className={`text-lg font-bold ${hasDiscount ? "text-rose-600" : "text-black"}`}>
             {product.price} руб.
           </span>
+          {hasDiscount && (
+            <span className="text-xs font-medium text-gray-400 line-through">
+              {product.oldPrice} руб.
+            </span>
+          )}
           {/* Место под будущую кнопку удаления */}
         </div>
       </div>

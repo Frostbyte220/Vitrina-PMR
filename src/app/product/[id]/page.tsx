@@ -33,6 +33,7 @@ const getProduct = cache(async (id: string) => {
       title: true,
       description: true,
       price: true,
+      oldPrice: true,
       images: true,
       status: true,
       category: true,
@@ -153,6 +154,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   
   const cleanUsername = rawInstagram.replace(/^@/, '') || storeSlug;
 
+  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
+  const discountPercent = hasDiscount
+    ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
+    : null;
+
   const storeData = product.store || (product.user as any)?.store;
   const storeContacts = {
     instagram: storeData?.instagram || product.user?.instagram || "",
@@ -212,9 +218,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <h1 className="text-2xl font-bold leading-tight text-text-main md:text-3xl">
                 {product.title}
               </h1>
-              <p className="mt-2 text-2xl font-bold text-primary">
-                {formatPrice(product.price)}
-              </p>
+              <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+                <span className={`text-2xl font-bold md:text-3xl ${hasDiscount ? "text-rose-600" : "text-primary"}`}>
+                  {formatPrice(product.price)}
+                </span>
+                {hasDiscount && (
+                  <>
+                    <span className="text-base font-medium text-gray-400 line-through md:text-lg">
+                      {formatPrice(product.oldPrice!)}
+                    </span>
+                    <span className="inline-flex items-center rounded-lg bg-rose-600 px-2.5 py-0.5 text-xs sm:text-sm font-bold text-white shadow-sm">
+                      -{discountPercent}%
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Добавлен whitespace-pre-wrap для сохранения переносов строк в описании */}
@@ -284,6 +302,7 @@ const productCardSelect = {
   id: true,
   title: true,
   price: true,
+  oldPrice: true,
   images: true,
   category: true,
   subCategory: true,

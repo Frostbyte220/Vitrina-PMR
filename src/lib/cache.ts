@@ -13,6 +13,7 @@ export const getProducts = unstable_cache(
           id: true,
           title: true,
           price: true,
+          oldPrice: true,
           images: true,
           category: true,
           subCategory: true,

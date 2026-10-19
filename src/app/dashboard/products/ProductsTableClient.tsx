@@ -110,8 +110,22 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {formatPrice(product.price)}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className={`font-semibold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-gray-900"}`}>
+                            {formatPrice(product.price)}
+                          </span>
+                          {product.oldPrice && product.oldPrice > product.price && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-xs text-gray-400 line-through">
+                                {formatPrice(product.oldPrice)}
+                              </span>
+                              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                                -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span

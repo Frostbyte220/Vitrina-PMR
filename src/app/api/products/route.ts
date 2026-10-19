@@ -33,6 +33,7 @@ export async function POST(req: Request) {
         title: validatedData.title,
         description: validatedData.description || "",
         price: validatedData.price,
+        oldPrice: validatedData.oldPrice ?? null,
         category: validatedData.category,
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],

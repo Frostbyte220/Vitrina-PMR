@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   title: string;
   price: number;
+  oldPrice?: number | null;
   category: string; // Обязательное поле для фильтрации на главной витрине
   subCategory?: string | null; // <-- ДОБАВЛЕНО НОВОЕ ПОЛЕ
   images: string[];

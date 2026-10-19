@@ -60,6 +60,7 @@ model Product {
   id          String    @id @default(uuid())
   title       String
   price       Float
+  oldPrice    Float?
   category    String    @default("Разное")
   subCategory String?   
   images      String[]  

@@ -33,6 +33,18 @@ price: z
     .number()
     .positive("Укажите корректную цену больше 0")
     .max(1000000, "Цена не может превышать 1 000 000 руб."),
+
+  oldPrice: z
+    .preprocess(
+      (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+      z
+        .number({ message: "Введите корректное число" })
+        .positive("Старая цена должна быть больше 0")
+        .max(1000000, "Цена не может превышать 1 000 000 руб.")
+        .nullable()
+        .optional()
+    )
+    .optional(),
   
   category: z
     .string()
@@ -54,7 +66,13 @@ price: z
       z.string().url("Некорректная ссылка на изображение")
     )
     .min(1, "Добавьте хотя бы одно изображение"),
-});
+}).refine(
+  (data) => !data.oldPrice || data.oldPrice > data.price,
+  {
+    message: "Старая цена должна быть выше текущей цены со скидкой",
+    path: ["oldPrice"],
+  }
+);
 
 export const CLOTHING_SIZES = [
   "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "One Size",

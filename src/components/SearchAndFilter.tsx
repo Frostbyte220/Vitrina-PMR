@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef, useMemo } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ArrowDownAZ, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ArrowDownAZ, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag, Percent } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
@@ -63,6 +63,8 @@ export function SearchAndFilter() {
     () => (currentSizesRaw ? currentSizesRaw.split(",") : []),
     [currentSizesRaw]
   );
+
+  const currentDiscount    = searchParams.get("discount") === "true";
 
   const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
   const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
@@ -149,6 +151,7 @@ export function SearchAndFilter() {
       maxPrice?: string;
       cities?: string[] | null;
       sizes?: string[] | null;
+      discount?: boolean | null;
     }) => {
       const params = new URLSearchParams(searchParams.toString());
 
@@ -207,6 +210,11 @@ export function SearchAndFilter() {
       if (updates.sizes !== undefined) {
         if (!updates.sizes || updates.sizes.length === 0) params.delete("sizes");
         else params.set("sizes", updates.sizes.join(","));
+      }
+
+      if (updates.discount !== undefined) {
+        if (!updates.discount) params.delete("discount");
+        else params.set("discount", "true");
       }
 
       params.delete("page");
@@ -760,6 +768,35 @@ export function SearchAndFilter() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Кнопка фильтра «Со скидкой» */}
+        <button
+          type="button"
+          onClick={() => updateParams({ discount: !currentDiscount })}
+          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm active:scale-95 ${
+            currentDiscount
+              ? "bg-rose-600 text-white shadow-rose-200 ring-2 ring-rose-200 border border-rose-600"
+              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+          }`}
+          title={currentDiscount ? "Сбросить фильтр скидок" : "Показать товары со скидкой"}
+        >
+          <Percent className={`h-3.5 w-3.5 ${currentDiscount ? "text-white" : "text-rose-500"}`} />
+          <span>Со скидкой</span>
+          {currentDiscount && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                updateParams({ discount: false });
+              }}
+              className="ml-0.5 rounded-full p-0.5 text-white/80 hover:text-white transition-colors"
+              title="Сбросить скидки"
+            >
+              <X className="h-3 w-3" />
+            </span>
+          )}
+        </button>
 
         {/* Кнопки сортировки */}
         {SORT_OPTIONS.map(({ value, label, Icon }) => {
