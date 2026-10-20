@@ -4,7 +4,7 @@ import { productSchema } from "@/lib/validations/product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { productRateLimiter } from "@/lib/rate-limit";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 // Обновление товара (PATCH)
 export async function PATCH(
@@ -49,6 +49,7 @@ export async function PATCH(
     revalidatePath("/");
     revalidatePath(`/product/${id}`);
     revalidatePath("/dashboard/products");
+    revalidateTag("products");
 
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error: any) {
@@ -107,6 +108,7 @@ export async function DELETE(
 
     revalidatePath("/");
     revalidatePath("/dashboard/products");
+    revalidateTag("products");
 
     return NextResponse.json(
       { message: "Товар успешно удален", product: deletedProduct },

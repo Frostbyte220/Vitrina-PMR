@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { productSchema } from "@/lib/validations/product";
@@ -79,6 +79,7 @@ export async function createProduct(arg1: any, arg2?: any) {
     });
 
     console.log("✅ ТОВАР УСПЕШНО СОЗДАН В БАЗЕ!");
+    revalidateTag("products");
 
     revalidatePath("/dashboard", "layout");
     revalidatePath("/", "layout");
@@ -121,7 +122,8 @@ export async function deleteProduct(id: string) {
     });
 
     revalidatePath("/dashboard", "layout");
-    revalidatePath("/", "layout"); 
+    revalidatePath("/", "layout");
+    revalidateTag("products");
     
     return { success: true };
   } catch (error) {
@@ -155,6 +157,7 @@ export async function toggleProductStatus(id: string, currentStatus: string) {
 
     revalidatePath("/dashboard", "layout");
     revalidatePath("/dashboard/products", "layout");
+    revalidateTag("products");
     revalidatePath("/", "layout");
 
     return { success: true, newStatus };
@@ -226,7 +229,8 @@ export async function updateProduct(id: string, formData: FormData) {
     });
 
     revalidatePath("/dashboard", "layout");
-    revalidatePath("/", "layout"); 
+    revalidatePath("/", "layout");
+    revalidateTag("products");
     return { success: true };
   } catch (error) {
     console.error("Ошибка при обновлении товара:", error);

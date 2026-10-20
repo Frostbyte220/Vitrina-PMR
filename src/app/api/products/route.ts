@@ -4,7 +4,7 @@ import { productSchema } from "@/lib/validations/product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { productRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     revalidatePath("/");
     revalidatePath("/shops");
     revalidatePath("/dashboard/products");
+    revalidateTag("products");
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {
