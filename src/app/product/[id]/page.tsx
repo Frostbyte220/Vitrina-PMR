@@ -14,6 +14,7 @@ import { ReportProductModal } from "@/components/product/ReportProductModal";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 
@@ -191,12 +192,57 @@ export default async function ProductPage({ params }: ProductPageProps) {
     },
   };
 
+  const productUrl = `${BASE_URL}/product/${id}`;
+
+  // Формируем цепочку хлебных крошек (Главная → Категория → Подкатегория → Товар)
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: "Главная", href: "/" },
+  ];
+
+  if (product.category) {
+    breadcrumbs.push({
+      label: product.category,
+      href: `/?category=${encodeURIComponent(product.category)}`,
+    });
+  }
+
+  if (product.subCategory) {
+    breadcrumbs.push({
+      label: product.subCategory,
+      href: product.category
+        ? `/?category=${encodeURIComponent(product.category)}&sub=${encodeURIComponent(product.subCategory)}`
+        : `/?sub=${encodeURIComponent(product.subCategory)}`,
+    });
+  }
+
+  breadcrumbs.push({
+    label: product.title,
+  });
+
+  // Структурированные данные Schema.org BreadcrumbList JSON-LD для Google и Яндекса
+  const breadcrumbsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbs.map((crumb, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: crumb.label,
+      item: crumb.href
+        ? (crumb.href.startsWith("http") ? crumb.href : `${BASE_URL}${crumb.href}`)
+        : productUrl,
+    })),
+  };
+
   return (
     <>
       {/* Внедряем микроразметку для поисковиков в <head> (Next.js поймет это расположение) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
       />
 
       <RecentlyViewedTracker productId={product.id} />
@@ -218,6 +264,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       <main className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-6 md:pb-16">
         <div className="mx-auto max-w-3xl">
+          <Breadcrumbs items={breadcrumbs} currentUrl={productUrl} />
+
           <ProductGallery images={images} title={product.title} />
 
           <div className="mt-6 flex flex-col gap-4">
