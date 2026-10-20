@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Store, MapPin } from "lucide-react";
+import { Store, MapPin, ShoppingBag } from "lucide-react";
 import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
@@ -34,6 +34,9 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, priority = false, activeCities }: ProductCardProps) {
+  const [imgError, setImgError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
   const prod = product as Record<string, any>;
@@ -110,7 +113,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         className="flex items-center gap-2 p-3 group/header hover:bg-gray-50 transition-colors cursor-pointer"
       >
         <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gray-100 border border-gray-200 shrink-0">
-          {avatarSrc ? (
+          {avatarSrc && !avatarError ? (
             <Image 
               src={avatarSrc} 
               alt={displayName} 
@@ -118,6 +121,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               loader={cloudinaryLoader}
               sizes="32px"
               className="object-cover" 
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-100 to-orange-100 text-xs font-bold text-rose-800">
@@ -157,7 +161,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
           prefetch={true}
           suppressHydrationWarning
         >
-          {imageUrl ? (
+          {imageUrl && !imgError ? (
             <Image
               src={imageUrl}
               alt={product.title}
@@ -168,10 +172,14 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImgError(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-50 text-sm text-gray-400">
-              Нет фото
+            <div className="flex h-full w-full flex-col items-center justify-center bg-gray-50 text-xs font-medium text-gray-400 gap-2 p-4 text-center">
+              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
+                <ShoppingBag className="h-5 w-5 stroke-[1.5]" />
+              </div>
+              <span className="line-clamp-2 max-w-[130px] text-[11px] text-gray-400">{product.title}</span>
             </div>
           )}
         </Link>
