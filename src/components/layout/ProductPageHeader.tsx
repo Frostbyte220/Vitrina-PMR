@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronLeft, Share2, Heart } from "lucide-react";
+import { ChevronLeft, Share2, Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import { ReportProductModal } from "@/components/product/ReportProductModal";
 import { ShareModal } from "@/components/ui/ShareModal";
+import { useCartStore } from "@/store/useCartStore";
 
 interface ProductPageHeaderProps {
   title?: string;
@@ -25,6 +26,12 @@ export function ProductPageHeader({
 }: ProductPageHeaderProps) {
   const router = useRouter();
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const cartCount = useCartStore((s) => s.getTotalCount());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formattedPrice = price ? formatPrice(price) : "";
   const subtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
@@ -64,6 +71,19 @@ export function ProductPageHeader({
             title="В избранное"
           >
             <Heart className="h-5 w-5 text-gray-700" />
+          </Link>
+          <Link
+            href="/cart"
+            className="relative rounded-full p-2 text-text-main transition-colors hover:bg-surface active:scale-95"
+            aria-label="Корзина"
+            title="В корзину"
+          >
+            <ShoppingBag className="h-5 w-5 text-gray-700" />
+            {mounted && cartCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-xs">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </header>
@@ -105,6 +125,12 @@ export function ProductPageHeaderDesktop({
   shopName?: string | null;
 }) {
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const cartCount = useCartStore((s) => s.getTotalCount());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formattedPrice = price ? formatPrice(price) : "";
   const subtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
@@ -142,6 +168,27 @@ export function ProductPageHeaderDesktop({
               <Share2 className="h-3.5 w-3.5 text-gray-500" />
               <span>Поделиться</span>
             </button>
+            <Link
+              href="/favorites"
+              className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-2xs active:scale-95"
+              title="Перейти в избранное"
+            >
+              <Heart className="h-3.5 w-3.5 text-gray-500" />
+              <span>Избранное</span>
+            </Link>
+            <Link
+              href="/cart"
+              className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-2xs active:scale-95"
+              title="Перейти в корзину"
+            >
+              <ShoppingBag className="h-3.5 w-3.5 text-rose-600" />
+              <span>Корзина</span>
+              {mounted && cartCount > 0 && (
+                <span className="ml-0.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
       </header>

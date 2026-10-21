@@ -47,6 +47,7 @@ const getProduct = cache(async (id: string) => {
       userId: true,
       store: {
         select: {
+          id: true,
           name: true,
           slug: true,
           instagram: true,
@@ -329,6 +330,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
               category={product.category}
               imageUrl={images[0]}
               shopName={shopName}
+              oldPrice={product.oldPrice}
+              storeId={product.storeId || product.store?.id || (product.user?.store as any)?.id || null}
+              storeAvatar={product.store?.avatarUrl || (product.user?.store as any)?.avatarUrl || (product.user as any)?.avatar || null}
+              isVerified={Boolean(product.store?.isVerified || (product.user?.store as any)?.isVerified)}
             />
 
             {/* Кнопка «Пожаловаться на товар» */}
@@ -390,6 +395,7 @@ const productCardSelect = {
       avatar: true,
       store: {
         select: {
+          id: true,
           name: true,
           slug: true,
           instagram: true,

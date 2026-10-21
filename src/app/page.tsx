@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
+import { CartButton } from "@/components/layout/CartButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
@@ -56,6 +57,9 @@ export default async function HomePage({
           <Store className="h-4 w-4 sm:h-5 sm:w-5" />
           <span>Все магазины</span>
         </Link>
+
+        {/* Кнопка Корзины */}
+        <CartButton />
 
         {/* Кнопка Избранного */}
         <FavoritesButton />

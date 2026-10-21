@@ -2,14 +2,23 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Heart, Store, User } from "lucide-react";
+import { Home, Heart, Store, User, ShoppingBag } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useCartStore } from "@/store/useCartStore";
 
 export function MobileTabBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
+
+  const cartCount = useCartStore((s) => s.getTotalCount());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Не показываем бар на страницах авторизации и дэшборде (чтобы не мешать)
   if (
@@ -30,6 +39,13 @@ export function MobileTabBar() {
   const tabs = [
     { name: "Главная", href: homeHref, match: "/" as const, icon: Home },
     { name: "Избранное", href: "/favorites", match: "/favorites" as const, icon: Heart },
+    {
+      name: "Корзина",
+      href: "/cart",
+      match: "/cart" as const,
+      icon: ShoppingBag,
+      badge: mounted && cartCount > 0 ? (cartCount > 99 ? "99+" : cartCount) : null,
+    },
     { name: "Магазины", href: shopsHref, match: "/shops" as const, icon: Store },
     { name: "Профиль", href: session ? "/dashboard" : "/login", match: "/dashboard" as const, icon: User },
   ];
@@ -54,10 +70,17 @@ export function MobileTabBar() {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
               )}
-              <tab.icon
-                className={`relative z-10 h-6 w-6 transition-transform duration-300 ${isActive ? "scale-110" : ""}`}
-                strokeWidth={isActive ? 2 : 1.5}
-              />
+              <div className="relative">
+                <tab.icon
+                  className={`relative z-10 h-6 w-6 transition-transform duration-300 ${isActive ? "scale-110" : ""}`}
+                  strokeWidth={isActive ? 2 : 1.5}
+                />
+                {tab.badge && (
+                  <span className="absolute -top-1.5 -right-2 z-20 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-xs">
+                    {tab.badge}
+                  </span>
+                )}
+              </div>
               <span className="relative z-10 text-[10px] font-medium leading-none">
                 {tab.name}
               </span>

@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Store, MapPin, ShoppingBag } from "lucide-react";
+import { Store, MapPin, ShoppingBag, Check } from "lucide-react";
 import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { useCartStore } from "@/store/useCartStore";
+import toast from "react-hot-toast";
 
 interface ProductCardProps {
   product: Product & {
@@ -36,6 +38,8 @@ interface ProductCardProps {
 export function ProductCard({ product, priority = false, activeCities }: ProductCardProps) {
   const [imgError, setImgError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
 
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
@@ -103,6 +107,30 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     prod.store?.isVerified || 
     prod.user?.store?.isVerified
   );
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    addItem({
+      productId: product.id,
+      title: product.title,
+      price: product.price,
+      oldPrice: product.oldPrice,
+      image: imageUrl || "",
+      selectedSize: Array.isArray(prod.sizes) && prod.sizes.length > 0 ? prod.sizes[0] : null,
+      storeId: (product as any).storeId || (prod.store as any)?.id || (prod.user?.store as any)?.id || null,
+      storeName: displayName,
+      storeSlug: cleanInstagram || null,
+      storeAvatar: avatarSrc,
+      isVerified,
+      contacts: storeContacts,
+    });
+
+    setIsAddedToCart(true);
+    toast.success(`«${product.title}» добавлен в корзину!`);
+    setTimeout(() => setIsAddedToCart(false), 2000);
+  };
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -225,14 +253,35 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         </div>
 
         <div className="flex flex-col gap-2 mt-auto pt-1">
-          <ContactSellerButton
-            productId={product.id}
-            productName={product.title}
-            productPrice={product.price}
-            shopUsername={cleanInstagram}
-            contacts={storeContacts}
-            isCardView={true} 
-          />
+          <div className="flex items-center gap-1.5 w-full">
+            <div className="flex-1 min-w-0">
+              <ContactSellerButton
+                productId={product.id}
+                productName={product.title}
+                productPrice={product.price}
+                shopUsername={cleanInstagram}
+                contacts={storeContacts}
+                isCardView={true} 
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-xl border transition-all shadow-2xs active:scale-95 ${
+                isAddedToCart
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+              }`}
+              title={isAddedToCart ? "Добавлено в корзину" : "Добавить в корзину"}
+              aria-label="Добавить в корзину"
+            >
+              {isAddedToCart ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingBag className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
           {cleanInstagram && (
             <Link
