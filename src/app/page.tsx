@@ -15,6 +15,7 @@ import { getFuzzyProducts } from "@/lib/fuzzySearch";
 import { getBanners } from "@/lib/banners";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
+import { HomePreloader } from "@/components/ui/HomePreloader";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -46,6 +47,8 @@ export default async function HomePage({
 
   return (
     <main className="relative min-h-screen bg-gray-50 pb-24">
+      {/* Фирменный прелоадер при входе на главную страницу */}
+      <HomePreloader />
       
       {/* Контейнер для кнопок в правом верхнем углу */}
       <div className="absolute right-4 top-4 z-50 flex items-center gap-2 md:right-8 md:top-6 md:gap-3">
