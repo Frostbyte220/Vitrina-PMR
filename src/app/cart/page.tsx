@@ -17,12 +17,20 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import dynamic from "next/dynamic";
 import {
   useCartStore,
   StoreCartGroup,
 } from "@/store/useCartStore";
-import { StoreCheckoutModal } from "@/components/cart/StoreCheckoutModal";
 import toast from "react-hot-toast";
+
+const StoreCheckoutModal = dynamic(
+  () =>
+    import("@/components/cart/StoreCheckoutModal").then(
+      (m) => m.StoreCheckoutModal
+    ),
+  { ssr: false }
+);
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);

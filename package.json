@@ -12,7 +12,6 @@
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^5.22.0",
-    "@types/bcryptjs": "^2.4.6",
     "@upstash/redis": "^1.38.4",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
@@ -31,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.0",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.0.0",

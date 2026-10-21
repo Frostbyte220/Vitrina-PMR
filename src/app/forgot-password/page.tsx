@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useToast } from "@/components/ui/Toast";
+import toast from "react-hot-toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +25,10 @@ export default function ForgotPasswordPage() {
       if (res.ok && data.success) {
         setIsSuccess(true);
       } else {
-        showToast(data.error || "Произошла ошибка");
+        toast.error(data.error || "Произошла ошибка");
       }
     } catch {
-      showToast("Ошибка при отправке запроса");
+      toast.error("Ошибка при отправке запроса");
     } finally {
       setIsLoading(false);
     }

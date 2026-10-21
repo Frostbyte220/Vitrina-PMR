@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Share2 } from "lucide-react";
-import { ShareModal, ShareData } from "./ShareModal";
+import type { ShareData } from "./ShareModal";
+
+const ShareModal = dynamic(
+  () => import("./ShareModal").then((m) => m.ShareModal),
+  { ssr: false }
+);
 
 export interface ShareButtonProps {
   title: string;

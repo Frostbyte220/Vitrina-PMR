@@ -4,10 +4,22 @@ import { ChevronLeft, Share2, Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { formatPrice } from "@/lib/utils";
-import { ReportProductModal } from "@/components/product/ReportProductModal";
-import { ShareModal } from "@/components/ui/ShareModal";
 import { useCartStore } from "@/store/useCartStore";
+
+const ReportProductModal = dynamic(
+  () =>
+    import("@/components/product/ReportProductModal").then(
+      (m) => m.ReportProductModal
+    ),
+  { ssr: false }
+);
+
+const ShareModal = dynamic(
+  () => import("@/components/ui/ShareModal").then((m) => m.ShareModal),
+  { ssr: false }
+);
 
 interface ProductPageHeaderProps {
   title?: string;

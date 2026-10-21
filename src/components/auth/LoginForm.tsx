@@ -4,13 +4,12 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { useToast } from "@/components/ui/Toast";
+import toast from "react-hot-toast";
 import { registerUser } from "@/app/login/actions"; // Импортируем наше серверное действие
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { showToast } = useToast();
   
   // Состояния формы
   const [isRegister, setIsRegister] = useState(false);
@@ -42,7 +41,7 @@ export function LoginForm() {
         const res = await registerUser(formData);
         
         if (res?.error) {
-          showToast(res.error);
+          toast.error(res.error);
           setIsLoading(false);
           return;
         }
@@ -57,7 +56,7 @@ export function LoginForm() {
 
       // --- ИСПРАВЛЕННЫЙ БЛОК РЕДИРЕКТА ---
       if (result?.error || !result?.ok) {
-        showToast(
+        toast.error(
           isRegister 
             ? "Регистрация прошла успешно, но войти не удалось. Попробуйте войти вручную." 
             : "Неверный email или пароль"
@@ -72,7 +71,7 @@ export function LoginForm() {
       router.push(callbackUrl);
     } catch (error: any) {
       console.error("Auth error:", error);
-      showToast(error?.message || "Произошла системная ошибка. Попробуйте еще раз.");
+      toast.error(error?.message || "Произошла системная ошибка. Попробуйте еще раз.");
       setIsLoading(false);
     }
   };

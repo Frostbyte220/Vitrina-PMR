@@ -3,7 +3,7 @@
 import { useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/Toast";
+import toast from "react-hot-toast";
 
 function ResetPasswordForm({ token }: { token: string }) {
   const [password, setPassword] = useState("");
@@ -12,18 +12,17 @@ function ResetPasswordForm({ token }: { token: string }) {
   const [isSuccess, setIsSuccess] = useState(false);
   
   const router = useRouter();
-  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      showToast("Пароли не совпадают");
+      toast.error("Пароли не совпадают");
       return;
     }
     
     if (password.length < 6) {
-      showToast("Пароль должен быть минимум 6 символов");
+      toast.error("Пароль должен быть минимум 6 символов");
       return;
     }
 
@@ -44,10 +43,10 @@ function ResetPasswordForm({ token }: { token: string }) {
           router.push("/login");
         }, 3000);
       } else {
-        showToast(data.error || "Произошла ошибка");
+        toast.error(data.error || "Произошла ошибка");
       }
     } catch {
-      showToast("Ошибка при отправке запроса");
+      toast.error("Ошибка при отправке запроса");
     } finally {
       setIsLoading(false);
     }

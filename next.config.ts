@@ -39,9 +39,17 @@ const nextConfig: NextConfig = {
   // Оптимизация: сжатие через gzip
   compress: true,
 
-  // Оптимизация: автоматический tree-shaking для пакетов иконок
+  // Очистка console.log в production-сборке для уменьшения размера клиентского JS
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
+
+  // Оптимизация: автоматический tree-shaking для пакетов
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "react-hot-toast"],
   },
 
   async headers() {

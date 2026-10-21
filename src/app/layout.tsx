@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
 import { YandexMetrika } from "@/components/YandexMetrika";
-import { SellerOnboardingWidget } from "@/components/onboarding/SellerOnboardingWidget";
+import { SellerOnboardingWidgetLazy } from "@/components/onboarding/SellerOnboardingWidgetLazy";
 import "@/app/globals.css";
 
 // Подключаем Inter через next/font — шрифт загружается без FOUT (мигания)
@@ -96,7 +96,7 @@ export default function RootLayout({
             <Footer />
           </div>
 
-          <SellerOnboardingWidget />
+          <SellerOnboardingWidgetLazy />
           <MobileTabBarLazy />
           
           {/* Toaster просто лежит рядом, он сам отрендерит уведомления поверх всего сайта */}

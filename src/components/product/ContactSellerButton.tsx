@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useToast } from "@/components/ui/Toast";
+import toast from "react-hot-toast";
 import { formatPrice } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,7 +76,6 @@ export function ContactSellerButton({
   isCardView = false,
   selectedSize,
 }: ContactSellerButtonProps) {
-  const { showToast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -127,7 +126,7 @@ export function ContactSellerButton({
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
       if (copied) {
-        if (showToast) showToast("Текст скопирован! Вставьте его в чат");
+        toast.success("Текст скопирован! Вставьте его в чат");
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 3000);
       }
