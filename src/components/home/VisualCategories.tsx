@@ -38,7 +38,7 @@ export function VisualCategories() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="flex space-x-4 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0">
+      <div className="flex space-x-4 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:space-x-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {categoryMap.map((cat) => {
           const isActive = currentCategory === cat.name;
           const params = new URLSearchParams(searchParams.toString());

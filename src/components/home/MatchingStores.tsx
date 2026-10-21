@@ -87,7 +87,7 @@ export async function MatchingStores({ cities }: MatchingStoresProps) {
         </div>
       ) : (
         /* Горизонтальный скролл магазинов */
-        <div className="flex gap-3 overflow-x-auto pb-1 pt-2 scrollbar-hide snap-x">
+        <div className="flex gap-3 overflow-x-auto pb-1 pt-2 scrollbar-hide snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {stores.map((store) => {
             const cleanInstagram = store.instagram
               ? store.instagram.trim().replace(/^@/, "")
