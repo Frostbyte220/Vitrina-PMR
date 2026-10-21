@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, ImageOff, Edit, EyeOff, Eye, Package } from "lucide-react";
+import { Trash2, ImageOff, Edit, EyeOff, Eye, Package, CheckSquare } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { deleteProduct, toggleProductStatus } from "@/app/dashboard/actions";
+import {
+  deleteProduct,
+  toggleProductStatus,
+  bulkUpdateProductsStatus,
+  bulkDeleteProducts,
+} from "@/app/dashboard/actions";
 import type { Product } from "@/types";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import AddProductButton from "@/components/AddProductButton";
+import toast from "react-hot-toast";
 
 interface ProductsTableClientProps {
   items: Product[];
@@ -19,8 +25,40 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // ── Bulk selection state ──────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+
+  const allSelected = items.length > 0 && selectedIds.size === items.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < items.length;
+
+  const toggleSelectAll = useCallback(() => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((p) => p.id)));
+    }
+  }, [allSelected, items]);
+
+  const toggleSelectOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // ── Single-item actions ───────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Вы уверены, что хотите удалить этот товар? (Он будет перемещен в удаленные)")) {
+    if (
+      !window.confirm(
+        "Вы уверены, что хотите удалить этот товар? (Он будет перемещен в удаленные)"
+      )
+    ) {
       return;
     }
     setDeletingId(id);
@@ -46,6 +84,65 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
     }
   };
 
+  // ── Bulk actions ──────────────────────────────────────────────────────────
+  const handleBulkPublish = async () => {
+    setIsBulkLoading(true);
+    try {
+      const result = await bulkUpdateProductsStatus([...selectedIds], "Активен");
+      if (result.success) {
+        toast.success(`Опубликовано товаров: ${result.count}`);
+        setSelectedIds(new Set());
+      } else {
+        toast.error(result.error ?? "Ошибка при публикации");
+      }
+    } catch {
+      toast.error("Ошибка при публикации");
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const handleBulkHide = async () => {
+    setIsBulkLoading(true);
+    try {
+      const result = await bulkUpdateProductsStatus([...selectedIds], "Скрыт");
+      if (result.success) {
+        toast.success(`Скрыто товаров: ${result.count}`);
+        setSelectedIds(new Set());
+      } else {
+        toast.error(result.error ?? "Ошибка при скрытии");
+      }
+    } catch {
+      toast.error("Ошибка при скрытии");
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (
+      !window.confirm(
+        `Удалить ${selectedIds.size} товаров? Они будут перемещены в удалённые.`
+      )
+    ) {
+      return;
+    }
+    setIsBulkLoading(true);
+    try {
+      const result = await bulkDeleteProducts([...selectedIds]);
+      if (result.success) {
+        toast.success(`Удалено товаров: ${result.count}`);
+        setSelectedIds(new Set());
+      } else {
+        toast.error(result.error ?? "Ошибка при удалении");
+      }
+    } catch {
+      toast.error("Ошибка при удалении");
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* ПАНЕЛЬ ИНСТРУМЕНТОВ */}
@@ -64,6 +161,19 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
               <tr>
+                {/* Checkbox column */}
+                <th className="w-12 px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected;
+                    }}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                    aria-label="Выбрать все"
+                  />
+                </th>
                 <th className="px-6 py-4 font-semibold">Товар</th>
                 <th className="px-6 py-4 font-semibold">Категория</th>
                 <th className="px-6 py-4 font-semibold">Цена</th>
@@ -76,9 +186,23 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                 items.map((product) => {
                   const imageUrl = product.images?.[0];
                   const isActive = product.status === "Активен";
-                  
+                  const isSelected = selectedIds.has(product.id);
+
                   return (
-                    <tr key={product.id} className="transition-colors hover:bg-gray-50/30">
+                    <tr
+                      key={product.id}
+                      className={`transition-colors hover:bg-gray-50/30 ${isSelected ? "bg-blue-50/40" : ""}`}
+                    >
+                      {/* Row checkbox */}
+                      <td className="w-12 px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(product.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                          aria-label={`Выбрать ${product.title}`}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
@@ -112,7 +236,9 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className={`font-semibold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-gray-900"}`}>
+                          <span
+                            className={`font-semibold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-gray-900"}`}
+                          >
                             {formatPrice(product.price)}
                           </span>
                           {product.oldPrice && product.oldPrice > product.price && (
@@ -148,7 +274,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                           >
                             {isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
-                          
+
                           <Link
                             href={`/dashboard/edit/${product.id}`}
                             className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -156,7 +282,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
-                          
+
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deletingId === product.id}
@@ -172,7 +298,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Package className="h-8 w-8 text-gray-300" />
                       <p>Товары не найдены</p>
@@ -184,6 +310,48 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
           </table>
         </div>
       </div>
+
+      {/* ── ПЛАВАЮЩАЯ ПАНЕЛЬ МАССОВЫХ ДЕЙСТВИЙ ─────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-2xl bg-gray-900 px-5 py-3 shadow-2xl text-white text-sm whitespace-nowrap">
+            <CheckSquare className="h-4 w-4 text-blue-400 shrink-0" />
+            <span className="font-medium text-gray-300">
+              Выбрано: <span className="text-white font-bold">{selectedIds.size}</span>
+            </span>
+            <div className="h-4 w-px bg-gray-700 shrink-0" />
+            <button
+              onClick={handleBulkPublish}
+              disabled={isBulkLoading}
+              className="rounded-lg px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 transition-colors font-medium"
+            >
+              Опубликовать
+            </button>
+            <button
+              onClick={handleBulkHide}
+              disabled={isBulkLoading}
+              className="rounded-lg px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 transition-colors font-medium"
+            >
+              Скрыть
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkLoading}
+              className="rounded-lg px-3 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors font-medium"
+            >
+              Удалить
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              disabled={isBulkLoading}
+              className="ml-1 rounded-lg p-1.5 text-gray-400 hover:text-white transition-colors"
+              title="Снять выделение"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

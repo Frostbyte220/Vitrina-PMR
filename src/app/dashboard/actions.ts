@@ -237,3 +237,70 @@ export async function updateProduct(id: string, formData: FormData) {
     return { error: "Внутренняя ошибка сервера при обновлении" };
   }
 }
+
+export async function bulkUpdateProductsStatus(ids: string[], status: "Активен" | "Скрыт") {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    if (!ids || ids.length === 0) {
+      return { success: false, error: "Товары не выбраны" };
+    }
+
+    const result = await prisma.product.updateMany({
+      where: {
+        id: { in: ids },
+        userId: session.user.id,
+        deletedAt: null,
+      },
+      data: { status },
+    });
+
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/products", "layout");
+    revalidatePath("/", "layout");
+    revalidateTag("products");
+
+    return { success: true, count: result.count };
+  } catch (error) {
+    console.error("Ошибка при массовом обновлении статуса:", error);
+    return { success: false, error: "Не удалось обновить выбранные товары" };
+  }
+}
+
+export async function bulkDeleteProducts(ids: string[]) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    if (!ids || ids.length === 0) {
+      return { success: false, error: "Товары не выбраны" };
+    }
+
+    const result = await prisma.product.updateMany({
+      where: {
+        id: { in: ids },
+        userId: session.user.id,
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+        status: "Удален",
+      },
+    });
+
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/products", "layout");
+    revalidatePath("/", "layout");
+    revalidateTag("products");
+
+    return { success: true, count: result.count };
+  } catch (error) {
+    console.error("Ошибка при массовом удалении товаров:", error);
+    return { success: false, error: "Не удалось удалить выбранные товары" };
+  }
+}
