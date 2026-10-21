@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { Toaster } from "react-hot-toast"; 
-import { ToastProvider } from "@/components/ui/Toast"; 
 import { Footer } from "@/components/layout/Footer";
 import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
@@ -59,18 +58,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "SMOT2_G-Ry9W1_VqCOdQRWY6mqD_-d7Ci48fMUotqek",
-    yandex: "3be08a782b40a74f",
+  alternates: {
+    canonical: "https://vitrina-pmr.vercel.app",
   },
-};
-
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#d4173a",
 };
 
 export default function RootLayout({
@@ -80,11 +70,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={inter.variable}>
-      {/* Preconnect к внешним ресурсам — браузер установит TCP-соединение заранее */}
       <head>
+        {/* Предзагружаем критические домены для ускорения загрузки изображений товаров */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://mc.yandex.ru" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://via.placeholder.com" />
+        <link rel="dns-prefetch" href="https://via.placeholder.com" />
       </head>
       <body
         // 🔥 Добавили flex и flex-col для того, чтобы футер всегда был внизу
@@ -95,21 +86,18 @@ export default function RootLayout({
           <YandexMetrika />
         </Suspense>
         <AuthSessionProvider>
-          <ToastProvider>
-            
-            {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
-            <div className="flex-grow pb-tabbar md:pb-0">
-              {children}
-            </div>
+          {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
+          <div className="flex-grow pb-tabbar md:pb-0">
+            {children}
+          </div>
 
-            {/* 🔥 Вставляем наш футер (тоже скрывается за таббаром, поэтому нужен padding) */}
-            <div className="pb-tabbar md:pb-0">
-              <Footer />
-            </div>
+          {/* 🔥 Вставляем наш футер (тоже скрывается за таббаром, поэтому нужен padding) */}
+          <div className="pb-tabbar md:pb-0">
+            <Footer />
+          </div>
 
-            <SellerOnboardingWidget />
-            <MobileTabBarLazy />
-          </ToastProvider>
+          <SellerOnboardingWidget />
+          <MobileTabBarLazy />
           
           {/* Toaster просто лежит рядом, он сам отрендерит уведомления поверх всего сайта */}
           <Toaster 

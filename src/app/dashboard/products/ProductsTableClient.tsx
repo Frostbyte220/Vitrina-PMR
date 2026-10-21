@@ -3,11 +3,23 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, ImageOff, Edit, EyeOff, Eye, Package, CheckSquare } from "lucide-react";
+import {
+  Trash2,
+  ImageOff,
+  Edit,
+  EyeOff,
+  Eye,
+  Package,
+  CheckSquare,
+  Copy,
+  Download,
+  Loader2,
+} from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import {
   deleteProduct,
   toggleProductStatus,
+  duplicateProduct,
   bulkUpdateProductsStatus,
   bulkDeleteProducts,
 } from "@/app/dashboard/actions";
@@ -24,6 +36,7 @@ interface ProductsTableClientProps {
 export function ProductsTableClient({ items, searchQuery }: ProductsTableClientProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   // ── Bulk selection state ──────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -81,6 +94,84 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
       alert("Ошибка при обновлении статуса");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleDuplicate = async (id: string) => {
+    setDuplicatingId(id);
+    try {
+      const result = await duplicateProduct(id);
+      if (result.success) {
+        toast.success("Копия товара создана (со статусом «Скрыт»)");
+      } else {
+        toast.error(result.error ?? "Не удалось создать копию товара");
+      }
+    } catch {
+      toast.error("Ошибка при дублировании товара");
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
+
+  // ── CSV Export ────────────────────────────────────────────────────────────
+  const handleExportCSV = () => {
+    if (items.length === 0) {
+      toast.error("Нет товаров для экспорта");
+      return;
+    }
+
+    try {
+      // Заголовки таблицы
+      const headers = [
+        "ID",
+        "Название",
+        "Категория",
+        "Подкатегория",
+        "Цена (руб)",
+        "Старая цена (руб)",
+        "Статус",
+        "Размеры",
+        "Фотографии",
+      ];
+
+      const escapeCSV = (val: string | number | null | undefined) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const rows = items.map((p) => [
+        escapeCSV(p.id),
+        escapeCSV(p.title),
+        escapeCSV(p.category),
+        escapeCSV(p.subCategory || ""),
+        escapeCSV(p.price),
+        escapeCSV(p.oldPrice || ""),
+        escapeCSV(p.status || "Активен"),
+        escapeCSV(Array.isArray(p.sizes) ? p.sizes.join(", ") : ""),
+        escapeCSV(Array.isArray(p.images) ? p.images.join("; ") : ""),
+      ]);
+
+      // Добавляем UTF-8 BOM (\uFEFF) для корректного открытия кириллицы в Excel на Windows
+      const csvContent =
+        "\uFEFF" +
+        [headers.map((h) => `"${h}"`).join(";"), ...rows.map((r) => r.join(";"))].join("\r\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `vitrina-pmr-products-${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Экспортировано ${items.length} товаров в CSV`);
+    } catch (err) {
+      console.error("Ошибка при экспорте CSV:", err);
+      toast.error("Не удалось экспортировать CSV");
     }
   };
 
@@ -150,7 +241,16 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         <div className="flex-1 w-full sm:max-w-xs">
           <DashboardSearch initialQuery={searchQuery} />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={handleExportCSV}
+            title="Экспорт каталога в CSV (Excel)"
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+          >
+            <Download className="h-4 w-4 text-gray-500" />
+            <span className="hidden sm:inline">Экспорт CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </button>
           <AddProductButton />
         </div>
       </div>
@@ -187,6 +287,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                   const imageUrl = product.images?.[0];
                   const isActive = product.status === "Активен";
                   const isSelected = selectedIds.has(product.id);
+                  const isDuplicating = duplicatingId === product.id;
 
                   return (
                     <tr
@@ -265,7 +366,8 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Скрыть / Показать */}
                           <button
                             onClick={() => handleToggleStatus(product.id, product.status || "Активен")}
                             disabled={togglingId === product.id}
@@ -275,6 +377,21 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                             {isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
 
+                          {/* Создать копию */}
+                          <button
+                            onClick={() => handleDuplicate(product.id)}
+                            disabled={isDuplicating}
+                            title="Создать копию товара"
+                            className="rounded-lg p-2 text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors disabled:opacity-50"
+                          >
+                            {isDuplicating ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </button>
+
+                          {/* Редактировать */}
                           <Link
                             href={`/dashboard/edit/${product.id}`}
                             className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -283,6 +400,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                             <Edit className="h-4 w-4" />
                           </Link>
 
+                          {/* Удалить */}
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deletingId === product.id}

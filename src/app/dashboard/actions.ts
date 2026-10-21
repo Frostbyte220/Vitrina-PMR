@@ -304,3 +304,59 @@ export async function bulkDeleteProducts(ids: string[]) {
     return { success: false, error: "Не удалось удалить выбранные товары" };
   }
 }
+
+export async function duplicateProduct(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    const original = await prisma.product.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        oldPrice: true,
+        category: true,
+        subCategory: true,
+        sizes: true,
+        images: true,
+        userId: true,
+        storeId: true,
+      },
+    });
+
+    if (!original || original.userId !== session.user.id) {
+      return { success: false, error: "Товар не найден или у вас нет прав на его копирование" };
+    }
+
+    const newProduct = await prisma.product.create({
+      data: {
+        title: `${original.title} (копия)`,
+        description: original.description,
+        price: original.price,
+        oldPrice: original.oldPrice,
+        category: original.category,
+        subCategory: original.subCategory,
+        sizes: original.sizes,
+        images: original.images,
+        status: "Скрыт",
+        userId: session.user.id,
+        storeId: original.storeId,
+      },
+    });
+
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/products", "layout");
+    revalidatePath("/", "layout");
+    revalidateTag("products");
+
+    return { success: true, product: newProduct };
+  } catch (error) {
+    console.error("Ошибка при дублировании товара:", error);
+    return { success: false, error: "Не удалось создать копию товара" };
+  }
+}
