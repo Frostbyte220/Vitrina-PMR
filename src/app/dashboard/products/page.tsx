@@ -111,7 +111,7 @@ export default async function DashboardProductsPage({
   });
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 pb-24 md:px-8 md:pb-8 flex-1">
+    <main className="mx-auto w-full max-w-7xl min-w-0 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8 flex-1">
       <div className="mb-8 flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight text-text-main">
           Управление товарами

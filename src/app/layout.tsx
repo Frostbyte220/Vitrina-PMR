@@ -87,7 +87,7 @@ export default function RootLayout({
         </Suspense>
         <AuthSessionProvider>
           {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
-          <div className="flex-grow pb-tabbar md:pb-0">
+          <div className="flex-grow w-full min-w-0 pb-tabbar md:pb-0">
             {children}
           </div>
 

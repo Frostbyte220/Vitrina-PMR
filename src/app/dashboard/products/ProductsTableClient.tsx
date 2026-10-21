@@ -121,7 +121,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
     }
 
     try {
-      // Заголовки таблицы
       const headers = [
         "ID",
         "Название",
@@ -152,7 +151,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         escapeCSV(Array.isArray(p.images) ? p.images.join("; ") : ""),
       ]);
 
-      // Добавляем UTF-8 BOM (\uFEFF) для корректного открытия кириллицы в Excel на Windows
       const csvContent =
         "\uFEFF" +
         [headers.map((h) => `"${h}"`).join(";"), ...rows.map((r) => r.join(";"))].join("\r\n");
@@ -235,33 +233,215 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* ПАНЕЛЬ ИНСТРУМЕНТОВ */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex-1 w-full sm:max-w-xs">
+    <div className="flex flex-col gap-6 w-full min-w-0">
+      {/* ── ПАНЕЛЬ ИНСТРУМЕНТОВ ────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-100 shadow-sm w-full min-w-0">
+        <div className="w-full sm:max-w-xs">
           <DashboardSearch initialQuery={searchQuery} />
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={handleExportCSV}
             title="Экспорт каталога в CSV (Excel)"
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 shadow-xs"
           >
-            <Download className="h-4 w-4 text-gray-500" />
-            <span className="hidden sm:inline">Экспорт CSV</span>
-            <span className="sm:hidden">CSV</span>
+            <Download className="h-4 w-4 text-gray-500 shrink-0" />
+            <span>Экспорт CSV</span>
           </button>
-          <AddProductButton />
+          <div className="flex-1 sm:flex-initial">
+            <AddProductButton />
+          </div>
         </div>
       </div>
 
-      {/* ТАБЛИЦА */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+      {/* ── МОБИЛЬНЫЙ ВИД: КАРТОЧКИ ТОВАРОВ (md:hidden) ────────────────────── */}
+      <div className="md:hidden flex flex-col gap-3 w-full min-w-0">
+        {items.length > 0 ? (
+          <>
+            {/* Панель «Выбрать все» на мобильных */}
+            <div className="flex items-center justify-between rounded-xl bg-white border border-gray-100 px-4 py-2.5 shadow-xs text-xs font-medium text-gray-600">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                />
+                <span>Выбрать все товары</span>
+              </label>
+              <span className="text-gray-400">
+                {selectedIds.size > 0 ? `Выбрано: ${selectedIds.size} из ${items.length}` : `Всего: ${items.length}`}
+              </span>
+            </div>
+
+            {/* Список карточек */}
+            {items.map((product) => {
+              const imageUrl = product.images?.[0];
+              const isActive = product.status === "Активен";
+              const isSelected = selectedIds.has(product.id);
+              const isDuplicating = duplicatingId === product.id;
+              const hasDiscount = product.oldPrice && product.oldPrice > product.price;
+
+              return (
+                <div
+                  key={product.id}
+                  className={`flex flex-col gap-3 rounded-2xl border bg-white p-3.5 shadow-sm transition-all ${
+                    isSelected ? "border-blue-400 bg-blue-50/25 ring-1 ring-blue-400" : "border-gray-100"
+                  }`}
+                >
+                  {/* Верхняя строка: Чекбокс, Фото, Название, Статус */}
+                  <div className="flex items-start gap-3">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectOne(product.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
+                        aria-label={`Выбрать ${product.title}`}
+                      />
+                    </div>
+
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <ImageOff className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug">
+                          {product.title}
+                        </h3>
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {product.status || "Активен"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span className="truncate">{product.category}</span>
+                        {product.subCategory && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate">{product.subCategory}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Средняя строка: Цена, скидка и размеры */}
+                  <div className="flex items-center justify-between border-t border-gray-50 pt-2.5">
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-base font-bold ${hasDiscount ? "text-rose-600" : "text-gray-900"}`}>
+                        {formatPrice(product.price)}
+                      </span>
+                      {hasDiscount && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-400 line-through">
+                            {formatPrice(product.oldPrice!)}
+                          </span>
+                          <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                            -{Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {product.sizes && product.sizes.length > 0 && (
+                      <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                        {product.sizes.length} разм.
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Нижняя панель действий */}
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-2.5">
+                    <button
+                      onClick={() => handleToggleStatus(product.id, product.status || "Активен")}
+                      disabled={togglingId === product.id}
+                      className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                      title={isActive ? "Скрыть товар" : "Показать товар"}
+                    >
+                      {isActive ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-green-600" />}
+                      <span>{isActive ? "Скрыть" : "Показать"}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDuplicate(product.id)}
+                        disabled={isDuplicating}
+                        title="Создать копию"
+                        className="rounded-lg p-2 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors disabled:opacity-50"
+                      >
+                        {isDuplicating ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+
+                      <Link
+                        href={`/dashboard/edit/${product.id}`}
+                        className="rounded-lg p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        title="Редактировать"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Link>
+
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        disabled={deletingId === product.id}
+                        className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          /* Мобильный красивый пустой статус */
+          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm w-full">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="p-3 bg-gray-50 text-gray-400 rounded-2xl">
+                <Package className="h-8 w-8 text-gray-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 text-sm">Товары не найдены</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {searchQuery ? "Попробуйте изменить поисковый запрос" : "Добавьте свой первый товар кнопкой выше"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── ДЕСКТОПНЫЙ ВИД: ТАБЛИЦА (hidden md:block) ───────────────────────── */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
               <tr>
-                {/* Checkbox column */}
                 <th className="w-12 px-4 py-4">
                   <input
                     type="checkbox"
@@ -294,7 +474,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       key={product.id}
                       className={`transition-colors hover:bg-gray-50/30 ${isSelected ? "bg-blue-50/40" : ""}`}
                     >
-                      {/* Row checkbox */}
                       <td className="w-12 px-4 py-4">
                         <input
                           type="checkbox"
@@ -367,7 +546,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Скрыть / Показать */}
                           <button
                             onClick={() => handleToggleStatus(product.id, product.status || "Активен")}
                             disabled={togglingId === product.id}
@@ -377,7 +555,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                             {isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
 
-                          {/* Создать копию */}
                           <button
                             onClick={() => handleDuplicate(product.id)}
                             disabled={isDuplicating}
@@ -391,7 +568,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                             )}
                           </button>
 
-                          {/* Редактировать */}
                           <Link
                             href={`/dashboard/edit/${product.id}`}
                             className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -400,7 +576,6 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                             <Edit className="h-4 w-4" />
                           </Link>
 
-                          {/* Удалить */}
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deletingId === product.id}
@@ -431,42 +606,46 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
 
       {/* ── ПЛАВАЮЩАЯ ПАНЕЛЬ МАССОВЫХ ДЕЙСТВИЙ ─────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2">
-          <div className="flex items-center gap-3 rounded-2xl bg-gray-900 px-5 py-3 shadow-2xl text-white text-sm whitespace-nowrap">
-            <CheckSquare className="h-4 w-4 text-blue-400 shrink-0" />
-            <span className="font-medium text-gray-300">
-              Выбрано: <span className="text-white font-bold">{selectedIds.size}</span>
-            </span>
-            <div className="h-4 w-px bg-gray-700 shrink-0" />
-            <button
-              onClick={handleBulkPublish}
-              disabled={isBulkLoading}
-              className="rounded-lg px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 transition-colors font-medium"
-            >
-              Опубликовать
-            </button>
-            <button
-              onClick={handleBulkHide}
-              disabled={isBulkLoading}
-              className="rounded-lg px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 transition-colors font-medium"
-            >
-              Скрыть
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              disabled={isBulkLoading}
-              className="rounded-lg px-3 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors font-medium"
-            >
-              Удалить
-            </button>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              disabled={isBulkLoading}
-              className="ml-1 rounded-lg p-1.5 text-gray-400 hover:text-white transition-colors"
-              title="Снять выделение"
-            >
-              ✕
-            </button>
+        <div className="fixed bottom-20 md:bottom-8 left-1/2 z-50 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl bg-gray-900 px-4 py-3 shadow-2xl text-white text-xs sm:text-sm">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4 text-blue-400 shrink-0" />
+              <span className="font-medium text-gray-300">
+                Выбрано: <span className="text-white font-bold">{selectedIds.size}</span>
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={handleBulkPublish}
+                disabled={isBulkLoading}
+                className="rounded-lg px-2.5 sm:px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 transition-colors font-medium"
+              >
+                Опубликовать
+              </button>
+              <button
+                onClick={handleBulkHide}
+                disabled={isBulkLoading}
+                className="rounded-lg px-2.5 sm:px-3 py-1.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 transition-colors font-medium"
+              >
+                Скрыть
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkLoading}
+                className="rounded-lg px-2.5 sm:px-3 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors font-medium"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                disabled={isBulkLoading}
+                className="rounded-lg p-1 text-gray-400 hover:text-white transition-colors"
+                title="Снять выделение"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       )}
