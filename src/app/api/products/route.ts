@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],
         images: validatedData.images,
+        availability: validatedData.availability || "В наличии",
         userId: session.user.id,
         // Привязываем storeId, если магазин найден
         storeId: store ? store.id : null,

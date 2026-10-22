@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 import { formatPrice } from "@/lib/utils";
+import { getAvailabilityInfo } from "@/lib/availability";
 import { trackEvent } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,6 +34,7 @@ interface ContactSellerButtonProps {
   contacts?: StoreContacts | null;
   isCardView?: boolean;
   selectedSize?: string | null;
+  availability?: string | null;
 }
 
 // Универсальная функция копирования текста в буфер обмена
@@ -75,6 +77,7 @@ export function ContactSellerButton({
   contacts,
   isCardView = false,
   selectedSize,
+  availability,
 }: ContactSellerButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,10 +121,12 @@ export function ContactSellerButton({
       : "";
 
   const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
+  const availInfo = getAvailabilityInfo(availability);
+  const availText = availInfo ? `, ${availInfo.label}` : "";
   const sizeText = selectedSize ? ` (размер: ${selectedSize})` : "";
   const greetingMessage = productUrl
-    ? `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}).\nСсылка на товар: ${productUrl}`
-    : `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}) на E-Vitrina PMR.`;
+    ? `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}${availText}).\nСсылка на товар: ${productUrl}`
+    : `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}${availText}) на E-Vitrina PMR.`;
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
@@ -295,7 +300,7 @@ export function ContactSellerButton({
               <div className="pr-4">
                 <h3 className="text-lg font-bold text-gray-900 leading-snug">Связаться с продавцом</h3>
                 <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
-                  {productName}{selectedSize ? ` · Размер: ${selectedSize}` : ""} · <span className="font-semibold text-rose-600">{formattedPrice}</span>
+                  {productName}{selectedSize ? ` · Размер: ${selectedSize}` : ""} · <span className="font-semibold text-rose-600">{formattedPrice}</span> · <span className="font-medium text-emerald-700">{availInfo.label}</span>
                 </p>
               </div>
               <button

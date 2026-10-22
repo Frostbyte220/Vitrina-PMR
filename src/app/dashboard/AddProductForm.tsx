@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { AVAILABILITY_OPTIONS } from "@/lib/availability";
 
 interface AddProductFormProps {
   onSuccess?: () => void;
@@ -46,6 +47,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     Array.isArray(initialData?.sizes) ? initialData.sizes : []
   );
   const [customSizeInput, setCustomSizeInput] = useState("");
+  const [availability, setAvailability] = useState<string>(initialData?.availability || "В наличии");
 
   // 1. Инициализация React Hook Form
   const {
@@ -115,6 +117,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         ...data,
         subCategory: subCategory !== "Нет" ? subCategory : undefined,
         sizes: isSizeCategory ? selectedSizes : [],
+        availability,
       };
 
       const url = isEditing ? `/api/products/${initialData.id}` : "/api/products";
@@ -141,6 +144,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         setSubCategory("Нет");
         setSelectedSizes([]);
         setCustomSizeInput("");
+        setAvailability("В наличии");
         if (onSuccess) onSuccess();
         router.refresh();
       }
@@ -267,6 +271,41 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
               Укажите, чтобы показать скидку и зачеркнутую цену
             </span>
           )}
+        </div>
+      </div>
+
+      {/* СТАТУС НАЛИЧИЯ ТОВАРА */}
+      <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-gray-800">
+            Наличие товара <span className="text-rose-500">*</span>
+          </label>
+          <span className="text-xs text-gray-400">
+            Снимает вопросы покупателей
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
+          {AVAILABILITY_OPTIONS.map((opt) => {
+            const isSelected = availability === opt.label;
+            return (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => setAvailability(opt.label)}
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                  isSelected
+                    ? `${opt.badgeClass} ring-2 ring-rose-200 border-transparent shadow-xs font-semibold`
+                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${opt.dotClass} shrink-0`} />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold truncate leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-gray-400 truncate leading-tight mt-0.5">{opt.description}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

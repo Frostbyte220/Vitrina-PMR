@@ -9,6 +9,7 @@ import type { Product } from "@/types";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { AvailabilityBadge } from "@/components/ui/AvailabilityBadge";
 import { useCartStore } from "@/store/useCartStore";
 import toast from "react-hot-toast";
 
@@ -216,15 +217,18 @@ export function ProductCard({ product, priority = false, activeCities }: Product
       {/* 3. Инфо и кнопки */}
       <div className="flex flex-col p-4 flex-grow justify-between gap-3">
         <div>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-primary"}`}>
-              {formatPrice(product.price)}
-            </span>
-            {product.oldPrice && product.oldPrice > product.price && (
-              <span className="text-xs font-medium text-gray-400 line-through">
-                {formatPrice(product.oldPrice)}
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-baseline gap-2">
+              <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-primary"}`}>
+                {formatPrice(product.price)}
               </span>
-            )}
+              {product.oldPrice && product.oldPrice > product.price && (
+                <span className="text-xs font-medium text-gray-400 line-through">
+                  {formatPrice(product.oldPrice)}
+                </span>
+              )}
+            </div>
+            <AvailabilityBadge availability={prod.availability} size="xs" />
           </div>
           <Link href={`/product/${product.id}`} prefetch={true}>
             <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
@@ -259,6 +263,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                 productId={product.id}
                 productName={product.title}
                 productPrice={product.price}
+                availability={prod.availability}
                 shopUsername={cleanInstagram}
                 contacts={storeContacts}
                 isCardView={true} 

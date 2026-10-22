@@ -43,6 +43,7 @@ export async function PATCH(
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],
         images: validatedData.images,
+        availability: validatedData.availability || "В наличии",
       },
     });
 

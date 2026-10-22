@@ -28,6 +28,7 @@ import type { Product } from "@/types";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import AddProductButton from "@/components/AddProductButton";
 import toast from "react-hot-toast";
+import { AvailabilityBadge } from "@/components/ui/AvailabilityBadge";
 
 // ⚙️ Переключатель: false = скрыть отображение счетчиков статистики в таблице товаров (код сохранен)
 const SHOW_REAL_METRICS = false;
@@ -133,6 +134,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         "Цена (руб)",
         "Старая цена (руб)",
         "Статус",
+        "Наличие",
         "Просмотры",
         "Клики (контакты)",
         "Размеры",
@@ -153,6 +155,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         escapeCSV(p.price),
         escapeCSV(p.oldPrice || ""),
         escapeCSV(p.status || "Активен"),
+        escapeCSV(p.availability || "В наличии"),
         escapeCSV(p.viewsCount || 0),
         escapeCSV(p.contactClicksCount || 0),
         escapeCSV(Array.isArray(p.sizes) ? p.sizes.join(", ") : ""),
@@ -333,13 +336,16 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                         <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug">
                           {product.title}
                         </h3>
-                        <span
-                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {product.status || "Активен"}
-                        </span>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {product.status || "Активен"}
+                          </span>
+                          <AvailabilityBadge availability={product.availability} size="xs" />
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                         <span className="truncate">{product.category}</span>
@@ -563,15 +569,18 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {product.status || "Активен"}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {product.status || "Активен"}
+                          </span>
+                          <AvailabilityBadge availability={product.availability} size="xs" />
+                        </div>
                       </td>
                       {SHOW_REAL_METRICS && (
                         <td className="px-6 py-4">

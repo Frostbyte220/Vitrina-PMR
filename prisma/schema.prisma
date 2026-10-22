@@ -70,6 +70,7 @@ model Product {
   description String?
   sizes       String[]  @default([])
   status      String?   @default("Активен")
+  availability String?   @default("В наличии") // "В наличии", "Под заказ", "Ожидается"
   deletedAt   DateTime? 
 
   // Связь с продавцом

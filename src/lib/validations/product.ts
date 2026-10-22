@@ -55,6 +55,12 @@ price: z
   subCategory: z
     .string()
     .optional(),
+
+  // Статус наличия («В наличии», «Под заказ», «Ожидается»)
+  availability: z
+    .string()
+    .default("В наличии")
+    .optional(),
   
   sizes: z
     .array(z.string().trim().min(1))

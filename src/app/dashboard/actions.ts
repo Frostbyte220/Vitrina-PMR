@@ -74,6 +74,7 @@ export async function createProduct(arg1: any, arg2?: any) {
         category,
         subCategory, // <-- Передаем в БД
         status: "Активен",
+        availability: (formData.get("availability") as string) || "В наличии",
         userId: user.id, 
       },
     });

@@ -23,6 +23,7 @@ interface ProductPurchaseSectionProps {
   storeId?: string | null;
   storeAvatar?: string | null;
   isVerified?: boolean;
+  availability?: string | null;
 }
 
 export function ProductPurchaseSection({
@@ -39,6 +40,7 @@ export function ProductPurchaseSection({
   storeId,
   storeAvatar,
   isVerified,
+  availability,
 }: ProductPurchaseSectionProps) {
   // Выбранный размер (по умолчанию первый размер, если есть, либо null)
   const hasSizes = Array.isArray(sizes) && sizes.length > 0;
@@ -165,6 +167,7 @@ export function ProductPurchaseSection({
               contacts={contacts}
               isCardView={true}
               selectedSize={selectedSize}
+              availability={availability}
             />
           </div>
 
@@ -233,6 +236,7 @@ export function ProductPurchaseSection({
               contacts={contacts}
               isCardView={true}
               selectedSize={selectedSize}
+              availability={availability}
             />
           </div>
 

@@ -15,6 +15,7 @@ import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracke
 import { ProductViewTracker } from "@/components/product/ProductViewTracker";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { AvailabilityBadge } from "@/components/ui/AvailabilityBadge";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -44,6 +45,7 @@ const getProduct = cache(async (id: string) => {
       category: true,
       subCategory: true,
       sizes: true,
+      availability: true,
       storeId: true,
       userId: true,
       store: {
@@ -276,20 +278,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <h1 className="text-2xl font-bold leading-tight text-text-main md:text-3xl">
                 {product.title}
               </h1>
-              <div className="mt-2 flex items-baseline gap-3 flex-wrap">
-                <span className={`text-2xl font-bold md:text-3xl ${hasDiscount ? "text-rose-600" : "text-primary"}`}>
-                  {formatPrice(product.price)}
-                </span>
-                {hasDiscount && (
-                  <>
-                    <span className="text-base font-medium text-gray-400 line-through md:text-lg">
-                      {formatPrice(product.oldPrice!)}
-                    </span>
-                    <span className="inline-flex items-center rounded-lg bg-rose-600 px-2.5 py-0.5 text-xs sm:text-sm font-bold text-white shadow-sm">
-                      -{discountPercent}%
-                    </span>
-                  </>
-                )}
+              <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className={`text-2xl font-bold md:text-3xl ${hasDiscount ? "text-rose-600" : "text-primary"}`}>
+                    {formatPrice(product.price)}
+                  </span>
+                  {hasDiscount && (
+                    <>
+                      <span className="text-base font-medium text-gray-400 line-through md:text-lg">
+                        {formatPrice(product.oldPrice!)}
+                      </span>
+                      <span className="inline-flex items-center rounded-lg bg-rose-600 px-2.5 py-0.5 text-xs sm:text-sm font-bold text-white shadow-sm">
+                        -{discountPercent}%
+                      </span>
+                    </>
+                  )}
+                </div>
+                <AvailabilityBadge availability={product.availability} size="md" />
               </div>
             </div>
 
@@ -336,6 +341,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               storeId={product.storeId || product.store?.id || (product.user?.store as any)?.id || null}
               storeAvatar={product.store?.avatarUrl || (product.user?.store as any)?.avatarUrl || (product.user as any)?.avatar || null}
               isVerified={Boolean(product.store?.isVerified || (product.user?.store as any)?.isVerified)}
+              availability={product.availability}
             />
 
             {/* Кнопка «Пожаловаться на товар» */}

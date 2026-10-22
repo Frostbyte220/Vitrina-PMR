@@ -22,6 +22,7 @@ export type FuzzyProduct = {
   category: string;
   subCategory: string | null;
   sizes: string[];
+  availability?: string | null;
   user: {
     name: string | null;
     instagram: string | null;
@@ -314,6 +315,7 @@ const productSelectFields = {
   category: true,
   subCategory: true,
   sizes: true,
+  availability: true,
   user: {
     select: {
       name: true,

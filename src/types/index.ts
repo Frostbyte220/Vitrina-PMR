@@ -13,6 +13,9 @@ export interface Product {
   
   // Статус товара (например, "Активен" или "Скрыт")
   status?: string;
+
+  // Статус наличия ("В наличии", "Под заказ", "Ожидается")
+  availability?: string | null;
   
   // ID продавца
   userId?: string | null;
