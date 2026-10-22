@@ -242,43 +242,70 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
 
   return (
     <>
-      {/* Заголовок секции товаров */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold text-gray-900">
-          {discount === "true" ? (
-            <>
-              Товары со скидкой{" "}
-              {selectedCities.length > 0 && (
-                <span className="text-rose-600 font-semibold">: {selectedCities.join(", ")}</span>
+      {/* Формируем строку диапазона цен для заголовка */}
+      {(() => {
+        const priceLabel = minPrice && maxPrice
+          ? `${minPrice}–${maxPrice} Руб`
+          : minPrice
+          ? `от ${minPrice} Руб`
+          : maxPrice
+          ? `до ${maxPrice} Руб`
+          : null;
+
+        return (
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
+              {discount === "true" ? (
+                <>
+                  Товары со скидкой{" "}
+                  {selectedCities.length > 0 && (
+                    <span className="text-rose-600 font-semibold">: {selectedCities.join(", ")}</span>
+                  )}
+                  {priceLabel && (
+                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
+                  )}
+                </>
+              ) : selectedCities.length > 0 ? (
+                <>
+                  Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
+                  {selectedSizes.length > 0 && (
+                    <span className="text-gray-500 font-normal text-sm ml-2">
+                      (размер: {selectedSizes.join(", ")})
+                    </span>
+                  )}
+                  {priceLabel && (
+                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
+                  )}
+                </>
+              ) : selectedSizes.length > 0 ? (
+                <>
+                  Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
+                  {priceLabel && (
+                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
+                  )}
+                </>
+              ) : priceLabel ? (
+                <>
+                  Товары <span className="text-rose-600 font-semibold">({priceLabel})</span>
+                </>
+              ) : (
+                "Каталог товаров"
               )}
-            </>
-          ) : selectedCities.length > 0 ? (
-            <>
-              Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
-              {selectedSizes.length > 0 && (
-                <span className="text-gray-500 font-normal text-sm ml-2">
-                  (размер: {selectedSizes.join(", ")})
-                </span>
-              )}
-            </>
-          ) : selectedSizes.length > 0 ? (
-            <>
-              Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
-            </>
-          ) : (
-            "Каталог товаров"
-          )}
-        </h2>
-        <span className="text-xs sm:text-sm text-gray-500">
-          {totalCount} {totalCount === 1 ? "товар" : totalCount < 5 ? "товара" : "товаров"}
-        </span>
-      </div>
+            </h2>
+            <span className="text-xs sm:text-sm text-gray-500">
+              {totalCount} {totalCount === 1 ? "товар" : totalCount < 5 ? "товара" : "товаров"}
+            </span>
+          </div>
+        );
+      })()}
 
       {products.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
           <h3 className="text-lg font-semibold text-gray-900">
             {discount === "true"
               ? "Пока нет товаров со скидкой по вашим фильтрам"
+              : (minPrice || maxPrice)
+              ? `В диапазоне ${minPrice && maxPrice ? `${minPrice}–${maxPrice} Руб` : minPrice ? `от ${minPrice} Руб` : `до ${maxPrice} Руб`} пока нет товаров`
               : selectedCities.length > 0
               ? `В ${selectedCities.join(", ")} пока нет товаров по вашим фильтрам`
               : selectedSizes.length > 0
