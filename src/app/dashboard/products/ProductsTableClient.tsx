@@ -29,6 +29,9 @@ import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import AddProductButton from "@/components/AddProductButton";
 import toast from "react-hot-toast";
 
+// ⚙️ Переключатель: false = скрыть отображение счетчиков статистики в таблице товаров (код сохранен)
+const SHOW_REAL_METRICS = false;
+
 interface ProductsTableClientProps {
   items: Product[];
   searchQuery: string;
@@ -375,23 +378,25 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                     )}
                   </div>
 
-                  {/* Статистика: Просмотры и Клики */}
-                  <div className="flex items-center gap-2 border-t border-gray-50 pt-2">
-                    <div
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold"
-                      title="Просмотры товара"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>{product.viewsCount || 0} просмотров</span>
+                  {/* Статистика: Просмотры и Клики (сохранена, отображается при SHOW_REAL_METRICS = true) */}
+                  {SHOW_REAL_METRICS && (
+                    <div className="flex items-center gap-2 border-t border-gray-50 pt-2">
+                      <div
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold"
+                        title="Просмотры товара"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>{product.viewsCount || 0} просмотров</span>
+                      </div>
+                      <div
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                        title="Переходы в мессенджеры и звонки"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{product.contactClicksCount || 0} обращений</span>
+                      </div>
                     </div>
-                    <div
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-semibold"
-                      title="Переходы в мессенджеры и звонки"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>{product.contactClicksCount || 0} обращений</span>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Нижняя панель действий */}
                   <div className="flex items-center justify-between border-t border-gray-100 pt-2.5">
@@ -481,7 +486,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                 <th className="px-6 py-4 font-semibold">Категория</th>
                 <th className="px-6 py-4 font-semibold">Цена</th>
                 <th className="px-6 py-4 font-semibold">Статус</th>
-                <th className="px-6 py-4 font-semibold">Статистика</th>
+                {SHOW_REAL_METRICS && <th className="px-6 py-4 font-semibold">Статистика</th>}
                 <th className="px-6 py-4 text-right font-semibold">Действия</th>
               </tr>
             </thead>
@@ -568,24 +573,26 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                           {product.status || "Активен"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold"
-                            title="Просмотры товара"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>{product.viewsCount || 0}</span>
+                      {SHOW_REAL_METRICS && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold"
+                              title="Просмотры товара"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{product.viewsCount || 0}</span>
+                            </div>
+                            <div
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                              title="Переходы в контакты (Telegram/Viber/Instagram/Телефон)"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              <span>{product.contactClicksCount || 0}</span>
+                            </div>
                           </div>
-                          <div
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold"
-                            title="Переходы в контакты (Telegram/Viber/Instagram/Телефон)"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span>{product.contactClicksCount || 0}</span>
-                          </div>
-                        </div>
-                      </td>
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
