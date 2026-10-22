@@ -143,7 +143,7 @@ function ProductsSkeleton() {
 
 // Отдельный асинхронный компонент для запроса данных
 async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, discount, ...otherFilters } = params;
+  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, discount, availability, ...otherFilters } = params;
   const currentPage = Number(page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -167,6 +167,11 @@ async function ProductCatalog({ params }: { params: { [key: string]: string | un
         gt: 0,
       },
     });
+  }
+
+  // Фильтр по наличию («В наличии», «Под заказ», «Ожидается»)
+  if (availability) {
+    conditions.push({ availability });
   }
 
   if (category && category !== "Все") {

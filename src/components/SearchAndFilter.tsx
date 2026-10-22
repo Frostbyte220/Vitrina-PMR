@@ -72,6 +72,7 @@ export function SearchAndFilter() {
   );
 
   const currentDiscount    = searchParams.get("discount") === "true";
+  const currentAvailability = searchParams.get("availability") || "";
 
   const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
   const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
@@ -165,6 +166,7 @@ export function SearchAndFilter() {
       cities?: string[] | null;
       sizes?: string[] | null;
       discount?: boolean | null;
+      availability?: string | null;
     }) => {
       const params = new URLSearchParams(searchParams.toString());
 
@@ -228,6 +230,11 @@ export function SearchAndFilter() {
       if (updates.discount !== undefined) {
         if (!updates.discount) params.delete("discount");
         else params.set("discount", "true");
+      }
+
+      if (updates.availability !== undefined) {
+        if (!updates.availability) params.delete("availability");
+        else params.set("availability", updates.availability);
       }
 
       params.delete("page");
@@ -836,6 +843,47 @@ export function SearchAndFilter() {
           </AnimatePresence>
         </div>
 
+        {/* Кнопка быстрого фильтра «В наличии» */}
+        <button
+          type="button"
+          onClick={() =>
+            updateParams({
+              availability: currentAvailability === "В наличии" ? null : "В наличии",
+            })
+          }
+          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm active:scale-95 ${
+            currentAvailability === "В наличии"
+              ? "bg-emerald-600 text-white shadow-emerald-200 ring-2 ring-emerald-200 border border-emerald-600"
+              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+          }`}
+          title={
+            currentAvailability === "В наличии"
+              ? "Показать все товары"
+              : "Показать только товары в наличии"
+          }
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              currentAvailability === "В наличии" ? "bg-white" : "bg-emerald-500"
+            }`}
+          />
+          <span>В наличии</span>
+          {currentAvailability === "В наличии" && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                updateParams({ availability: null });
+              }}
+              className="ml-0.5 rounded-full p-0.5 text-white/80 hover:text-white transition-colors"
+              title="Сбросить фильтр"
+            >
+              <X className="h-3 w-3" />
+            </span>
+          )}
+        </button>
+
         {/* Кнопка фильтра «Со скидкой» */}
         <button
           type="button"
@@ -887,7 +935,7 @@ export function SearchAndFilter() {
 
 
       {/* 2.5 Активные фильтры (быстрые теги для сброса) */}
-      {(Boolean(currentMinPrice || currentMaxPrice || currentCities.length > 0 || currentSizes.length > 0 || currentDiscount)) && (
+      {(Boolean(currentMinPrice || currentMaxPrice || currentCities.length > 0 || currentSizes.length > 0 || currentDiscount || currentAvailability)) && (
         <div className="mx-auto max-w-4xl px-4 flex flex-wrap items-center justify-center gap-1.5 text-xs z-20 relative">
           <span className="text-gray-400 font-medium mr-0.5">Выбрано:</span>
 
@@ -967,6 +1015,22 @@ export function SearchAndFilter() {
             </span>
           )}
 
+          {/* Тег наличия */}
+          {currentAvailability && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 font-semibold text-emerald-700 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>{currentAvailability}</span>
+              <button
+                type="button"
+                onClick={() => updateParams({ availability: null })}
+                className="hover:bg-emerald-200 rounded-full p-0.5 text-emerald-600 transition-colors"
+                title="Сбросить фильтр наличия"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
           {/* Кнопка сбросить все фильтры */}
           <button
             type="button"
@@ -979,6 +1043,7 @@ export function SearchAndFilter() {
                 cities: null,
                 sizes: null,
                 discount: false,
+                availability: null,
               });
             }}
             className="text-gray-400 hover:text-rose-600 underline font-medium ml-1 transition-colors"
