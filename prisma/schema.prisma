@@ -50,6 +50,7 @@ model Store {
   coverUrl    String?  
 
   isVerified  Boolean  @default(false) // Бейдж проверенного магазина
+  viewsCount  Int      @default(0)     // Количество просмотров страницы магазина
 
   // 🔥 Добавьте эту строку для связи с продуктами
   products    Product[] 
@@ -81,6 +82,10 @@ model Product {
 
   // Связь с жалобами на товар
   reports     ProductReport[]
+
+  // Аналитика и статистика товара
+  viewsCount         Int       @default(0) // Количество просмотров товара
+  contactClicksCount Int       @default(0) // Количество кликов по кнопкам связи (Telegram/Viber/Instagram/тел)
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

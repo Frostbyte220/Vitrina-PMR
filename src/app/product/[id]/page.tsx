@@ -12,6 +12,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductCarousel } from "@/components/product/ProductCarousel";
 import { ReportProductModal } from "@/components/product/ReportProductModal";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
+import { ProductViewTracker } from "@/components/product/ProductViewTracker";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
@@ -247,6 +248,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       <RecentlyViewedTracker productId={product.id} />
+      <ProductViewTracker productId={product.id} />
 
       <ProductPageHeader
         title={product.title}

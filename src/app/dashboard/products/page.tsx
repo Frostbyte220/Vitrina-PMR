@@ -76,6 +76,8 @@ export default async function DashboardProductsPage({
         description: true,
         status: true,
         userId: true,
+        viewsCount: true,
+        contactClicksCount: true,
         createdAt: true,
         updatedAt: true,
         deletedAt: true,
@@ -107,6 +109,8 @@ export default async function DashboardProductsPage({
       description: p.description,
       status: p.status || "Активен",
       userId: p.userId,
+      viewsCount: p.viewsCount,
+      contactClicksCount: p.contactClicksCount,
     } as Product;
   });
 

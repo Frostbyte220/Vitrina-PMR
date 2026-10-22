@@ -4,15 +4,13 @@ export interface Product {
   price: number;
   oldPrice?: number | null;
   category: string; // Обязательное поле для фильтрации на главной витрине
-  subCategory?: string | null; // <-- ДОБАВЛЕНО НОВОЕ ПОЛЕ
+  subCategory?: string | null;
   images: string[];
   shopName: string;
   shopUsername: string;
   description?: string | null; 
   sizes?: string[]; 
   
-  // --- Новые поля из базы данных ---
-
   // Статус товара (например, "Активен" или "Скрыт")
   status?: string;
   
@@ -45,6 +43,10 @@ export interface Product {
     isVerified?: boolean | null;
   } | null;
 
+  // Счетчики просмотров и переходов в контакты
+  viewsCount?: number;
+  contactClicksCount?: number;
+
   // Даты создания и обновления
   createdAt?: Date;
   updatedAt?: Date;
@@ -63,6 +65,7 @@ export interface StoreType {
   avatarUrl?: string | null;
   coverUrl?: string | null;
   isVerified: boolean;
+  viewsCount?: number;
   createdAt: Date;
   updatedAt?: Date;
 }

@@ -194,6 +194,18 @@ export function ContactSellerButton({
   }
 
   const handleChannelClick = (channel: Channel) => {
+    if (productId) {
+      try {
+        fetch(`/api/products/${productId}/click`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ channel: channel.id }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {
+        // Игнорируем сетевые ошибки, чтобы не блокировать открытие ссылки
+      }
+    }
     trackEvent("contact_seller", {
       product: productName,
       channel: channel.id,

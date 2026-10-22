@@ -14,6 +14,7 @@ import {
   Copy,
   Download,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -129,6 +130,8 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         "Цена (руб)",
         "Старая цена (руб)",
         "Статус",
+        "Просмотры",
+        "Клики (контакты)",
         "Размеры",
         "Фотографии",
       ];
@@ -147,6 +150,8 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         escapeCSV(p.price),
         escapeCSV(p.oldPrice || ""),
         escapeCSV(p.status || "Активен"),
+        escapeCSV(p.viewsCount || 0),
+        escapeCSV(p.contactClicksCount || 0),
         escapeCSV(Array.isArray(p.sizes) ? p.sizes.join(", ") : ""),
         escapeCSV(Array.isArray(p.images) ? p.images.join("; ") : ""),
       ]);
@@ -370,6 +375,24 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                     )}
                   </div>
 
+                  {/* Статистика: Просмотры и Клики */}
+                  <div className="flex items-center gap-2 border-t border-gray-50 pt-2">
+                    <div
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold"
+                      title="Просмотры товара"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{product.viewsCount || 0} просмотров</span>
+                    </div>
+                    <div
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                      title="Переходы в мессенджеры и звонки"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>{product.contactClicksCount || 0} обращений</span>
+                    </div>
+                  </div>
+
                   {/* Нижняя панель действий */}
                   <div className="flex items-center justify-between border-t border-gray-100 pt-2.5">
                     <button
@@ -458,6 +481,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                 <th className="px-6 py-4 font-semibold">Категория</th>
                 <th className="px-6 py-4 font-semibold">Цена</th>
                 <th className="px-6 py-4 font-semibold">Статус</th>
+                <th className="px-6 py-4 font-semibold">Статистика</th>
                 <th className="px-6 py-4 text-right font-semibold">Действия</th>
               </tr>
             </thead>
@@ -543,6 +567,24 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                         >
                           {product.status || "Активен"}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold"
+                            title="Просмотры товара"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{product.viewsCount || 0}</span>
+                          </div>
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                            title="Переходы в контакты (Telegram/Viber/Instagram/Телефон)"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>{product.contactClicksCount || 0}</span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
