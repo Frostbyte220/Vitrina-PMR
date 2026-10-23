@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { cn } from "@/lib/utils";
-import { useSession } from "next-auth/react";
 
 const navItems = [
   { href: "/dashboard", label: "Главная", icon: LayoutDashboard },
@@ -14,12 +13,12 @@ const navItems = [
   { href: "/dashboard/settings", label: "Магазин", icon: Store },
 ] as const;
 
-export function DashboardNav() {
+interface DashboardNavProps {
+  isAdmin?: boolean;
+}
+
+export function DashboardNav({ isAdmin = false }: DashboardNavProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  
-  // Проверяем, является ли текущий юзер Супер-Админом (через env)
-  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <>

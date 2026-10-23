@@ -242,11 +242,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Внедряем микроразметку для поисковиков в <head> (Next.js поймет это расположение) */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd).replace(/</g, "\\u003c") }}
       />
 
       <RecentlyViewedTracker productId={product.id} />

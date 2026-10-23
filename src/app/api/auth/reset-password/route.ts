@@ -9,6 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Токен и пароль обязательны" }, { status: 400 });
     }
 
+    if (typeof password !== "string" || password.length < 6 || password.length > 64) {
+      return NextResponse.json(
+        { error: "Пароль должен содержать от 6 до 64 символов" },
+        { status: 400 }
+      );
+    }
+
     const resetToken = await (prisma as any).passwordResetToken.findUnique({
       where: { token },
       include: { user: true },

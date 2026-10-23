@@ -20,7 +20,12 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const rawCallback = searchParams.get("callbackUrl");
+  // Защита от Open Redirect: разрешаем только относительные локальные пути
+  const callbackUrl =
+    rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//")
+      ? rawCallback
+      : "/dashboard";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

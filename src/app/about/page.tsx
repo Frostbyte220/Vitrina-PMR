@@ -49,7 +49,7 @@ export default function AboutPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">

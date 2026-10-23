@@ -112,3 +112,5 @@ export const productRateLimiter = new RateLimiter(10, 60 * 1000, 'product');
 export const storeRateLimiter = new RateLimiter(5, 60 * 1000, 'store');
 // 5 жалоб в минуту на один IP (защита от спама жалобами)
 export const reportRateLimiter = new RateLimiter(5, 60 * 1000, 'report');
+// 3 запроса сброса пароля в минуту на один IP
+export const forgotPasswordRateLimiter = new RateLimiter(3, 60 * 1000, 'forgot-password');

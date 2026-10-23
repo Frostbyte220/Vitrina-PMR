@@ -14,9 +14,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const isAdmin = Boolean(
+    session?.user?.email &&
+    adminEmail &&
+    session.user.email.toLowerCase() === adminEmail.toLowerCase()
+  );
+
   return (
     <div className="flex min-h-screen w-full min-w-0 overflow-x-hidden bg-surface">
-      <DashboardNav />
+      <DashboardNav isAdmin={isAdmin} />
       <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col pb-tabbar md:pb-0">
         {children}
       </div>
