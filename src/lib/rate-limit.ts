@@ -114,3 +114,5 @@ export const storeRateLimiter = new RateLimiter(5, 60 * 1000, 'store');
 export const reportRateLimiter = new RateLimiter(5, 60 * 1000, 'report');
 // 3 запроса сброса пароля в минуту на один IP
 export const forgotPasswordRateLimiter = new RateLimiter(3, 60 * 1000, 'forgot-password');
+// Ограничение email-уведомлений продавцу: максимум 1 письмо по товару за 10 минут
+export const sellerNotificationRateLimiter = new RateLimiter(1, 10 * 60 * 1000, 'seller-notify');

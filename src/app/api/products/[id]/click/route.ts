@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendSellerNotification } from "@/lib/mail";
+import { sellerNotificationRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(
   req: Request,
@@ -40,9 +41,16 @@ export async function POST(
       select: { id: true },
     });
 
-    // Fire-and-forget: отправляем уведомление продавцу (не блокируем ответ)
-    (async () => {
+    // Надежная фоновая отправка уведомления продавцу через Next.js 15 after()
+    // Гарантирует завершение отправки на Vercel serverless без блокировки ответа клиенту
+    after(async () => {
       try {
+        // Защита от спама: не более 1 email по товару в течение 10 минут
+        const canSend = await sellerNotificationRateLimiter.check(id);
+        if (!canSend) {
+          return;
+        }
+
         const product = await prisma.product.findUnique({
           where: { id },
           select: {
@@ -71,7 +79,7 @@ export async function POST(
       } catch (notifyErr) {
         console.error("Ошибка при отправке уведомления продавцу:", notifyErr);
       }
-    })();
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
