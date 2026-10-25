@@ -217,7 +217,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
       {/* 3. Инфо и кнопки */}
       <div className="flex flex-col p-4 flex-grow justify-between gap-3">
         <div>
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex flex-col gap-0.5">
             <div className="flex items-baseline gap-2">
               <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-primary"}`}>
                 {formatPrice(product.price)}
@@ -228,7 +228,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                 </span>
               )}
             </div>
-            <AvailabilityBadge availability={prod.availability} size="xs" />
+            <AvailabilityBadge availability={prod.availability} size="xs" className="self-start" />
           </div>
           <Link href={`/product/${product.id}`} prefetch={true}>
             <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
