@@ -32,5 +32,6 @@ export async function GET(req: NextRequest) {
 
   revalidateTag("products");
   revalidatePath("/", "layout");
+  revalidatePath("/sitemap.xml");
   return NextResponse.json({ revalidated: true, at: new Date().toISOString() });
 }
