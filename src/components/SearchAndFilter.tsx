@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition, useEffect, useRef, useMemo } from "react";
-import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ArrowDownAZ, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag, Percent } from "lucide-react";
+import { Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ArrowDownAZ, SlidersHorizontal, ChevronDown, X, MapPin, Store, Tag, Percent, History } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
@@ -88,6 +88,76 @@ export function SearchAndFilter() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isDebouncing, setIsDebouncing] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
+
+  // История поиска (хранится в localStorage, максимум 5 недавних запросов)
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  // Загрузка истории поиска из localStorage при монтировании
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vitrina_search_history");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSearchHistory(parsed.slice(0, 5));
+        }
+      }
+    } catch {
+      // Игнорируем ошибку, если localStorage недоступен
+    }
+  }, []);
+
+  // Сохранение запроса в историю (только уникальные, максимум 5)
+  const saveSearchQuery = useCallback((query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
+      const next = [trimmed, ...filtered].slice(0, 5);
+      try {
+        localStorage.setItem("vitrina_search_history", JSON.stringify(next));
+      } catch {
+        // Игнорируем ошибку
+      }
+      return next;
+    });
+  }, []);
+
+  // Удаление одного запроса из истории
+  const removeHistoryItem = useCallback((itemToRemove: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSearchHistory((prev) => {
+      const next = prev.filter((item) => item !== itemToRemove);
+      try {
+        localStorage.setItem("vitrina_search_history", JSON.stringify(next));
+      } catch {
+        // Игнорируем ошибку
+      }
+      return next;
+    });
+  }, []);
+
+  // Очистка всей истории поиска
+  const clearSearchHistory = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSearchHistory([]);
+    try {
+      localStorage.removeItem("vitrina_search_history");
+    } catch {
+      // Игнорируем ошибку
+    }
+  }, []);
+
+  // Клик по запросу из истории
+  const handleHistoryItemClick = (item: string) => {
+    setSearchQuery(item);
+    saveSearchQuery(item);
+    setShowSuggestions(false);
+    trackEvent("search", { query: item });
+    updateParams({ q: item });
+  };
 
   // Всплывающее меню диапазона цен
   const [isPriceOpen, setIsPriceOpen] = useState(false);
@@ -266,6 +336,7 @@ export function SearchAndFilter() {
     setShowSuggestions(false);
     if (searchQuery.trim()) {
       trackEvent("search", { query: searchQuery.trim() });
+      saveSearchQuery(searchQuery.trim());
     }
     updateParams({ q: searchQuery, minPrice, maxPrice });
   };
@@ -316,6 +387,7 @@ export function SearchAndFilter() {
                 setStoreSuggestions([]);
                 setCategorySuggestions([]);
                 updateParams({ q: "" });
+                setShowSuggestions(true);
               }}
               className="absolute right-3.5 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               title="Очистить поиск"
@@ -326,9 +398,12 @@ export function SearchAndFilter() {
         </div>
         <button type="submit" className="hidden" aria-label="Искать" />
         
-        {/* Выпадающий список «живого» поиска */}
+        {/* Выпадающий список «живого» поиска и недавней истории */}
         <AnimatePresence>
-          {showSuggestions && (productSuggestions.length > 0 || storeSuggestions.length > 0 || categorySuggestions.length > 0) && (
+          {showSuggestions && (
+            (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
+            (productSuggestions.length > 0 || storeSuggestions.length > 0 || categorySuggestions.length > 0)
+          ) && (
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -336,6 +411,50 @@ export function SearchAndFilter() {
               transition={{ duration: 0.15 }}
               className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
             >
+              {/* История поиска (показывается при фокусе, когда запрос пуст или короче 2 символов) */}
+              {searchQuery.trim().length < 2 && searchHistory.length > 0 && (
+                <div className="p-2">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 mb-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <History className="h-3.5 w-3.5 text-rose-500" />
+                      История поиска
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearSearchHistory}
+                      className="text-xs text-gray-400 hover:text-rose-600 transition-colors font-medium px-1 py-0.5 rounded"
+                    >
+                      Очистить
+                    </button>
+                  </div>
+                  <ul className="space-y-0.5">
+                    {searchHistory.map((item) => (
+                      <li key={item}>
+                        <div className="flex items-center justify-between rounded-xl hover:bg-gray-50 transition-colors group px-2.5 py-2">
+                          <button
+                            type="button"
+                            onClick={() => handleHistoryItemClick(item)}
+                            className="flex items-center gap-2.5 text-left flex-1 min-w-0"
+                          >
+                            <History className="h-4 w-4 text-gray-400 shrink-0 group-hover:text-rose-500 transition-colors" />
+                            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 truncate">
+                              {item}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => removeHistoryItem(item, e)}
+                            className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-200/60 transition-colors shrink-0"
+                            title="Удалить из истории"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {/* Категории */}
               {categorySuggestions.length > 0 && (
                 <div className="p-3 bg-gray-50/60">
@@ -464,19 +583,21 @@ export function SearchAndFilter() {
                 </div>
               )}
 
-              {/* Футер: перейти ко всем результатам */}
-              <div className="p-2.5 bg-gray-50 text-center">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    handleSearch();
-                    setShowSuggestions(false);
-                  }}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
-                >
-                  Смотреть все результаты по запросу «{searchQuery}» →
-                </button>
-              </div>
+              {/* Футер: перейти ко всем результатам (только при вводе поискового запроса) */}
+              {searchQuery.trim().length >= 2 && (
+                <div className="p-2.5 bg-gray-50 text-center">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      handleSearch();
+                      setShowSuggestions(false);
+                    }}
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
+                  >
+                    Смотреть все результаты по запросу «{searchQuery}» →
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
