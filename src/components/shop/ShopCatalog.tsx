@@ -31,6 +31,10 @@ interface ShopCatalogProps {
   initialCategory?: string;
   initialSort?: string;
   initialPage?: number;
+  /** Полное количество товаров в магазине (до серверного лимита) */
+  totalProductsCount?: number;
+  /** Username магазина для построения ссылки ?all=true */
+  shopUsername?: string;
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -84,6 +88,8 @@ export function ShopCatalog({
   initialCategory = "all",
   initialSort = "newest",
   initialPage = 1,
+  totalProductsCount,
+  shopUsername,
 }: ShopCatalogProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
@@ -538,6 +544,23 @@ export function ShopCatalog({
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
+            </div>
+          )}
+
+          {/* Блок "Загрузить ещё" — если сервер вернул не все товары */}
+          {typeof totalProductsCount === "number" && totalProductsCount > products.length && shopUsername && (
+            <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-xs">
+              <p className="text-sm text-gray-500">
+                Показано <strong className="text-gray-900">{products.length}</strong> из{" "}
+                <strong className="text-gray-900">{totalProductsCount}</strong> товаров
+              </p>
+              <a
+                href={`/shop/${shopUsername}?all=true`}
+                className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 transition-all cursor-pointer"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Загрузить ещё товары
+              </a>
             </div>
           )}
         </>

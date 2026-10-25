@@ -77,6 +77,10 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   const sortFilter = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : "newest";
   const currentPage = Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1;
 
+  // Серверный лимит товаров (при ?all=true — загружаем все)
+  const SHOP_ITEMS_PER_PAGE = 24;
+  const loadAll = resolvedSearchParams.all === "true";
+
   // 2. Ищем магазин по instagram или slug (проверяем и таблицу Store, и таблицу User)
   const store = await prisma.store.findFirst({
     where: {
@@ -115,32 +119,38 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
 
   if (!store || isHiddenStore(store)) notFound();
 
-  // 3. Загружаем ВСЕ активные товары магазина одним быстрым запросом.
-  // Это обеспечивает мгновенную фильтрацию и сортировку на клиенте (0ms задержки).
-  const rawProducts = await prisma.product.findMany({
-    where: {
-      deletedAt: null,
-      userId: store.userId,
-      status: "Активен",
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      price: true,
-      oldPrice: true,
-      category: true,
-      subCategory: true,
-      sizes: true,
-      availability: true,
-      images: true,
-      description: true,
-      status: true,
-      userId: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // 3. Загружаем активные товары магазина (с лимитом если не ?all=true).
+  // При ?all=true грузим все, иначе — первые SHOP_ITEMS_PER_PAGE для быстрой загрузки.
+  const productWhere = {
+    deletedAt: null,
+    userId: store.userId,
+    status: "Активен" as const,
+  };
+
+  const [rawProducts, totalProductsCount] = await Promise.all([
+    prisma.product.findMany({
+      where: productWhere,
+      orderBy: { createdAt: "desc" },
+      ...(loadAll ? {} : { take: SHOP_ITEMS_PER_PAGE }),
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        oldPrice: true,
+        category: true,
+        subCategory: true,
+        sizes: true,
+        availability: true,
+        images: true,
+        description: true,
+        status: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+    prisma.product.count({ where: productWhere }),
+  ]);
 
   // Автоматический подсчет категорий и количества товаров в каждой
   const categoryCounts: Record<string, number> = {};
@@ -319,6 +329,8 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
             initialCategory={categoryFilter}
             initialSort={sortFilter}
             initialPage={currentPage}
+            totalProductsCount={totalProductsCount}
+            shopUsername={cleanInstagram || store.slug || username}
           />
         </div>
       </main>

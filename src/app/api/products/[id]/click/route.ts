@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendSellerNotification } from "@/lib/mail";
 
 export async function POST(
   req: Request,
@@ -12,6 +13,24 @@ export async function POST(
       return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
     }
 
+    // Читаем канал из тела запроса (необязательно)
+    let channel = "мессенджере";
+    try {
+      const body = await req.json();
+      if (body?.channel && typeof body.channel === "string") {
+        // Приводим id канала к читаемому названию
+        const channelMap: Record<string, string> = {
+          telegram: "Telegram",
+          viber: "Viber",
+          instagram: "Instagram",
+          phone: "Телефон",
+        };
+        channel = channelMap[body.channel.toLowerCase()] ?? body.channel;
+      }
+    } catch {
+      // Тело может быть пустым — игнорируем
+    }
+
     // Инкрементируем счетчик переходов в контакты (Telegram/Viber/Instagram/Телефон)
     await prisma.product.update({
       where: { id },
@@ -20,6 +39,39 @@ export async function POST(
       },
       select: { id: true },
     });
+
+    // Fire-and-forget: отправляем уведомление продавцу (не блокируем ответ)
+    (async () => {
+      try {
+        const product = await prisma.product.findUnique({
+          where: { id },
+          select: {
+            title: true,
+            userId: true,
+            store: { select: { name: true } },
+            user: { select: { email: true, name: true } },
+          },
+        });
+
+        if (product?.user?.email) {
+          const baseUrl =
+            process.env.NEXTAUTH_URL ||
+            process.env.NEXT_PUBLIC_APP_URL ||
+            "https://vitrina-pmr.vercel.app";
+
+          await sendSellerNotification({
+            to: product.user.email,
+            sellerName: product.user.name || product.store?.name || "Продавец",
+            productTitle: product.title,
+            productId: id,
+            channel,
+            baseUrl,
+          });
+        }
+      } catch (notifyErr) {
+        console.error("Ошибка при отправке уведомления продавцу:", notifyErr);
+      }
+    })();
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
