@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return new ImageResponse(
+  const imageResponse = new ImageResponse(
     (
       <div
         style={{
@@ -268,4 +268,13 @@ export async function GET(req: NextRequest) {
       height: H,
     }
   );
+
+  // Кэшируем OG-изображение на 1 час в CDN (Vercel Edge) и в браузере.
+  // Без этого Telegram и Facebook перезапрашивают изображение при каждом превью.
+  imageResponse.headers.set(
+    "Cache-Control",
+    "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400"
+  );
+
+  return imageResponse;
 }

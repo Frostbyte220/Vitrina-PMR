@@ -128,9 +128,11 @@ export async function generateMetadata({
       images: [
         {
           url: ogImageUrl,
+          secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
           alt: `${product.title} — ${shopName}`,
+          type: "image/png",
         },
       ],
       locale: "ru_RU",
