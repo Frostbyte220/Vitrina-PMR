@@ -8,6 +8,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 import { cn, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 
@@ -22,41 +25,72 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
+  // Состояние масштабирования и панорамирования в Lightbox
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const dragStart = useRef({ x: 0, y: 0 });
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const initialPinchDist = useRef<number | null>(null);
+  const initialScaleOnPinch = useRef(1);
+  const lastTapTime = useRef<number>(0);
 
   const currentImage = images[activeIndex];
   const isCurrentFailed = !currentImage || failedImages[activeIndex];
-
   const zoomImage = images[zoomIndex];
+
+  // Сброс масштаба к 100%
+  const resetZoom = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
 
   const openZoom = (index?: number) => {
     const idx = typeof index === "number" ? index : activeIndex;
     setZoomIndex(idx);
+    resetZoom();
     setIsZoomOpen(true);
   };
 
   const closeZoom = useCallback(() => {
     setIsZoomOpen(false);
-  }, []);
+    resetZoom();
+  }, [resetZoom]);
 
   const handlePrev = useCallback(() => {
+    resetZoom();
     setZoomIndex((prev) => {
       const next = prev > 0 ? prev - 1 : images.length - 1;
       setActiveIndex(next);
       return next;
     });
-  }, [images.length]);
+  }, [images.length, resetZoom]);
 
   const handleNext = useCallback(() => {
+    resetZoom();
     setZoomIndex((prev) => {
       const next = prev < images.length - 1 ? prev + 1 : 0;
       setActiveIndex(next);
       return next;
     });
-  }, [images.length]);
+  }, [images.length, resetZoom]);
 
-  // Управление с клавиатуры (Escape, ArrowLeft, ArrowRight) и блокировка скролла
+  // Увеличение / уменьшение кнопками
+  const zoomIn = () => {
+    setScale((prev) => Math.min(prev + 0.5, 4));
+  };
+
+  const zoomOut = () => {
+    setScale((prev) => {
+      const next = Math.max(prev - 0.5, 1);
+      if (next === 1) setPosition({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  // Управление с клавиатуры (Escape, стрелки, зум +, -, 0) и блокировка скролла
   useEffect(() => {
     if (!isZoomOpen) return;
 
@@ -67,9 +101,15 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
       if (e.key === "Escape") {
         closeZoom();
       } else if (e.key === "ArrowLeft") {
-        handlePrev();
+        if (scale === 1) handlePrev();
       } else if (e.key === "ArrowRight") {
-        handleNext();
+        if (scale === 1) handleNext();
+      } else if (e.key === "+" || e.key === "=") {
+        zoomIn();
+      } else if (e.key === "-") {
+        zoomOut();
+      } else if (e.key === "0") {
+        resetZoom();
       }
     };
 
@@ -78,38 +118,139 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isZoomOpen, closeZoom, handlePrev, handleNext]);
+  }, [isZoomOpen, closeZoom, handlePrev, handleNext, scale, resetZoom]);
 
-  // Поддержка свайпов на смартфонах
+  // Обработка жестов на тач-экранах (Pinch-to-zoom двумя пальцами + свайп/перемещение)
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
+    if (e.touches.length === 2) {
+      // Пинч-зум двумя пальцами
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialPinchDist.current = dist;
+      initialScaleOnPinch.current = scale;
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      // Двойной тап (Double Tap) для мгновенного зума 2.5x / сброса
+      if (now - lastTapTime.current < 300) {
+        if (scale > 1) {
+          resetZoom();
+        } else {
+          setScale(2.5);
+          setPosition({ x: 0, y: 0 });
+        }
+        lastTapTime.current = 0;
+        return;
+      }
+      lastTapTime.current = now;
+
+      if (scale > 1) {
+        setIsDragging(true);
+        dragStart.current = {
+          x: e.touches[0].clientX - position.x,
+          y: e.touches[0].clientY - position.y,
+        };
+      } else {
+        touchStartX.current = e.touches[0].clientX;
+      }
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
+    if (e.touches.length === 2 && initialPinchDist.current !== null) {
+      // Плавный pinch-zoom
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = currentDist / initialPinchDist.current;
+      const newScale = Math.min(Math.max(1, initialScaleOnPinch.current * factor), 4);
+      setScale(newScale);
+      if (newScale === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+    } else if (e.touches.length === 1) {
+      if (scale > 1 && isDragging) {
+        // Перемещение увеличенного фото (панорамирование пальцем)
+        const maxOffset = (scale - 1) * 220;
+        const newX = e.touches[0].clientX - dragStart.current.x;
+        const newY = e.touches[0].clientY - dragStart.current.y;
+        setPosition({
+          x: Math.max(-maxOffset, Math.min(maxOffset, newX)),
+          y: Math.max(-maxOffset, Math.min(maxOffset, newY)),
+        });
+      } else if (scale === 1) {
+        touchEndX.current = e.touches[0].clientX;
+      }
+    }
   };
 
   const handleTouchEnd = () => {
-    if (touchStartX.current === null || touchEndX.current === null) return;
-    const distance = touchStartX.current - touchEndX.current;
-    if (distance > 45) {
-      handleNext();
-    } else if (distance < -45) {
-      handlePrev();
+    initialPinchDist.current = null;
+    setIsDragging(false);
+
+    // Свайп между фото только если фото не увеличено (scale === 1)
+    if (scale === 1 && touchStartX.current !== null && touchEndX.current !== null) {
+      const distance = touchStartX.current - touchEndX.current;
+      if (distance > 45) {
+        handleNext();
+      } else if (distance < -45) {
+        handlePrev();
+      }
     }
     touchStartX.current = null;
     touchEndX.current = null;
   };
 
+  // Колесико мыши для плавного зума на ПК
+  const handleWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+    const delta = e.deltaY < 0 ? 0.3 : -0.3;
+    setScale((prev) => {
+      const next = Math.min(Math.max(1, prev + delta), 4);
+      if (next === 1) setPosition({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  // Перетаскивание мышью на ПК при зуме
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1 && e.button === 0) {
+      e.preventDefault();
+      setIsDragging(true);
+      dragStart.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      };
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (scale > 1 && isDragging) {
+      const maxOffset = (scale - 1) * 300;
+      const newX = e.clientX - dragStart.current.x;
+      const newY = e.clientY - dragStart.current.y;
+      setPosition({
+        x: Math.max(-maxOffset, Math.min(maxOffset, newX)),
+        y: Math.max(-maxOffset, Math.min(maxOffset, newY)),
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   return (
     <>
       <div className="flex flex-col gap-3">
-        {/* Главный блок фото: пропорция 4/5 (вертикальный портрет) + object-contain для 100% сохранения всех деталей */}
+        {/* Главный блок фото: пропорция 4/5 (вертикальный портрет) + object-contain для 100% деталей */}
         <div
           onClick={() => !isCurrentFailed && openZoom(activeIndex)}
           className="group relative aspect-[4/5] max-h-[640px] w-full overflow-hidden rounded-2xl bg-surface border border-gray-100/80 flex items-center justify-center cursor-zoom-in"
         >
-          {/* Мягкий рассеянный фоновый слой под цвет фото, чтобы при любом соотношении сторон не было пустых полос */}
+          {/* Мягкий рассеянный фоновый слой под цвет фото */}
           {!isCurrentFailed && currentImage && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
               <Image
@@ -123,7 +264,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
             </div>
           )}
 
-          {/* Основное фото: object-contain предотвращает обрезку голов, обуви, краев одежды */}
+          {/* Основное фото: object-contain предотвращает обрезку краев */}
           {!isCurrentFailed ? (
             <>
               <Image
@@ -203,18 +344,18 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
         )}
       </div>
 
-      {/* Улучшенный Lightbox / Полноэкранный просмотр с галереей, стрелками и свайпом */}
+      {/* Полноэкранный Lightbox с Pinch-to-Zoom, панорамированием и навигацией */}
       {isZoomOpen && zoomImage && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/95 p-4 backdrop-blur-md select-none"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/95 p-3 sm:p-4 backdrop-blur-md select-none touch-none"
           onClick={closeZoom}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Верхняя панель: счётчик фото и кнопка закрытия */}
+          {/* Верхняя панель: счётчик фото, панель инструментов масштаба и кнопка закрытия */}
           <div
-            className="flex w-full max-w-5xl items-center justify-between pt-2 px-2 z-10"
+            className="flex w-full max-w-5xl items-center justify-between pt-2 px-2 z-30"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2">
@@ -226,6 +367,53 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
               </span>
             </div>
 
+            {/* Панель управления зумом */}
+            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md rounded-full px-2 py-1">
+              <button
+                type="button"
+                onClick={zoomOut}
+                disabled={scale <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                aria-label="Уменьшить (-)"
+                title="Уменьшить (-)"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={resetZoom}
+                className="px-2 py-0.5 text-[11px] font-bold text-white/90 hover:text-white rounded-md transition-colors"
+                title="Сбросить масштаб (0)"
+              >
+                {Math.round(scale * 100)}%
+              </button>
+
+              <button
+                type="button"
+                onClick={zoomIn}
+                disabled={scale >= 4}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                aria-label="Увеличить (+)"
+                title="Увеличить (+)"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+
+              {scale > 1 && (
+                <button
+                  type="button"
+                  onClick={resetZoom}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  aria-label="Сброс"
+                  title="Сбросить масштаб"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Закрыть Lightbox */}
             <button
               type="button"
               onClick={closeZoom}
@@ -237,13 +425,13 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
             </button>
           </div>
 
-          {/* Центральная зона с фото и навигационными стрелками */}
+          {/* Центральная зона с фото, зумом, панорамированием и навигацией */}
           <div
-            className="relative flex-1 w-full max-w-5xl flex items-center justify-center my-2"
+            className="relative flex-1 w-full max-w-5xl flex items-center justify-center my-2 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Стрелка влево */}
-            {images.length > 1 && (
+            {/* Стрелка влево (показывается только при масштабе 1x) */}
+            {images.length > 1 && scale === 1 && (
               <button
                 type="button"
                 onClick={handlePrev}
@@ -255,22 +443,48 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
               </button>
             )}
 
-            {/* Картинка во весь экран */}
-            <div className="relative h-full w-full max-h-[82vh] flex items-center justify-center">
-              <Image
-                key={zoomImage}
-                src={zoomImage}
-                alt={title}
-                fill
-                loader={cloudinaryLoader}
-                sizes="(max-width: 1280px) 100vw, 1280px"
-                className="object-contain"
-                priority
-              />
+            {/* Картинка во весь экран с зумом и перемещением */}
+            <div
+              className={cn(
+                "relative h-full w-full max-h-[82vh] flex items-center justify-center overflow-hidden",
+                scale > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-zoom-in"
+              )}
+              onDoubleClick={() => {
+                if (scale > 1) {
+                  resetZoom();
+                } else {
+                  setScale(2.5);
+                  setPosition({ x: 0, y: 0 });
+                }
+              }}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <div
+                style={{
+                  transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
+                  transition: isDragging ? "none" : "transform 0.15s cubic-bezier(0.2, 0.9, 0.4, 1)",
+                }}
+                className="relative h-full w-full flex items-center justify-center will-change-transform"
+              >
+                <Image
+                  key={zoomImage}
+                  src={zoomImage}
+                  alt={title}
+                  fill
+                  loader={cloudinaryLoader}
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="object-contain pointer-events-none select-none"
+                  priority
+                />
+              </div>
             </div>
 
-            {/* Стрелка вправо */}
-            {images.length > 1 && (
+            {/* Стрелка вправо (показывается только при масштабе 1x) */}
+            {images.length > 1 && scale === 1 && (
               <button
                 type="button"
                 onClick={handleNext}
@@ -286,7 +500,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           {/* Нижняя панель: миниатюры для быстрого переключения в зуме */}
           {images.length > 1 && (
             <div
-              className="flex items-center gap-2 overflow-x-auto max-w-md pb-2 px-2 z-10 scrollbar-hide"
+              className="flex items-center gap-2 overflow-x-auto max-w-md pb-2 px-2 z-20 scrollbar-hide"
               onClick={(e) => e.stopPropagation()}
             >
               {images.map((img, idx) => (
@@ -294,6 +508,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
                   key={`zoom-thumb-${img}`}
                   type="button"
                   onClick={() => {
+                    resetZoom();
                     setZoomIndex(idx);
                     setActiveIndex(idx);
                   }}
