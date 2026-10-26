@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { SellerOnboardingWidgetLazy } from "@/components/onboarding/SellerOnboardingWidgetLazy";
 import { FavoritesSyncProvider } from "@/components/providers/FavoritesSyncProvider";
+import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
 import "@/app/globals.css";
 
 // Подключаем Inter через next/font — шрифт загружается без FOUT (мигания)
@@ -103,6 +104,7 @@ export default function RootLayout({
           <MobileTabBarLazy />
           
           {/* Toaster просто лежит рядом, он сам отрендерит уведомления поверх всего сайта */}
+          <ScrollToTopButton />
           <Toaster 
             position="bottom-right" 
             toastOptions={{

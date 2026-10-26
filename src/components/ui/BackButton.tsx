@@ -1,19 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export function BackButton() {
-  const router = useRouter();
-
   return (
     <button
-      onClick={() => router.back()}
-      className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 font-medium"
-      aria-label="Вернуться назад"
+      type="button"
+      onClick={() => window.history.back()}
+      className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
     >
-      <ArrowLeft className="h-5 w-5" />
-      Вернуться назад
+      <ArrowLeft className="h-4 w-4" />
+      Назад
     </button>
   );
 }
