@@ -7,6 +7,7 @@ import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { SellerOnboardingWidgetLazy } from "@/components/onboarding/SellerOnboardingWidgetLazy";
+import { FavoritesSyncProvider } from "@/components/providers/FavoritesSyncProvider";
 import "@/app/globals.css";
 
 // Подключаем Inter через next/font — шрифт загружается без FOUT (мигания)
@@ -86,6 +87,8 @@ export default function RootLayout({
           <YandexMetrika />
         </Suspense>
         <AuthSessionProvider>
+          {/* Синхронизация избранного с БД для авторизованных пользователей */}
+          <FavoritesSyncProvider />
           {/* 🔥 Обернули children в flex-grow. padding-bottom на мобильных (чтобы контент не прятался за TabBar) */}
           <div className="flex-grow w-full min-w-0 pb-tabbar md:pb-0">
             {children}

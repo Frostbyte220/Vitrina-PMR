@@ -19,6 +19,7 @@ model User {
   products     Product[]
   store        Store?    // <-- Связь с расширенными настройками магазина
   resetTokens  PasswordResetToken[]
+  favorites    String[]  @default([]) // ID товаров в избранном (синхронизируются с клиентом)
   createdAt    DateTime  @default(now())
 }
 
