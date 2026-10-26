@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { prisma } from "@/lib/prisma";
+import { fetchShopProducts } from "@/actions/shopProducts";
 import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { isHiddenStore } from "@/lib/storeFilter";
@@ -77,10 +78,6 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   const sortFilter = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : "newest";
   const currentPage = Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1;
 
-  // Серверный лимит товаров (при ?all=true — загружаем все)
-  const SHOP_ITEMS_PER_PAGE = 24;
-  const loadAll = resolvedSearchParams.all === "true";
-
   // 2. Ищем магазин по instagram или slug (проверяем и таблицу Store, и таблицу User)
   const store = await prisma.store.findFirst({
     where: {
@@ -119,78 +116,50 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
 
   if (!store || isHiddenStore(store)) notFound();
 
-  // 3. Загружаем активные товары магазина (с лимитом если не ?all=true).
-  // При ?all=true грузим все, иначе — первые SHOP_ITEMS_PER_PAGE для быстрой загрузки.
+  const cleanInstagram = store.instagram ? store.instagram.replace(/^@/, '') : store.user.instagram?.replace(/^@/, '');
+
+  // 3. Загружаем первую порцию товаров (take: 12, skip: 0) и категории для всего магазина
   const productWhere = {
     deletedAt: null,
     userId: store.userId,
     status: "Активен" as const,
   };
 
-  const [rawProducts, totalProductsCount] = await Promise.all([
+  const storeMetadata = {
+    storeUserId: store.userId,
+    storeName: store.name,
+    storeSlug: store.slug,
+    storeInstagram: cleanInstagram,
+    storeAvatarUrl: store.avatarUrl,
+    storeCities: store.cities,
+    storeTelegram: store.telegram,
+    storeViber: store.viber,
+    storePhone: store.phone,
+    storeIsVerified: store.isVerified,
+  };
+
+  const [initialData, rawCategories] = await Promise.all([
+    fetchShopProducts({
+      ...storeMetadata,
+      category: categoryFilter,
+      sort: sortFilter as any,
+      skip: 0,
+      take: 12,
+    }),
     prisma.product.findMany({
       where: productWhere,
-      orderBy: { createdAt: "desc" },
-      ...(loadAll ? {} : { take: SHOP_ITEMS_PER_PAGE }),
-      select: {
-        id: true,
-        title: true,
-        price: true,
-        oldPrice: true,
-        category: true,
-        subCategory: true,
-        sizes: true,
-        availability: true,
-        images: true,
-        description: true,
-        status: true,
-        userId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { category: true },
     }),
-    prisma.product.count({ where: productWhere }),
   ]);
 
   // Автоматический подсчет категорий и количества товаров в каждой
   const categoryCounts: Record<string, number> = {};
-  for (const item of rawProducts) {
+  for (const item of rawCategories) {
     if (item.category) {
       categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
     }
   }
   const availableCategories = Object.keys(categoryCounts).sort();
-
-  const cleanInstagram = store.instagram ? store.instagram.replace(/^@/, '') : store.user.instagram?.replace(/^@/, '');
-
-  const products: Product[] = rawProducts.map((item: any) => ({
-    id: item.id,
-    title: item.title,
-    price: item.price,
-    oldPrice: item.oldPrice,
-    category: item.category,
-    subCategory: item.subCategory,
-    sizes: item.sizes || [],
-    images: item.images && item.images.length > 0 ? item.images : ["https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80"],
-    shopName: store.name,
-    shopUsername: cleanInstagram, 
-    description: item.description,
-    status: item.status,
-    availability: item.availability || "В наличии",
-    userId: item.userId,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    store: {
-      name: store.name,
-      slug: store.slug,
-      instagram: store.instagram,
-      avatarUrl: store.avatarUrl,
-      cities: store.cities,
-      telegram: store.telegram,
-      viber: store.viber,
-      phone: store.phone,
-    },
-  }));
 
   const storeInitial = store.name.charAt(0).toUpperCase();
 
@@ -323,14 +292,14 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
           <div className="mb-8 h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
 
           <ShopCatalog
-            products={products}
+            initialProducts={initialData.products}
+            initialTotalCount={initialData.totalCount}
+            initialHasMore={initialData.hasMore}
             categories={availableCategories}
             categoryCounts={categoryCounts}
             initialCategory={categoryFilter}
             initialSort={sortFilter}
-            initialPage={currentPage}
-            totalProductsCount={totalProductsCount}
-            shopUsername={cleanInstagram || store.slug || username}
+            storeMetadata={storeMetadata}
           />
         </div>
       </main>
