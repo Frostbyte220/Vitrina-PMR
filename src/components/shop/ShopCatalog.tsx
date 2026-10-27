@@ -377,19 +377,7 @@ export function ShopCatalog({
         </div>
 
         {/* Сортировка + Сброс */}
-        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-          {isFiltered && (
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer"
-              title="Сбросить все фильтры"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Сбросить</span>
-            </button>
-          )}
-
+        <div className="flex items-center justify-start sm:justify-end gap-2 shrink-0">
           <div className="relative" ref={sortRef}>
             <button
               type="button"
@@ -410,7 +398,7 @@ export function ShopCatalog({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-2 z-50 w-52 rounded-2xl bg-white p-1.5 shadow-xl border border-gray-100"
+                  className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-50 w-52 rounded-2xl bg-white p-1.5 shadow-xl border border-gray-100"
                 >
                   <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">
                     Сортировка
@@ -439,6 +427,19 @@ export function ShopCatalog({
               )}
             </AnimatePresence>
           </div>
+
+          {/* Кнопка сброса (если применены фильтры) */}
+          {isFiltered && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer sm:order-first"
+              title="Сбросить все фильтры"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Сбросить</span>
+            </button>
+          )}
         </div>
       </div>
 
