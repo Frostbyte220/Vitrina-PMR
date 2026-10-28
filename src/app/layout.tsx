@@ -63,6 +63,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.e-vitrina.com",
   },
+  verification: {
+    yandex: "8194bb8ec4c51992",
+  },
 };
 
 export default function RootLayout({
