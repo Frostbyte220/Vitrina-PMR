@@ -4,12 +4,11 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { LogIn, LayoutDashboard, Store } from "lucide-react";
 import { authOptions } from "@/lib/auth";
-import { ProductCard } from "@/components/product/ProductCard";
 import { SearchAndFilter } from "@/components/SearchAndFilter";
-import { Pagination } from "@/components/Pagination";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { CartButton } from "@/components/layout/CartButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
+import { ProductCatalogClient } from "@/components/home/ProductCatalogClient";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
 import { getBanners } from "@/lib/banners";
@@ -39,11 +38,58 @@ export default async function HomePage({
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const session = await getServerSession(authOptions);
-  const params = await searchParams;
+  const params  = await searchParams;
   const banners = await getBanners();
   const shopsHref = params.cities
     ? `/shops?cities=${encodeURIComponent(params.cities)}`
     : "/shops";
+
+  // SSR: загружаем первую порцию товаров на сервере (для быстрого первого рендера)
+  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, discount, availability } = params;
+  const currentPage    = Number(page) || 1;
+  const skip           = (currentPage - 1) * ITEMS_PER_PAGE;
+  const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
+  const selectedSizes  = sizes  ? sizes.split(",").map((s) => s.trim()).filter(Boolean) : [];
+
+  let orderBy: any = { createdAt: "desc" };
+  if (sort === "oldest")                        orderBy = { createdAt: "asc" };
+  if (sort === "price_asc")                     orderBy = { price: "asc" };
+  if (sort === "price_desc")                    orderBy = { price: "desc" };
+  if (sort === "title_asc" || sort === "title") orderBy = { title: "asc" };
+
+  const conditions: any[] = [];
+  if (discount === "true") conditions.push({ oldPrice: { not: null, gt: 0 } });
+  if (availability)        conditions.push({ availability });
+  if (category && category !== "Все") conditions.push({ category });
+  if (sub)                 conditions.push({ subCategory: sub });
+  if (selectedSizes.length > 0) conditions.push({ sizes: { hasSome: selectedSizes } });
+  if (minPrice || maxPrice) {
+    const priceFilter: any = {};
+    const min = minPrice ? Number(minPrice) : null;
+    const max = maxPrice ? Number(maxPrice) : null;
+    if (min !== null && !isNaN(min)) priceFilter.gte = min;
+    if (max !== null && !isNaN(max)) priceFilter.lte = max;
+    if (Object.keys(priceFilter).length > 0) conditions.push({ price: priceFilter });
+  }
+  if (selectedCities.length > 0) {
+    conditions.push({
+      OR: [
+        { store: { cities: { hasSome: selectedCities } } },
+        { user: { store: { cities: { hasSome: selectedCities } } } },
+      ],
+    });
+  }
+
+  const whereClause: any = { deletedAt: null, status: "Активен" };
+  if (conditions.length > 0) whereClause.AND = conditions;
+
+  const isCustomSort = Boolean(sort && ["oldest", "price_asc", "price_desc", "title_asc", "title"].includes(sort));
+
+  const [initialProducts, initialTotalCount] = q?.trim()
+    ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
+    : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
+
+  const initialTotalPages = Math.ceil(initialTotalCount / ITEMS_PER_PAGE);
 
   return (
     <main className="relative min-h-screen bg-gray-50 pb-24">
@@ -112,11 +158,16 @@ export default async function HomePage({
       {/* Рекламная карусель — Баннер #1 (динамический из БД) */}
       <AdBannerCarousel banners={banners} />
 
-      {/* Сетка товаров с Suspense */}
+      {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
       <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
-        <Suspense key={JSON.stringify(params)} fallback={<ProductsSkeleton />}>
-          <ProductCatalog params={params} />
-        </Suspense>
+        <React.Suspense fallback={<ProductsSkeleton />}>
+          <ProductCatalogClient
+            initialProducts={initialProducts as any[]}
+            initialTotalCount={initialTotalCount}
+            initialTotalPages={initialTotalPages}
+            initialPage={currentPage}
+          />
+        </React.Suspense>
 
         {/* Недавно просмотренные товары */}
         <RecentlyViewedSection className="mt-12 border-t border-gray-200/70 pt-8" />
@@ -125,7 +176,7 @@ export default async function HomePage({
   );
 }
 
-// Компонент загрузки (Скелетон)
+// Скелетон-заглушка при первом SSR
 function ProductsSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -138,209 +189,5 @@ function ProductsSkeleton() {
         </div>
       ))}
     </div>
-  );
-}
-
-// Отдельный асинхронный компонент для запроса данных
-async function ProductCatalog({ params }: { params: { [key: string]: string | undefined } }) {
-  const { category, sub, q, page, sort, minPrice, maxPrice, cities, sizes, discount, availability, ...otherFilters } = params;
-  const currentPage = Number(page) || 1;
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  // Определяем сортировку
-  let orderBy: any = { createdAt: "desc" };
-  if (sort === "oldest") orderBy = { createdAt: "asc" };
-  if (sort === "price_asc") orderBy = { price: "asc" };
-  if (sort === "price_desc") orderBy = { price: "desc" };
-  if (sort === "title_asc" || sort === "title") orderBy = { title: "asc" };
-
-  const selectedCities = cities ? cities.split(",").filter(Boolean) : [];
-  const selectedSizes = sizes ? sizes.split(",").map((s) => s.trim()).filter(Boolean) : [];
-
-  const conditions: any[] = [];
-
-  // Фильтр товаров со скидкой (где указана старая цена)
-  if (discount === "true") {
-    conditions.push({
-      oldPrice: {
-        not: null,
-        gt: 0,
-      },
-    });
-  }
-
-  // Фильтр по наличию («В наличии», «Под заказ», «Ожидается»)
-  if (availability) {
-    conditions.push({ availability });
-  }
-
-  if (category && category !== "Все") {
-    conditions.push({ category });
-  }
-
-  if (sub) {
-    conditions.push({ subCategory: sub });
-  }
-
-  if (selectedSizes.length > 0) {
-    conditions.push({
-      sizes: {
-        hasSome: selectedSizes,
-      },
-    });
-  }
-
-  if (minPrice || maxPrice) {
-    const min = minPrice ? Number(minPrice) : null;
-    const max = maxPrice ? Number(maxPrice) : null;
-    
-    const priceFilter: any = {};
-    if (min !== null && !isNaN(min)) priceFilter.gte = min;
-    if (max !== null && !isNaN(max)) priceFilter.lte = max;
-    
-    if (Object.keys(priceFilter).length > 0) {
-      conditions.push({ price: priceFilter });
-    }
-  }
-
-  if (selectedCities.length > 0) {
-    conditions.push({
-      OR: [
-        { store: { cities: { hasSome: selectedCities } } },
-        { user: { store: { cities: { hasSome: selectedCities } } } },
-      ],
-    });
-  }
-
-  const dynamicFilters = Object.keys(otherFilters)
-    .filter((key) => Boolean(otherFilters[key]))
-    .map((key) => ({
-      description: { contains: otherFilters[key]!, mode: "insensitive" as const },
-    }));
-
-  if (dynamicFilters.length > 0) {
-    conditions.push(...dynamicFilters);
-  }
-
-  const whereClause: any = {
-    deletedAt: null,
-    status: "Активен",
-  };
-
-  if (conditions.length > 0) {
-    whereClause.AND = conditions;
-  }
-
-  // Проверяем, задал ли пользователь явную сортировку (например, по цене или дате)
-  const isCustomSort = Boolean(
-    sort && ["oldest", "price_asc", "price_desc", "title_asc", "title"].includes(sort)
-  );
-
-  // Если есть поисковый запрос `q` — используем умный нечёткий поиск pg_trgm
-  // с поддержкой опечаток, падежей и синонимов брендов.
-  // Иначе используем кэшированную выборку каталога.
-  const [products, totalCount] = q && q.trim()
-    ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
-    : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  return (
-    <>
-      {/* Формируем строку диапазона цен для заголовка */}
-      {(() => {
-        const priceLabel = minPrice && maxPrice
-          ? `${minPrice}–${maxPrice} Руб`
-          : minPrice
-          ? `от ${minPrice} Руб`
-          : maxPrice
-          ? `до ${maxPrice} Руб`
-          : null;
-
-        return (
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900">
-              {discount === "true" ? (
-                <>
-                  Товары со скидкой{" "}
-                  {selectedCities.length > 0 && (
-                    <span className="text-rose-600 font-semibold">: {selectedCities.join(", ")}</span>
-                  )}
-                  {priceLabel && (
-                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
-                  )}
-                </>
-              ) : selectedCities.length > 0 ? (
-                <>
-                  Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
-                  {selectedSizes.length > 0 && (
-                    <span className="text-gray-500 font-normal text-sm ml-2">
-                      (размер: {selectedSizes.join(", ")})
-                    </span>
-                  )}
-                  {priceLabel && (
-                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
-                  )}
-                </>
-              ) : selectedSizes.length > 0 ? (
-                <>
-                  Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
-                  {priceLabel && (
-                    <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>
-                  )}
-                </>
-              ) : priceLabel ? (
-                <>
-                  Товары <span className="text-rose-600 font-semibold">({priceLabel})</span>
-                </>
-              ) : (
-                "Каталог товаров"
-              )}
-            </h2>
-            <span className="text-xs sm:text-sm text-gray-500">
-              {totalCount} {totalCount === 1 ? "товар" : totalCount < 5 ? "товара" : "товаров"}
-            </span>
-          </div>
-        );
-      })()}
-
-      {products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-16 text-center">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {discount === "true"
-              ? "Пока нет товаров со скидкой по вашим фильтрам"
-              : (minPrice || maxPrice)
-              ? `В диапазоне ${minPrice && maxPrice ? `${minPrice}–${maxPrice} Руб` : minPrice ? `от ${minPrice} Руб` : `до ${maxPrice} Руб`} пока нет товаров`
-              : selectedCities.length > 0
-              ? `В ${selectedCities.join(", ")} пока нет товаров по вашим фильтрам`
-              : selectedSizes.length > 0
-              ? `В выбранных размерах (${selectedSizes.join(", ")}) пока нет товаров`
-              : q
-              ? `По запросу «${q}» ничего не найдено`
-              : "По вашим фильтрам ничего не найдено"}
-          </h3>
-          <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
-            Попробуйте изменить параметры или сбросить фильтры.
-          </p>
-          <Link href="/" className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800">
-            Сбросить фильтры
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product, i) => (
-              <ProductCard
-                key={product.id}
-                product={product as any}
-                priority={i < 4}
-                activeCities={selectedCities}
-              />
-            ))}
-          </div>
-          <Pagination totalPages={totalPages} currentPage={currentPage} />
-        </>
-      )}
-    </>
   );
 }
