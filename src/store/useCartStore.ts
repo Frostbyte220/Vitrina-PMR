@@ -175,7 +175,7 @@ export function generateStoreOrderMessage(group: StoreCartGroup): string {
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
-      : "https://vitrina-pmr.vercel.app";
+      : "https://www.e-vitrina.com";
 
   const itemsList = group.items
     .map((item, idx) => {

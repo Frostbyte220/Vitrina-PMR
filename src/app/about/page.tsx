@@ -32,7 +32,7 @@ const jsonLd = {
   name: "E-Vitrina PMR",
   description:
     "Единая витрина локальных магазинов Приднестровья. Купить товары во всех городах ПМР.",
-  url: "https://vitrina-pmr.vercel.app",
+  url: "https://www.e-vitrina.com",
   areaServed: {
     "@type": "Place",
     name: "Приднестровская Молдавская Республика",

@@ -117,7 +117,7 @@ export function ContactSellerButton({
     typeof window !== "undefined" && productId
       ? `${window.location.origin}/product/${productId}`
       : productId
-      ? `https://vitrina-pmr.vercel.app/product/${productId}`
+      ? `https://www.e-vitrina.com/product/${productId}`
       : "";
 
   const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"

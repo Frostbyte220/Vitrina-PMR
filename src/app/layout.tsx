@@ -38,13 +38,13 @@ export const metadata: Metadata = {
     "E-Vitrina PMR",
     "локальные магазины ПМР",
   ],
-  authors: [{ name: "E-Vitrina PMR", url: "https://vitrina-pmr.vercel.app" }],
+  authors: [{ name: "E-Vitrina PMR", url: "https://www.e-vitrina.com" }],
   creator: "E-Vitrina PMR",
-  metadataBase: new URL("https://vitrina-pmr.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.e-vitrina.com"),
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    url: "https://vitrina-pmr.vercel.app",
+    url: "https://www.e-vitrina.com",
     siteName: "E-Vitrina PMR",
     title: "E-Vitrina PMR — Магазины Тирасполя и Приднестровья",
     description:
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://vitrina-pmr.vercel.app",
+    canonical: "https://www.e-vitrina.com",
   },
 };
 

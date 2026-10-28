@@ -20,7 +20,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   // Если используется Resend и домен не подтвержден, отправка разрешена ТОЛЬКО с onboarding@resend.dev
   const defaultFrom = process.env.SMTP_HOST?.includes('resend') 
     ? "E-Vitrina PMR <onboarding@resend.dev>" 
-    : "E-Vitrina PMR <no-reply@vitrina-pmr.ru>";
+    : "E-Vitrina PMR <no-reply@e-vitrina.com>";
   
   const from = process.env.EMAIL_FROM || defaultFrom;
   const html = `
@@ -77,7 +77,7 @@ export async function sendSellerNotification(opts: {
 
   const defaultFrom = process.env.SMTP_HOST?.includes("resend")
     ? "E-Vitrina PMR <onboarding@resend.dev>"
-    : "E-Vitrina PMR <no-reply@vitrina-pmr.ru>";
+    : "E-Vitrina PMR <no-reply@e-vitrina.com>";
 
   const from = process.env.EMAIL_FROM || defaultFrom;
   const productUrl = `${baseUrl}/product/${productId}`;
@@ -160,7 +160,7 @@ export async function sendSellerDailyDigestEmail(opts: {
 
   const defaultFrom = process.env.SMTP_HOST?.includes("resend")
     ? "E-Vitrina PMR <onboarding@resend.dev>"
-    : "E-Vitrina PMR <no-reply@vitrina-pmr.ru>";
+    : "E-Vitrina PMR <no-reply@e-vitrina.com>";
 
   const from = process.env.EMAIL_FROM || defaultFrom;
   const dashboardUrl = `${baseUrl}/dashboard/products`;

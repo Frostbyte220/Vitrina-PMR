@@ -5,7 +5,6 @@ import { Header } from "@/components/layout/Header";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { prisma } from "@/lib/prisma";
 import { fetchShopProducts } from "@/actions/shopProducts";
-import type { Product } from "@/types";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { isHiddenStore } from "@/lib/storeFilter";
 import { ShareButton } from "@/components/ui/ShareButton";
@@ -76,7 +75,6 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   // 1. Параметры фильтрации из URL (для синхронизации начального состояния)
   const categoryFilter = typeof resolvedSearchParams.category === "string" ? resolvedSearchParams.category : "all";
   const sortFilter = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : "newest";
-  const currentPage = Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1") || 1;
 
   // 2. Ищем магазин по instagram или slug (проверяем и таблицу Store, и таблицу User)
   const store = await prisma.store.findFirst({

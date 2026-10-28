@@ -9,7 +9,7 @@ export const revalidate = 3600;
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
-  "https://vitrina-pmr.vercel.app";
+  "https://www.e-vitrina.com";
 
 // Все категории каталога
 const ALL_CATEGORIES = [

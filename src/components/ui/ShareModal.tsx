@@ -253,7 +253,7 @@ export function ShareModal({
                   </p>
                 )}
                 <p className="text-[11px] text-gray-400 mt-0.5 truncate">
-                  vitrina-pmr.vercel.app
+                  e-vitrina.com
                 </p>
               </div>
             </div>

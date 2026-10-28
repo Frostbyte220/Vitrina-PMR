@@ -48,7 +48,7 @@ export const useFavoritesStore = create<FavoritesState>()(
           // Добавляем локальные, которых ещё нет на сервере (добавлены офлайн)
           const offlineAdded = localFavs.filter((id) => !serverSet.has(id));
 
-          let merged = [...data.favorites, ...offlineAdded];
+          const merged = [...data.favorites, ...offlineAdded];
 
           // Если есть офлайн-добавления — сохраняем на сервере
           if (offlineAdded.length > 0) {

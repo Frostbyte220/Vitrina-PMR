@@ -114,7 +114,7 @@ export function ProductPageHeader({
               typeof window !== "undefined"
                 ? window.location.href
                 : productId
-                ? `https://vitrina-pmr.vercel.app/product/${productId}`
+                ? `https://www.e-vitrina.com/product/${productId}`
                 : undefined,
           }}
         />
@@ -219,7 +219,7 @@ export function ProductPageHeaderDesktop({
               typeof window !== "undefined"
                 ? window.location.href
                 : productId
-                ? `https://vitrina-pmr.vercel.app/product/${productId}`
+                ? `https://www.e-vitrina.com/product/${productId}`
                 : undefined,
           }}
         />
