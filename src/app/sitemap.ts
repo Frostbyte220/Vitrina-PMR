@@ -117,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 4. SEO-страницы одежда + размер
   const clothingSizePages: MetadataRoute.Sitemap = CLOTHING_SIZES_SEO.map((size) => ({
-    url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}&sizes=${encodeURIComponent(size)}`,
+    url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}&amp;sizes=${encodeURIComponent(size)}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.65,
@@ -125,7 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 5. SEO-страницы обувь + размер
   const shoeSizePages: MetadataRoute.Sitemap = SHOE_SIZES_SEO.map((size) => ({
-    url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}&sizes=${encodeURIComponent(size)}`,
+    url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}&amp;sizes=${encodeURIComponent(size)}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.65,
@@ -192,7 +192,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("[SITEMAP] Ошибка загрузки магазинов:", error);
   }
 
-  return [
+  const allEntries: MetadataRoute.Sitemap = [
     ...staticPages,
     ...categoryPages,
     ...cityPages,
@@ -201,4 +201,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...productPages,
     ...storePages,
   ];
+
+  return allEntries.map((entry) => ({
+    ...entry,
+    // В XML по стандарту sitemaps.org амперсанд '&' обязан экранироваться как '&amp;', иначе парсер Google выдаёт "Ошибка разбора"
+    url: entry.url.replace(/&(?!(amp|lt|gt|quot|apos);)/g, "&amp;"),
+  }));
 }
