@@ -44,25 +44,33 @@ export function ProductCatalogClient({
       return;
     }
 
+    // Отменяем предыдущий запрос сразу
     abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
 
-    setIsFetching(true);
+    // Debounce 180мс — ждём пока пользователь закончит выбирать фильтры
+    const debounceId = setTimeout(() => {
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    fetch(`/api/products?${paramsStr}`, { signal: controller.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        setProducts(data.products ?? []);
-        setTotalCount(data.totalCount ?? 0);
-        setTotalPages(data.totalPages ?? 0);
-        setIsFetching(false);
-      })
-      .catch((e) => {
-        if (e.name !== "AbortError") setIsFetching(false);
-      });
+      setIsFetching(true);
 
-    return () => controller.abort();
+      fetch(`/api/products?${paramsStr}`, { signal: controller.signal })
+        .then((r) => r.json())
+        .then((data) => {
+          setProducts(data.products ?? []);
+          setTotalCount(data.totalCount ?? 0);
+          setTotalPages(data.totalPages ?? 0);
+          setIsFetching(false);
+        })
+        .catch((e) => {
+          if (e.name !== "AbortError") setIsFetching(false);
+        });
+    }, 180);
+
+    return () => {
+      clearTimeout(debounceId);
+      abortRef.current?.abort();
+    };
   }, [paramsStr]);
 
   const priceLabel = minPrice && maxPrice
