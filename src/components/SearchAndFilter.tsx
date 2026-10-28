@@ -402,7 +402,7 @@ export function SearchAndFilter() {
         <AnimatePresence>
           {showSuggestions && (
             (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
-            (productSuggestions.length > 0 || storeSuggestions.length > 0 || categorySuggestions.length > 0)
+            searchQuery.trim().length >= 2
           ) && (
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -580,6 +580,21 @@ export function SearchAndFilter() {
                       );
                     })}
                   </ul>
+                </div>
+              )}
+
+              {/* Состояние загрузки */}
+              {searchQuery.trim().length >= 2 && isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
+                <div className="flex items-center justify-center gap-2 p-4 text-sm text-gray-400">
+                  <Loader2 className="h-4 w-4 animate-spin text-rose-400" />
+                  Поиск...
+                </div>
+              )}
+
+              {/* Нет результатов */}
+              {searchQuery.trim().length >= 2 && !isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
+                <div className="p-4 text-center text-sm text-gray-400">
+                  Ничего не найдено по запросу «{searchQuery}»
                 </div>
               )}
 
