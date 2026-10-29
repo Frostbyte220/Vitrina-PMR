@@ -82,7 +82,7 @@ async function main() {
     where: { id: "f03e87ca-1895-4a08-b210-02e84fa9f3ef" },
     data: {
       images: [
-        "https://images.unsplash.com/photo-1598662779094-110c2bad80b5?w=800&q=80",
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&q=80",
       ],
     },
   });
@@ -93,7 +93,7 @@ async function main() {
     where: { id: "92790c1e-5c9b-42fa-833f-9c1927fa2069" },
     data: {
       images: [
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80",
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&q=80",
       ],
     },
   });

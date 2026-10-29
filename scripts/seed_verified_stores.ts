@@ -33,8 +33,7 @@ async function main() {
       subCategory: "Кроссовки",
       sizes: ["40", "41", "42", "43", "44"],
       images: [
-        "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&q=80",
-        "https://images.unsplash.com/photo-1515955656352-a1fa3ffcd111?w=800&q=80",
+        "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80",
       ],
       description: "Легендарные баскетбольные кроссовки в классической расцветке. Премиальная кожа, амортизация Air-Sole, максимальный комфорт на каждый день.",
     },
@@ -58,7 +57,7 @@ async function main() {
       subCategory: "Кроссовки",
       sizes: ["41", "42", "43", "44", "45"],
       images: [
-        "https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=800&q=80",
+        "https://images.unsplash.com/photo-1582588678413-dbf45f4823e9?w=800&q=80",
       ],
       description: "Культовая классика уличного стиля. Верх из мягкой кожи с замшевым Т-образным носком и контрастными полосками.",
     },
@@ -101,8 +100,7 @@ async function main() {
       subCategory: "Аудио",
       sizes: [],
       images: [
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
-        "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80",
+        "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80",
       ],
       description: "Флагманские полноразмерные наушники с лучшим на рынке активным шумоподавлением (ANC), 30 часов автономности и Hi-Res Audio.",
     },
@@ -114,7 +112,7 @@ async function main() {
       subCategory: "Умный дом",
       sizes: [],
       images: [
-        "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800&q=80",
+        "https://images.unsplash.com/photo-1589003077984-894e133dabab?w=800&q=80",
       ],
       description: "Мощный звук 24 Вт в компактном корпусе с голосовым помощником Алиса и встроенным хабом управления умным домом Zigbee.",
     },
@@ -138,7 +136,7 @@ async function main() {
       subCategory: "Аксессуары",
       sizes: [],
       images: [
-        "https://images.unsplash.com/photo-1622445262464-84b1456045b6?w=800&q=80",
+        "https://images.unsplash.com/photo-1615526675159-e248c3021d3f?w=800&q=80",
       ],
       description: "Элегантная складная станция для одновременной быстрой зарядки смартфона, смарт-часов и беспроводных наушников.",
     },
@@ -169,7 +167,7 @@ async function main() {
       subCategory: "Уход за кожей",
       sizes: [],
       images: [
-        "https://images.unsplash.com/photo-1608248597359-32243d65b128?w=800&q=80",
+        "https://images.unsplash.com/photo-1617897903246-719242758050?w=800&q=80",
       ],
       description: "Высокоактивная формула с 10% ниацинамидом и 1% цинком для сужения пор, выравнивания тона кожи и борьбы с несовершенствами.",
     },
@@ -193,7 +191,7 @@ async function main() {
       subCategory: "Уход за лицом",
       sizes: [],
       images: [
-        "https://images.unsplash.com/photo-1512290900672-1f55b9e59c23?w=800&q=80",
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&q=80",
       ],
       description: "Мгновенно снимают отечность, осветляют темные круги под глазами и разглаживают мелкие мимические морщинки. В банке 60 шт.",
     },
@@ -236,7 +234,7 @@ async function main() {
       subCategory: "Толстовки и свитшоты",
       sizes: ["S", "M", "L", "XL"],
       images: [
-        "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80",
+        "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=800&q=80",
       ],
       description: "Уютный базовый худи графитового цвета. Плотный 100% хлопок премиум качества пенье 380 г/м², держит форму после стирок.",
     },
@@ -248,7 +246,7 @@ async function main() {
       subCategory: "Джинсы",
       sizes: ["28", "30", "32", "34"],
       images: [
-        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&q=80",
+        "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=800&q=80",
       ],
       description: "Классический прямой силуэт с высокой посадкой в винтажной варке. Плотный деним 100% хлопок.",
     },
@@ -260,7 +258,7 @@ async function main() {
       subCategory: "Свитеры и джемперы",
       sizes: ["ONE SIZE"],
       images: [
-        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&q=80",
+        "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800&q=80",
       ],
       description: "Мягкий и теплый свитер молочного цвета с добавлением шерсти альпака. Идеально сочетается с брюками и юбками.",
     },
@@ -272,7 +270,7 @@ async function main() {
       subCategory: "Верхняя одежда",
       sizes: ["S", "M", "L"],
       images: [
-        "https://images.unsplash.com/photo-1548624313-0396c75e4b1a?w=800&q=80",
+        "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=800&q=80",
       ],
       description: "Элегантный длинный тренч с поясом и ветрозащитной планкой. Водоотталкивающая плотная ткань, премиальная фурнитура.",
     },
