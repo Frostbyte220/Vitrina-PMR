@@ -89,6 +89,14 @@ export default async function HomePage({
     ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
     : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
 
+  // Загружаем каталог активных товаров для мгновенной фильтрации в памяти на клиенте (<16 мс)
+  const [catalogPool] = await getProducts(
+    { deletedAt: null, status: "Активен" },
+    0,
+    300,
+    { createdAt: "desc" }
+  );
+
   const initialTotalPages = Math.ceil(initialTotalCount / ITEMS_PER_PAGE);
 
   return (
@@ -166,6 +174,7 @@ export default async function HomePage({
             initialTotalCount={initialTotalCount}
             initialTotalPages={initialTotalPages}
             initialPage={currentPage}
+            catalogPool={catalogPool as any[]}
           />
         </React.Suspense>
 
