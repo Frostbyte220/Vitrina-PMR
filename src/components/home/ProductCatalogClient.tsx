@@ -71,7 +71,10 @@ export function ProductCatalogClient({
       if (discount && (!p.oldPrice || p.oldPrice <= p.price)) return false;
 
       // Наличие
-      if (availability && p.availability !== availability) return false;
+      if (availability) {
+        const pAvail = p.availability || "В наличии";
+        if (pAvail !== availability) return false;
+      }
 
       // Диапазон цен
       if (hasMinPrice && p.price < minPrice!) return false;
@@ -194,10 +197,13 @@ export function ProductCatalogClient({
     : null;
 
   function HeadingText() {
+    const isAvail = availability === "В наличии";
+    const availPrefix = isAvail ? "В наличии: " : "";
+
     if (discount) {
       return (
         <>
-          Товары со скидкой{" "}
+          {isAvail ? "Товары в наличии со скидкой" : "Товары со скидкой"}{" "}
           {selectedCities.length > 0 && (
             <span className="text-rose-600 font-semibold">: {selectedCities.join(", ")}</span>
           )}
@@ -208,7 +214,7 @@ export function ProductCatalogClient({
     if (selectedCities.length > 0) {
       return (
         <>
-          Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
+          {availPrefix}Товары: <span className="text-rose-600 font-semibold">{selectedCities.join(", ")}</span>
           {selectedSizes.length > 0 && (
             <span className="text-gray-500 font-normal text-sm ml-2">(размер: {selectedSizes.join(", ")})</span>
           )}
@@ -219,18 +225,23 @@ export function ProductCatalogClient({
     if (selectedSizes.length > 0) {
       return (
         <>
-          Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
+          {availPrefix}Товары <span className="text-rose-600 font-semibold">(размер: {selectedSizes.join(", ")})</span>
           {priceLabel && <span className="text-gray-500 font-normal text-sm ml-2">({priceLabel})</span>}
         </>
       );
     }
     if (priceLabel) {
-      return <>Товары <span className="text-rose-600 font-semibold">({priceLabel})</span></>;
+      return <>{availPrefix}Товары <span className="text-rose-600 font-semibold">({priceLabel})</span></>;
+    }
+    if (isAvail) {
+      return <>Товары в наличии</>;
     }
     return <>Каталог товаров</>;
   }
 
   function emptyText() {
+    if (discount && availability) return "Пока нет товаров в наличии со скидкой по вашим фильтрам";
+    if (availability) return "Пока нет товаров в наличии по вашим фильтрам";
     if (discount) return "Пока нет товаров со скидкой по вашим фильтрам";
     if (minPrice || maxPrice) {
       const lbl = priceLabel ?? "";

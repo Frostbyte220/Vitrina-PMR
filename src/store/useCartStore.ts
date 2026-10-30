@@ -197,5 +197,5 @@ export function generateStoreOrderMessage(group: StoreCartGroup): string {
   const countWord =
     totalCount === 1 ? "товар" : totalCount > 1 && totalCount < 5 ? "товара" : "товаров";
 
-  return `Здравствуйте! Хочу оформить заказ с Витрины ПМР:\n\n${itemsList}\n\nИтого (${totalCount} ${countWord}): ${totalSumStr}\nМагазин: ${group.storeName}`;
+  return `Здравствуйте! Оформляю заказ с сайта e-vitrina.com:\n\n${itemsList}\n\nИтого (${totalCount} ${countWord}): ${totalSumStr}\nМагазин: ${group.storeName}`;
 }

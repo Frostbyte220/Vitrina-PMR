@@ -122,11 +122,13 @@ export function ContactSellerButton({
 
   const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
   const availInfo = getAvailabilityInfo(availability);
-  const availText = availInfo ? `, ${availInfo.label}` : "";
-  const sizeText = selectedSize ? ` (размер: ${selectedSize})` : "";
+  const availText = availInfo ? ` (${availInfo.label.toLowerCase()})` : "";
+  const sizeText = selectedSize ? `, размер: ${selectedSize}` : "";
+
+  // Фирменное сообщение с четкой атрибуцией e-vitrina.com
   const greetingMessage = productUrl
-    ? `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}${availText}).\nСсылка на товар: ${productUrl}`
-    : `Здравствуйте! Меня интересует товар «${productName}»${sizeText} (${formattedPrice}${availText}) на E-Vitrina PMR.`;
+    ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?\nСсылка на товар: ${productUrl}`
+    : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?`;
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
@@ -180,14 +182,27 @@ export function ContactSellerButton({
       id: "viber",
       name: "Viber",
       sub: rawViber,
-      url: `viber://chat?number=%2B${viberDigits}`,
+      url: `viber://chat?number=%2B${viberDigits}&draft=${encodeURIComponent(greetingMessage)}`,
       icon: MessageCircle,
       bgClass: "bg-[#7360F2] hover:bg-[#6350E2] text-white shadow-sm",
     });
   }
 
   if (rawPhone) {
-    const phoneDigits = rawPhone.replace(/[^\d+]/g, "");
+    const phoneDigits = rawPhone.replace(/[^\d]/g, "");
+    // Если есть телефон, также добавляем WhatsApp (популярен в ПМР)
+    if (phoneDigits.length >= 8) {
+      channels.push({
+        id: "whatsapp",
+        name: "WhatsApp",
+        sub: rawPhone,
+        url: `https://wa.me/${phoneDigits}?text=${encodeURIComponent(greetingMessage)}`,
+        icon: MessageSquare,
+        bgClass: "bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-sm",
+        target: "_blank",
+      });
+    }
+
     channels.push({
       id: "phone",
       name: "Позвонить (IDC)",
@@ -199,6 +214,18 @@ export function ContactSellerButton({
   }
 
   const handleChannelClick = (channel: Channel) => {
+    if (channel.id === "instagram") {
+      copyToClipboard(greetingMessage).then((copied) => {
+        if (copied) {
+          toast.success("Текст заказа скопирован! Вставьте его в Direct 💬", { duration: 4000 });
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 3000);
+        }
+      });
+    } else {
+      copyGreeting();
+    }
+
     if (productId) {
       try {
         fetch(`/api/products/${productId}/click`, {
@@ -216,7 +243,6 @@ export function ContactSellerButton({
       channel: channel.id,
       shop: cleanInstagram || cleanTelegram || rawPhone,
     });
-    copyGreeting();
   };
 
   const handleMainButtonClick = (e: React.MouseEvent) => {
