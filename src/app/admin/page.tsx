@@ -27,7 +27,8 @@ export default async function AdminDashboardPage() {
   const [stores, products, totalUsers, reports, banners] = await Promise.all([
     prisma.store.findMany({
       include: {
-        _count: { select: { products: true } }
+        _count: { select: { products: true } },
+        user: { select: { email: true } },
       },
       orderBy: { createdAt: "desc" }
     }),

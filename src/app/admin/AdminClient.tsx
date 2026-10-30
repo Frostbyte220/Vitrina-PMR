@@ -18,7 +18,9 @@ import {
   Plus, 
   Edit2, 
   Link as LinkIcon,
-  BadgeCheck
+  BadgeCheck,
+  Instagram,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -39,6 +41,7 @@ import { BannerItem } from "@/lib/banners";
 import { formatPrice } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import toast from "react-hot-toast";
+import { CreateStoreModal } from "./CreateStoreModal";
 
 const GRADIENT_PRESETS = [
   { label: "Розовый", value: "from-rose-600 to-rose-800" },
@@ -52,7 +55,7 @@ const GRADIENT_PRESETS = [
 const EMOJI_PRESETS = ["🏪", "👟", "💄", "👗", "⚡", "🔥", "🎁", "🏷️", "📱", "✨"];
 const LABEL_PRESETS = ["Реклама", "Акция", "Партнёр", "Новинка", "Скидка", "Топ"];
 
-type StoreData = {
+export type StoreData = {
   id: string;
   name: string;
   slug: string;
@@ -60,6 +63,7 @@ type StoreData = {
   isVerified?: boolean;
   createdAt: Date;
   _count: { products: number };
+  user?: { email: string } | null;
 };
 
 type ProductData = {
@@ -107,6 +111,18 @@ export function AdminClient({
 
   // Состояние магазинов
   const [storesList, setStoresList] = useState<StoreData[]>(stores);
+  const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+  const [storeSearchQuery, setStoreSearchQuery] = useState("");
+
+  const filteredStores = storesList.filter((s) => {
+    if (!storeSearchQuery.trim()) return true;
+    const q = storeSearchQuery.toLowerCase();
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.slug.toLowerCase().includes(q) ||
+      (s.instagram && s.instagram.toLowerCase().includes(q))
+    );
+  });
 
   // Состояние управления баннерами
   const [bannersList, setBannersList] = useState<BannerItem[]>(banners);
@@ -427,72 +443,158 @@ export function AdminClient({
         </div>
       )}
 
-      {/* Таблица магазинов */}
+      {/* Секция магазинов */}
       {activeTab === "stores" && (
-        <div className="overflow-hidden rounded-xl bg-white shadow-sm outline outline-1 outline-gray-200">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Магазин</th>
-                  <th className="px-4 py-3 font-semibold">Instagram</th>
-                  <th className="px-4 py-3 font-semibold text-center">Верификация</th>
-                  <th className="px-4 py-3 font-semibold text-center">Товаров</th>
-                  <th className="px-4 py-3 font-semibold">Регистрация</th>
-                  <th className="px-4 py-3 text-right font-semibold">Действие</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {storesList.map((s) => (
-                  <tr key={s.id} className="transition-colors hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 font-medium text-gray-900">
-                        <span>{s.name}</span>
-                        {s.isVerified && <VerifiedBadge size="sm" />}
-                      </div>
-                      <div className="text-xs text-gray-400">/{s.slug}</div>
-                    </td>
-                    <td className="px-4 py-3 text-blue-600">
-                      {s.instagram ? `@${s.instagram.replace("@", "")}` : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleStoreVerified(s)}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all shadow-xs ${
-                          s.isVerified
-                            ? "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200"
-                            : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200"
-                        }`}
-                        title={s.isVerified ? "Нажмите, чтобы снять статус проверенного магазина" : "Нажмите, чтобы сделать магазин проверенным"}
-                      >
-                        <BadgeCheck className={`h-4 w-4 ${s.isVerified ? "fill-sky-500 text-white" : "text-gray-400"}`} />
-                        <span>{s.isVerified ? "Проверен" : "Обычный"}</span>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-center font-medium">
-                      {s._count.products}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
-                      {new Date(s.createdAt).toLocaleDateString("ru-RU")}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDeleteStore(s.id)}
-                        disabled={loadingId === s.id}
-                        className="rounded-lg p-2 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-                        title="Удалить магазин навсегда"
-                      >
-                        {loadingId === s.id ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </td>
+        <div className="space-y-4">
+          {/* Панель действий магазинов */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <input
+                type="text"
+                value={storeSearchQuery}
+                onChange={(e) => setStoreSearchQuery(e.target.value)}
+                placeholder="Поиск по названию или Instagram..."
+                className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-800 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-xs"
+              />
+              {storeSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setStoreSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateStoreModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 via-pink-600 to-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-95 transition"
+            >
+              <Instagram className="h-4 w-4" />
+              <span>Создать витрину по Instagram</span>
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            </button>
+          </div>
+
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm outline outline-1 outline-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Магазин</th>
+                    <th className="px-4 py-3 font-semibold">Instagram</th>
+                    <th className="px-4 py-3 font-semibold text-center">Тип профиля</th>
+                    <th className="px-4 py-3 font-semibold text-center">Верификация</th>
+                    <th className="px-4 py-3 font-semibold text-center">Товаров</th>
+                    <th className="px-4 py-3 font-semibold">Регистрация</th>
+                    <th className="px-4 py-3 text-right font-semibold">Действие</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredStores.map((s) => {
+                    const isUnclaimed = s.user?.email?.includes("@unclaimed.");
+
+                    return (
+                      <tr key={s.id} className="transition-colors hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 font-medium text-gray-900">
+                            <span>{s.name}</span>
+                            {s.isVerified && <VerifiedBadge size="sm" />}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <span>/{s.slug}</span>
+                            <a
+                              href={`/shop/${s.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-400 hover:text-gray-900"
+                              title="Открыть витрину"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-blue-600">
+                          {s.instagram ? (
+                            <a
+                              href={`https://instagram.com/${s.instagram.replace("@", "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 hover:underline"
+                            >
+                              <span>@{s.instagram.replace("@", "")}</span>
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                          {isUnclaimed ? (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200"
+                              title="Витрина создана автоматически администратором для outreach"
+                            >
+                              Авто-витрина
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                              Владелец
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                          <button
+                            onClick={() => handleToggleStoreVerified(s)}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all shadow-xs ${
+                              s.isVerified
+                                ? "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200"
+                                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200"
+                            }`}
+                            title={s.isVerified ? "Нажмите, чтобы снять статус проверенного магазина" : "Нажмите, чтобы сделать магазин проверенным"}
+                          >
+                            <BadgeCheck className={`h-4 w-4 ${s.isVerified ? "fill-sky-500 text-white" : "text-gray-400"}`} />
+                            <span>{s.isVerified ? "Проверен" : "Обычный"}</span>
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium">
+                          {s._count.products}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
+                          {new Date(s.createdAt).toLocaleDateString("ru-RU")}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <a
+                              href={`/shop/${s.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                              title="Открыть витрину"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                            <button
+                              onClick={() => handleDeleteStore(s.id)}
+                              disabled={loadingId === s.id}
+                              className="rounded-lg p-2 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              title="Удалить магазин навсегда"
+                            >
+                              {loadingId === s.id ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1103,6 +1205,14 @@ export function AdminClient({
           </div>
         </div>
       )}
+      {/* Модальное окно создания витрины по Instagram */}
+      <CreateStoreModal
+        isOpen={isCreateStoreModalOpen}
+        onClose={() => setIsCreateStoreModalOpen(false)}
+        onStoreCreated={(newStore) => {
+          setStoresList((prev) => [newStore, ...prev]);
+        }}
+      />
     </div>
   );
 }

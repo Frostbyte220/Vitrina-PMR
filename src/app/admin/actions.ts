@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
+import bcrypt from "bcryptjs";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
@@ -138,13 +139,25 @@ export async function fillRandomSizesAction(): Promise<{ updated: number; total:
 
 export async function deleteStoreAdmin(storeId: string) {
   await checkAdmin();
-  // Жесткое удаление магазина
-  await prisma.store.delete({
-    where: { id: storeId }
+  const store = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { userId: true },
   });
+
+  if (store?.userId) {
+    try {
+      await prisma.user.delete({ where: { id: store.userId } });
+    } catch {
+      await prisma.store.delete({ where: { id: storeId } });
+    }
+  } else {
+    await prisma.store.delete({ where: { id: storeId } });
+  }
+
   revalidateTag("products");
   revalidatePath("/admin");
   revalidatePath("/shops");
+  revalidatePath("/");
 }
 
 export async function resolveReportAdmin(reportId: string, hideProduct = true) {
@@ -307,4 +320,149 @@ export async function toggleStoreVerifiedAdmin(storeId: string, isVerified: bool
   revalidatePath("/shops");
 }
 
+export type QuickCreateStoreInput = {
+  instagram: string;
+  name?: string;
+  cities?: string[];
+  phone?: string;
+  telegram?: string;
+  viber?: string;
+  description?: string;
+};
 
+export type QuickCreateStoreResult = {
+  success: boolean;
+  store: {
+    id: string;
+    name: string;
+    slug: string;
+    instagram: string | null;
+    isVerified: boolean;
+    createdAt: Date;
+    _count: { products: number };
+    user?: { email: string } | null;
+  };
+  credentials: {
+    email: string;
+    password: string;
+  };
+  url: string;
+  directMessageTemplate: string;
+};
+
+export async function createStoreByInstagramAdmin(
+  input: QuickCreateStoreInput
+): Promise<QuickCreateStoreResult> {
+  await checkAdmin();
+
+  const rawInsta = input.instagram || "";
+  const cleanInsta = rawInsta
+    .replace(/^@+/, "")
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/[/?#].*$/, "")
+    .replace(/[^a-zA-Z0-9._]/g, "")
+    .trim()
+    .toLowerCase();
+
+  if (!cleanInsta || cleanInsta.length < 2) {
+    throw new Error("Укажите корректный ник в Instagram (минимум 2 символа)");
+  }
+
+  // Проверка уникальности слага магазина
+  const existingStore = await prisma.store.findFirst({
+    where: {
+      OR: [
+        { slug: cleanInsta },
+        { instagram: { equals: cleanInsta, mode: "insensitive" } },
+      ],
+    },
+  });
+
+  if (existingStore) {
+    throw new Error(`Магазин со слагом или Instagram «${cleanInsta}» уже существует!`);
+  }
+
+  // Название витрины
+  const storeName = input.name?.trim() || cleanInsta;
+
+  // Формируем технический dummy email
+  let dummyEmail = `${cleanInsta}@unclaimed.e-vitrina.com`;
+  const existingUser = await prisma.user.findUnique({
+    where: { email: dummyEmail },
+  });
+  if (existingUser) {
+    dummyEmail = `${cleanInsta}_${Math.floor(1000 + Math.random() * 9000)}@unclaimed.e-vitrina.com`;
+  }
+
+  // Генерируем временный пароль для легкой передачи доступа
+  const plainPassword = `pmr_${cleanInsta}2026`;
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+  const selectedCities =
+    input.cities && input.cities.length > 0
+      ? input.cities
+      : ["Тирасполь", "Бендеры"];
+
+  const user = await prisma.user.create({
+    data: {
+      name: storeName,
+      email: dummyEmail,
+      password: hashedPassword,
+      instagram: cleanInsta,
+      instagramUrl: `https://instagram.com/${cleanInsta}`,
+      store: {
+        create: {
+          name: storeName,
+          slug: cleanInsta,
+          instagram: cleanInsta,
+          description: input.description?.trim() || null,
+          phone: input.phone?.trim() || null,
+          telegram: input.telegram?.replace(/^@+/, "").replace(/https?:\/\/t\.me\//i, "").trim() || null,
+          viber: input.viber?.trim() || null,
+          cities: selectedCities,
+          isVerified: false,
+        },
+      },
+    },
+    include: {
+      store: {
+        include: {
+          _count: { select: { products: true } },
+          user: { select: { email: true } },
+        },
+      },
+    },
+  });
+
+  if (!user.store) {
+    throw new Error("Не удалось создать витрину магазина");
+  }
+
+  revalidateTag("products");
+  revalidatePath("/admin");
+  revalidatePath("/shops");
+  revalidatePath("/");
+
+  const showcaseUrl = `https://e-vitrina.com/shop/${cleanInsta}`;
+  const directMessageTemplate = `Здравствуйте! 👋\nОчень понравился ваш ассортимент и подача профиля.\n\nМы запустили локальную платформу E-Vitrina PMR, чтобы местным брендам было проще продавать, а покупателям — находить товары по городам Приднестровья.\n\nСобрали для вас аккуратную онлайн-витрину с каталогом и фильтрами по наличию:\n👉 ${showcaseUrl}\n\nЭто полностью бесплатно. Покупателям удобно листать каталог как в полноценном интернет-магазине, а заказывать они переходят прямо к вам в Direct/Telegram.\n\nВзгляните, как вам такой формат? Будем рады, если витрина сэкономит вам время на однотипных вопросах в переписке 😊`;
+
+  return {
+    success: true,
+    store: {
+      id: user.store.id,
+      name: user.store.name,
+      slug: user.store.slug,
+      instagram: user.store.instagram,
+      isVerified: user.store.isVerified,
+      createdAt: user.store.createdAt,
+      _count: user.store._count,
+      user: user.store.user,
+    },
+    credentials: {
+      email: dummyEmail,
+      password: plainPassword,
+    },
+    url: showcaseUrl,
+    directMessageTemplate,
+  };
+}
