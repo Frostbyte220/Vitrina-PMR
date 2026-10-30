@@ -72,8 +72,14 @@ export function LoginForm() {
 
       // Сначала делаем refresh, чтобы Next.js подхватил новые куки сессии
       router.refresh();
-      // Затем перенаправляем пользователя в дашборд
-      router.push(callbackUrl);
+
+      // Если это только что зарегистрированный магазин — сразу перекидываем в настройки магазина!
+      if (isRegister) {
+        toast.success("Магазин создан! Давайте укажем города доставки и контакты 🚀", { duration: 5000 });
+        router.push("/dashboard/settings?new=true");
+      } else {
+        router.push(callbackUrl);
+      }
     } catch (error: any) {
       console.error("Auth error:", error);
       toast.error(error?.message || "Произошла системная ошибка. Попробуйте еще раз.");

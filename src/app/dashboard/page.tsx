@@ -12,6 +12,8 @@ import {
   MessageCircle,
   Plus,
   ArrowUpRight,
+  ArrowRight,
+  AlertCircle,
   Percent,
   Sparkles,
 } from "lucide-react";
@@ -65,6 +67,7 @@ export default async function DashboardHomePage() {
             slug: true,
             isVerified: true,
             avatarUrl: true,
+            cities: true,
           },
         },
       },
@@ -111,6 +114,7 @@ export default async function DashboardHomePage() {
 
   const store = storeInfo?.store;
   const sellerDisplayName = store?.name || storeInfo?.name || "Продавец";
+  const hasNoCities = !store?.cities || store.cities.length === 0;
 
   return (
     <main className="flex-1 px-4 py-8 pb-24 md:px-8 md:pb-8 mx-auto max-w-7xl w-full">
@@ -148,6 +152,34 @@ export default async function DashboardHomePage() {
           </Link>
         </div>
       </div>
+
+      {/* ── Предупреждение о ненастроенных городах доставки ── */}
+      {hasNoCities && (
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 text-amber-700 rounded-xl mt-0.5 sm:mt-0">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-amber-900">
+                  Укажите города доставки вашего магазина
+                </h3>
+                <p className="mt-1 text-sm text-amber-700">
+                  Пока вы не выбрали города работы, ваши товары не будут отображаться покупателям при фильтрации по городам на главной странице.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/settings"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 text-white text-xs sm:text-sm font-semibold hover:bg-amber-700 transition-colors shadow-sm"
+            >
+              <span>Настроить города</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Карточки метрик (если ENABLE_REAL_METRICS = false, показывается иконка «Скоро») ─── */}
       {ENABLE_REAL_METRICS ? (

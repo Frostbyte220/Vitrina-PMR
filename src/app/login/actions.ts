@@ -40,8 +40,7 @@ export async function registerUser(formData: FormData) {
   // 4. Пропускаем данные через валидатор Zod
   const parsedData = registerSchema.safeParse(rawData);
   
-if (!parsedData.success) {
-    // Используем .issues вместо .errors и добавляем ?. перед массивом
+  if (!parsedData.success) {
     return { error: parsedData.error?.issues?.[0]?.message || "Проверьте правильность введенных данных" };
   }
 
@@ -61,14 +60,32 @@ if (!parsedData.success) {
     // 6. Хешируем пароль
     const hashedPassword = await bcrypt.hash(validData.password, 10);
 
-    // 7. Сохраняем в базу данных
+    const cleanInsta = validData.instagram.replace(/^@+/, "").trim();
+    let slug = cleanInsta.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (!slug) slug = `store-${Date.now().toString().slice(-6)}`;
+
+    // Проверяем уникальность slug'а
+    const existingStore = await prisma.store.findUnique({ where: { slug } });
+    if (existingStore) {
+      slug = `${slug}-${Date.now().toString().slice(-4)}`;
+    }
+
+    // 7. Сохраняем пользователя и сразу создаем связанную витрину Store
     await prisma.user.create({
       data: {
         name: validData.name,
-        instagram: validData.instagram.replace("@", "").trim(),
+        instagram: cleanInsta,
         instagramUrl: validData.instagramLink.trim(),
         email: validData.email.toLowerCase(),
         password: hashedPassword,
+        store: {
+          create: {
+            name: validData.name,
+            slug: slug,
+            instagram: cleanInsta,
+            cities: [],
+          },
+        },
       },
     });
 
