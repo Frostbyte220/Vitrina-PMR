@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Store, MapPin, ShoppingBag, Check } from "lucide-react";
 import { formatPrice, cloudinaryLoader, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
+import { useRouter } from "next/navigation";
 import { ContactSellerButton } from "./ContactSellerButton";
 import { FavoriteButton } from "./FavoriteButton";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
@@ -37,6 +38,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, priority = false, activeCities }: ProductCardProps) {
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
@@ -113,13 +115,20 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     e.preventDefault();
     e.stopPropagation();
 
+    // Если у товара есть размеры, клиент должен сам выбрать размер на странице товара
+    if (Array.isArray(prod.sizes) && prod.sizes.length > 0) {
+      toast("Пожалуйста, выберите подходящий размер", { icon: "📏" });
+      router.push(`/product/${product.id}`);
+      return;
+    }
+
     addItem({
       productId: product.id,
       title: product.title,
       price: product.price,
       oldPrice: product.oldPrice,
       image: imageUrl || "",
-      selectedSize: Array.isArray(prod.sizes) && prod.sizes.length > 0 ? prod.sizes[0] : null,
+      selectedSize: null,
       storeId: (product as any).storeId || (prod.store as any)?.id || (prod.user?.store as any)?.id || null,
       storeName: displayName,
       storeSlug: cleanInstagram || null,

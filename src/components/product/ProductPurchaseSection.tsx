@@ -42,21 +42,27 @@ export function ProductPurchaseSection({
   isVerified,
   availability,
 }: ProductPurchaseSectionProps) {
-  // Выбранный размер (по умолчанию первый размер, если есть, либо null)
+  // Выбранный размер: по умолчанию НЕ выбран (null) — клиент выбирает сам
   const hasSizes = Array.isArray(sizes) && sizes.length > 0;
-  const [selectedSize, setSelectedSize] = useState<string | null>(
-    hasSizes ? sizes[0] : null
-  );
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
 
   const handleSelectSize = (size: string) => {
+    setSizeError(false);
     // Если нажимаем на уже выбранный — переключаем (или оставляем)
     setSelectedSize((prev) => (prev === size ? null : size));
   };
 
   const handleAddToCart = () => {
+    if (hasSizes && !selectedSize) {
+      setSizeError(true);
+      toast.error("Пожалуйста, выберите подходящий размер товара");
+      return;
+    }
+
     addItem({
       productId,
       title: productName,
@@ -84,15 +90,21 @@ export function ProductPurchaseSection({
     <>
       {/* 1. Блок выбора размера на странице товара */}
       {hasSizes && (
-        <div className="mt-2 rounded-2xl border border-gray-100 bg-surface/50 p-4 shadow-sm">
+        <div
+          className={`mt-2 rounded-2xl border p-4 shadow-sm transition-all duration-200 ${
+            sizeError
+              ? "border-rose-400 bg-rose-50/40 ring-2 ring-rose-200"
+              : "border-gray-100 bg-surface/50"
+          }`}
+        >
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-text-main">
               Размер:{" "}
               {selectedSize ? (
                 <span className="font-bold text-rose-600">{selectedSize}</span>
               ) : (
-                <span className="text-xs font-normal text-text-muted">
-                  (не выбран)
+                <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                  Выберите размер
                 </span>
               )}
             </span>
@@ -111,8 +123,8 @@ export function ProductPurchaseSection({
                   onClick={() => handleSelectSize(size)}
                   className={`relative flex min-w-[44px] items-center justify-center rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 select-none ${
                     isSelected
-                      ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 border-rose-600"
-                      : "bg-white text-gray-800 border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 border-rose-600 scale-105"
+                      : "bg-white text-gray-800 border border-gray-200 hover:border-gray-400 hover:bg-gray-50 active:scale-95"
                   }`}
                   aria-pressed={isSelected}
                 >
@@ -128,7 +140,11 @@ export function ProductPurchaseSection({
           </div>
 
           <p className="mt-2.5 text-[11px] text-text-muted">
-            💡 Выбранный размер сохранится при добавлении в корзину или сообщении продавцу.
+            {selectedSize ? (
+              <span>💡 Выбранный размер <b>{selectedSize}</b> сохранится при добавлении в корзину или сообщении продавцу.</span>
+            ) : (
+              <span>💡 Нажмите на нужный размер, чтобы выбрать его перед покупкой или вопросом продавцу.</span>
+            )}
           </p>
         </div>
       )}
@@ -194,18 +210,26 @@ export function ProductPurchaseSection({
 
       {/* 3. Мобильная фиксированная панель: «В корзину», «Связаться», «Поделиться» */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md p-3.5 md:hidden pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        {hasSizes && selectedSize && (
+        {hasSizes && (
           <div className="mb-2 flex items-center justify-between text-xs px-1">
-            <span className="text-gray-600">
-              Выбранный размер: <strong className="text-rose-600 font-bold">{selectedSize}</strong>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedSize(null)}
-              className="text-[11px] font-medium text-gray-400 hover:text-gray-600"
-            >
-              Снять выбор
-            </button>
+            {selectedSize ? (
+              <>
+                <span className="text-gray-600">
+                  Выбранный размер: <strong className="text-rose-600 font-bold">{selectedSize}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSize(null)}
+                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600"
+                >
+                  Снять выбор
+                </button>
+              </>
+            ) : (
+              <span className="text-amber-700 font-medium">
+                ⚠️ Размер не выбран
+              </span>
+            )}
           </div>
         )}
         <div className="flex items-center gap-2">
