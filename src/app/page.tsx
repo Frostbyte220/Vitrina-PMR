@@ -166,6 +166,31 @@ export default async function HomePage({
       {/* Рекламная карусель — Баннер #1 (динамический из БД) */}
       <AdBannerCarousel banners={banners} />
 
+      {/* ── CTA для продавцов ────────────────────────────── */}
+      {!session && (
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 my-6">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-600 to-rose-800 px-6 py-7 sm:px-10 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
+            <div className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/10" />
+            <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-white/10" />
+            <div className="relative z-10 text-center sm:text-left">
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-200 mb-1">Для владельцев магазинов</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">
+                У вас есть магазин в Instagram?
+              </h2>
+              <p className="mt-1.5 text-sm text-rose-100 max-w-md">
+                Создайте бесплатную онлайн-витрину с каталогом и фильтрами. Покупатели найдут вас сами.
+              </p>
+            </div>
+            <Link
+              href="/login"
+              className="relative z-10 shrink-0 rounded-full bg-white px-7 py-3 text-sm font-semibold text-rose-700 shadow-md transition-all hover:bg-rose-50 hover:shadow-lg active:scale-95"
+            >
+              Разместить магазин →
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
       <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
         <React.Suspense fallback={<ProductsSkeleton />}>
