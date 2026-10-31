@@ -36,13 +36,21 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-white/95 backdrop-blur-md pt-safe">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 md:h-16 md:px-6">
-        {/* 1. Логотип */}
-        <Link
-          href="/"
-          className="shrink-0 text-base font-bold uppercase tracking-tight text-primary md:text-lg"
-        >
-          E-Vitrina PMR
-        </Link>
+        {/* 1. Логотип и навигация */}
+        <div className="flex items-center gap-4 lg:gap-6">
+          <Link
+            href="/"
+            className="shrink-0 text-base font-bold uppercase tracking-tight text-primary md:text-lg"
+          >
+            E-Vitrina PMR
+          </Link>
+          <Link
+            href="/shops"
+            className="hidden sm:inline-flex items-center text-sm font-medium text-text-muted hover:text-primary transition-colors"
+          >
+            Магазины
+          </Link>
+        </div>
 
         {/* 2. Строка поиска (только для десктопа) */}
         <div className="hidden flex-1 items-center justify-center md:flex">
