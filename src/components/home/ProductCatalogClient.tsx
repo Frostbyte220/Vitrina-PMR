@@ -20,7 +20,7 @@ interface ProductCatalogClientProps {
 export function ProductCatalogClient({
   initialProducts,
   initialTotalCount,
-  initialTotalPages,
+  initialTotalPages: _initialTotalPages,
   initialPage,
   catalogPool,
 }: ProductCatalogClientProps) {
