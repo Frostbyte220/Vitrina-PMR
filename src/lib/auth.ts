@@ -28,7 +28,8 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         // 1. ЗАЩИТА ОТ БРУТФОРСА (Ограничение количества попыток входа)
         const headerList = await headers();
-        const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
+        const forwardedFor = headerList.get("x-forwarded-for");
+        const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
         const isAllowed = await loginRateLimiter.check(ip);
         if (!isAllowed) {
           throw new Error("Слишком много попыток входа. Подождите минуту.");
