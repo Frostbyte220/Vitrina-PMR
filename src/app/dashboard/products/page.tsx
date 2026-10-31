@@ -35,9 +35,9 @@ export default async function DashboardProductsPage({
 
   const whereClause = {
     deletedAt: null,
-    user: {
-      email: session.user.email,
-    },
+    ...(session.user.id
+      ? { userId: session.user.id }
+      : { user: { email: session.user.email } }),
     OR: q
       ? [
           { title: { contains: q, mode: "insensitive" as const } },

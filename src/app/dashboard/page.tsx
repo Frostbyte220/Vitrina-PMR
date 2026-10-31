@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Percent,
   Sparkles,
+  KeyRound,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { formatPrice } from "@/lib/utils";
@@ -30,9 +31,17 @@ const ENABLE_REAL_METRICS = false;
 export default async function DashboardHomePage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id && !session?.user?.email) {
     redirect("/login");
   }
+
+  const userFilter = session.user.id
+    ? { id: session.user.id }
+    : { email: session.user.email as string };
+
+  const productFilter = session.user.id
+    ? { userId: session.user.id }
+    : { user: { email: session.user.email as string } };
 
   // Получаем статистику для продавца параллельно (код метрик сохранен)
   const [
@@ -44,22 +53,23 @@ export default async function DashboardHomePage() {
   ] = await Promise.all([
     prisma.product.count({
       where: {
-        user: { email: session.user.email },
+        ...productFilter,
         deletedAt: null,
       },
     }),
     prisma.product.count({
       where: {
-        user: { email: session.user.email },
+        ...productFilter,
         deletedAt: null,
         status: "Активен",
       },
     }),
-    prisma.user.findUnique({
-      where: { email: session.user.email },
+    prisma.user.findFirst({
+      where: userFilter,
       select: {
         id: true,
         name: true,
+        email: true,
         store: {
           select: {
             id: true,
@@ -74,7 +84,7 @@ export default async function DashboardHomePage() {
     }),
     prisma.product.aggregate({
       where: {
-        user: { email: session.user.email },
+        ...productFilter,
         deletedAt: null,
       },
       _sum: {
@@ -84,7 +94,7 @@ export default async function DashboardHomePage() {
     }),
     prisma.product.findMany({
       where: {
-        user: { email: session.user.email },
+        ...productFilter,
         deletedAt: null,
       },
       orderBy: [
@@ -115,6 +125,7 @@ export default async function DashboardHomePage() {
   const store = storeInfo?.store;
   const sellerDisplayName = store?.name || storeInfo?.name || "Продавец";
   const hasNoCities = !store?.cities || store.cities.length === 0;
+  const isUnclaimed = storeInfo?.email?.includes("@unclaimed.") || false;
 
   return (
     <main className="flex-1 px-4 py-8 pb-24 md:px-8 md:pb-8 mx-auto max-w-7xl w-full">
@@ -152,6 +163,34 @@ export default async function DashboardHomePage() {
           </Link>
         </div>
       </div>
+
+      {/* ── Предупреждение для аккаунтов с временным ключом ── */}
+      {isUnclaimed && (
+        <div className="mb-8 rounded-2xl border-2 border-amber-300 bg-amber-50/90 p-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 bg-amber-200/70 text-amber-900 rounded-xl mt-0.5 sm:mt-0">
+                <KeyRound className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-amber-950">
+                  Вы вошли по временному доступу!
+                </h3>
+                <p className="mt-1 text-xs sm:text-sm text-amber-800">
+                  Ваша витрина привязана к техническому логину <b>{storeInfo?.email}</b>. Привяжите вашу личную почту и задайте постоянный пароль, чтобы закрепить магазин за собой.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/settings#security"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 text-white text-xs sm:text-sm font-bold hover:bg-amber-700 transition-colors shadow-sm"
+            >
+              <span>Привязать почту и пароль</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Предупреждение о ненастроенных городах доставки ── */}
       {hasNoCities && (

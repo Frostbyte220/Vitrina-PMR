@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { productSchema } from "@/lib/validations/product";
+import bcrypt from "bcryptjs";
 
 // Делаем аргументы гибкими: принимаем любые варианты передачи данных от формы
 export async function createProduct(arg1: any, arg2?: any) {
@@ -20,12 +21,16 @@ export async function createProduct(arg1: any, arg2?: any) {
 
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id && !session?.user?.email) {
       return { error: "Не авторизован" };
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+    const user = await prisma.user.findFirst({
+      where: session.user.id
+        ? { id: session.user.id }
+        : session.user.email
+        ? { email: session.user.email }
+        : undefined,
     });
     
     if (!user) {
@@ -96,7 +101,7 @@ export async function deleteProduct(id: string) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id && !session?.user?.email) {
       return { success: false, error: "Не авторизован" };
     }
 
@@ -109,7 +114,10 @@ export async function deleteProduct(id: string) {
       return { success: false, error: "Товар не найден" };
     }
 
-    if (product.user?.email !== session.user?.email) {
+    const isOwner = (session.user.id && product.userId === session.user.id) || 
+                    (session.user.email && product.user?.email === session.user.email);
+
+    if (!isOwner) {
       return { success: false, error: "У вас нет прав на удаление этого товара" };
     }
 
@@ -172,7 +180,7 @@ export async function updateProduct(id: string, formData: FormData) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id && !session?.user?.email) {
       return { error: "Не авторизован" };
     }
 
@@ -181,7 +189,10 @@ export async function updateProduct(id: string, formData: FormData) {
       include: { user: true }
     });
 
-    if (!product || product.user?.email !== session.user?.email) {
+    const isOwner = (session.user.id && product?.userId === session.user.id) || 
+                    (session.user.email && product?.user?.email === session.user.email);
+
+    if (!product || !isOwner) {
       return { error: "У вас нет прав на редактирование этого товара" };
     }
 
@@ -359,5 +370,107 @@ export async function duplicateProduct(id: string) {
   } catch (error) {
     console.error("Ошибка при дублировании товара:", error);
     return { success: false, error: "Не удалось создать копию товара" };
+  }
+}
+
+export type UpdateCredentialsInput = {
+  email?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+  currentPassword?: string;
+};
+
+export async function updateUserCredentials(input: UpdateCredentialsInput) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id && !session?.user?.email) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    const user = await prisma.user.findFirst({
+      where: session.user.id
+        ? { id: session.user.id }
+        : session.user.email
+        ? { email: session.user.email }
+        : undefined,
+    });
+
+    if (!user) {
+      return { success: false, error: "Пользователь не найден" };
+    }
+
+    const isUnclaimed = user.email.includes("@unclaimed.");
+
+    // 1. Проверка текущего пароля (если аккаунт НЕ unclaimed и продавец меняет пароль)
+    if (!isUnclaimed && input.newPassword) {
+      if (!input.currentPassword) {
+        return { success: false, error: "Введите текущий пароль для подтверждения смены" };
+      }
+      if (user.password) {
+        const isMatch = await bcrypt.compare(input.currentPassword, user.password);
+        if (!isMatch) {
+          return { success: false, error: "Неверный текущий пароль" };
+        }
+      }
+    }
+
+    const updateData: { email?: string; password?: string } = {};
+
+    // 2. Валидация и смена Email
+    if (input.email && input.email.trim()) {
+      const cleanEmail = input.email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return { success: false, error: "Укажите корректный адрес электронной почты" };
+      }
+
+      if (cleanEmail !== user.email.toLowerCase()) {
+        const existing = await prisma.user.findUnique({
+          where: { email: cleanEmail },
+        });
+        if (existing && existing.id !== user.id) {
+          return { success: false, error: "Этот email уже зарегистрирован другим пользователем" };
+        }
+        updateData.email = cleanEmail;
+      }
+    }
+
+    // 3. Валидация и смена Пароля
+    if (input.newPassword && input.newPassword.trim()) {
+      const cleanPassword = input.newPassword.trim();
+      if (cleanPassword.length < 6) {
+        return { success: false, error: "Новый пароль должен содержать не менее 6 символов" };
+      }
+      if (input.confirmPassword && cleanPassword !== input.confirmPassword.trim()) {
+        return { success: false, error: "Пароли не совпадают" };
+      }
+      const hashedPassword = await bcrypt.hash(cleanPassword, 10);
+      updateData.password = hashedPassword;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return { success: false, error: "Вы не внесли изменений в почту или пароль" };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: updateData,
+    });
+
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      email: updatedUser.email,
+      isNowClaimed: isUnclaimed && updateData.email ? !updateData.email.includes("@unclaimed.") : false,
+      message: isUnclaimed
+        ? "Поздравляем! Ваш аккаунт успешно активирован и привязан к вашей личной почте."
+        : "Данные для входа успешно обновлены.",
+    };
+  } catch (err: any) {
+    console.error("Ошибка при обновлении учетных данных:", err);
+    return { success: false, error: err.message || "Ошибка сервера при обновлении данных" };
   }
 }
