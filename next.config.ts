@@ -4,7 +4,7 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://mc.yandex.ru https://upload-widget.cloudinary.com https://widget.cloudinary.com;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://res.cloudinary.com https://mc.yandex.ru https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://ui-avatars.com https://via.placeholder.com;
+  img-src 'self' data: blob: https://res.cloudinary.com https://mc.yandex.ru https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://ui-avatars.com https://via.placeholder.com https://picsum.photos https://fastly.picsum.photos;
   font-src 'self' data:;
   connect-src 'self' https://mc.yandex.ru https://api.cloudinary.com https://res.cloudinary.com;
   frame-src 'self' https://upload-widget.cloudinary.com https://mc.yandex.ru;
@@ -47,6 +47,16 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "ui-avatars.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "fastly.picsum.photos",
         pathname: "/**",
       },
     ],
