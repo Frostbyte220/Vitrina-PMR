@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 // ⚙️ Переключатель: false = показывать карточку «Скоро» вместо живой статистики (код метрик сохранен)
-const ENABLE_REAL_METRICS = false;
+const ENABLE_REAL_METRICS = true;
 
 export default async function DashboardHomePage() {
   const session = await getServerSession(authOptions);
