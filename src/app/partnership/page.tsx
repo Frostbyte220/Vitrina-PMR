@@ -7,7 +7,7 @@ import {
   TrendingUp,
   CheckCircle2,
   ArrowRight,
-  ShieldCheck,
+  Smartphone,
   Instagram,
   Sparkles,
   Users,
@@ -44,10 +44,10 @@ const BENEFITS = [
     color: "bg-sky-100 text-sky-700",
   },
   {
-    icon: ShieldCheck,
-    title: "Статус проверенного магазина",
+    icon: Smartphone,
+    title: "Простое управление со смартфона",
     description:
-      "Верифицированные магазины получают синий бейдж доверия, привлекают больше кликов и вызывают максимальное доверие покупателей.",
+      "Управляйте ассортиментом в несколько кликов: обновляйте цены, размеры, отмечайте статус наличия («В наличии» или «Под заказ») прямо с телефона.",
     color: "bg-amber-100 text-amber-700",
   },
 ];
