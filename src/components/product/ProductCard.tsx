@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Store, MapPin, ShoppingBag, Check } from "lucide-react";
@@ -39,10 +39,18 @@ interface ProductCardProps {
 
 export function ProductCard({ product, priority = false, activeCities }: ProductCardProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [isAddedToCart, setIsAddedToCart] = useState(false);
+
+  const cartItems = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isInCart = mounted && cartItems.some((i) => i.productId === product.id);
 
   // Приоритет данных магазина, затем юзера
   // Используем prod вместо p чтобы избежать конфликта с JSX <p> тегом
@@ -137,9 +145,36 @@ export function ProductCard({ product, priority = false, activeCities }: Product
       contacts: storeContacts,
     });
 
-    setIsAddedToCart(true);
-    toast.success(`«${product.title}» добавлен в корзину!`);
-    setTimeout(() => setIsAddedToCart(false), 2000);
+    toast.success(
+      (t) => (
+        <div className="flex items-center justify-between gap-3 w-full">
+          <span className="text-xs sm:text-sm font-medium">«{product.title}» в корзине</span>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push("/cart");
+            }}
+            className="rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-rose-700 whitespace-nowrap active:scale-95 transition-all shadow-xs"
+          >
+            В корзину →
+          </button>
+        </div>
+      ),
+      { duration: 4000 }
+    );
+  };
+
+  const handleCartButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInCart) {
+      router.push("/cart");
+      return;
+    }
+
+    handleAddToCart(e);
   };
 
   return (
@@ -280,17 +315,17 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </div>
             <button
               type="button"
-              onClick={handleAddToCart}
+              onClick={handleCartButtonClick}
               className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-xl border transition-all shadow-2xs active:scale-95 ${
-                isAddedToCart
-                  ? "bg-emerald-600 text-white border-emerald-600"
+                isInCart
+                  ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs"
                   : "bg-white text-gray-700 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
               }`}
-              title={isAddedToCart ? "Добавлено в корзину" : "Добавить в корзину"}
-              aria-label="Добавить в корзину"
+              title={isInCart ? "В корзине (нажмите, чтобы открыть)" : "Добавить в корзину"}
+              aria-label={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
             >
-              {isAddedToCart ? (
-                <Check className="h-4 w-4" />
+              {isInCart ? (
+                <Check className="h-4 w-4 stroke-[2.5]" />
               ) : (
                 <ShoppingBag className="h-4 w-4" />
               )}

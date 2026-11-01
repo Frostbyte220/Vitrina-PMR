@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ContactSellerButton, StoreContacts } from "./ContactSellerButton";
 import { Check, ShoppingBag } from "lucide-react";
@@ -42,13 +43,27 @@ export function ProductPurchaseSection({
   isVerified,
   availability,
 }: ProductPurchaseSectionProps) {
-  // Выбранный размер: по умолчанию НЕ выбран (null) — клиент выбирает сам
-  const hasSizes = Array.isArray(sizes) && sizes.length > 0;
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState(false);
-  const [isAddedToCart, setIsAddedToCart] = useState(false);
 
+  const cartItems = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Выбранный размер: по умолчанию НЕ выбран (null) — клиент выбирает сам
+  const hasSizes = Array.isArray(sizes) && sizes.length > 0;
+
+  // Проверяем, находится ли текущий вариант (или товар без размера) в корзине
+  const isInCart = mounted && (
+    hasSizes
+      ? selectedSize !== null && cartItems.some((i) => i.productId === productId && i.selectedSize === selectedSize)
+      : cartItems.some((i) => i.productId === productId)
+  );
 
   const handleSelectSize = (size: string) => {
     setSizeError(false);
@@ -78,9 +93,32 @@ export function ProductPurchaseSection({
       contacts,
     });
 
-    setIsAddedToCart(true);
-    toast.success("Товар добавлен в корзину!");
-    setTimeout(() => setIsAddedToCart(false), 2500);
+    toast.success(
+      (t) => (
+        <div className="flex items-center justify-between gap-3 w-full">
+          <span className="text-xs sm:text-sm font-medium">Товар добавлен в корзину</span>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push("/cart");
+            }}
+            className="rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-rose-700 whitespace-nowrap active:scale-95 transition-all shadow-xs"
+          >
+            В корзину →
+          </button>
+        </div>
+      ),
+      { duration: 4000 }
+    );
+  };
+
+  const handleCartButtonClick = () => {
+    if (isInCart) {
+      router.push("/cart");
+      return;
+    }
+    handleAddToCart();
   };
 
   const formattedPrice = typeof productPrice === "number" ? formatPrice(productPrice) : "";
@@ -154,17 +192,18 @@ export function ProductPurchaseSection({
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={handleAddToCart}
+            onClick={handleCartButtonClick}
             className={`flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-bold text-sm transition-all shadow-sm active:scale-[0.98] ${
-              isAddedToCart
-                ? "bg-emerald-600 text-white shadow-emerald-200"
+              isInCart
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
                 : "bg-rose-50 text-rose-700 hover:bg-rose-100/90 border border-rose-200"
             }`}
+            title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
           >
-            {isAddedToCart ? (
+            {isInCart ? (
               <>
-                <Check className="h-4 w-4" />
-                <span>Добавлено в корзину</span>
+                <Check className="h-4 w-4 stroke-[2.5]" />
+                <span>В корзине — перейти →</span>
               </>
             ) : (
               <>
@@ -235,20 +274,25 @@ export function ProductPurchaseSection({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleAddToCart}
-            className={`h-11 px-3.5 shrink-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95 ${
-              isAddedToCart
-                ? "bg-emerald-600 text-white"
+            onClick={handleCartButtonClick}
+            className={`h-11 px-3.5 shrink-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-xs transition-all shadow-xs active:scale-95 ${
+              isInCart
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
                 : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
             }`}
-            title="Добавить в корзину"
+            title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
           >
-            {isAddedToCart ? (
-              <Check className="h-4 w-4" />
+            {isInCart ? (
+              <>
+                <Check className="h-4 w-4 stroke-[2.5]" />
+                <span>В корзине →</span>
+              </>
             ) : (
-              <ShoppingBag className="h-4 w-4" />
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                <span>В корзину</span>
+              </>
             )}
-            <span>В корзину</span>
           </button>
 
           <div className="flex-1">
