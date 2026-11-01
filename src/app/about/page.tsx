@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Store, Lightbulb, HeartHandshake, MapPin, ShoppingBag, Users, Rocket, Heart } from "lucide-react";
+import { Store, Lightbulb, HeartHandshake, MapPin, ShoppingBag, Users, Rocket, Heart, Instagram } from "lucide-react";
 import Link from "next/link";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
 import { BackButton } from "@/components/ui/BackButton";
@@ -210,6 +210,12 @@ export default function AboutPage() {
                     Разместить магазин бесплатно
                   </Link>
                   <Link
+                    href="/partnership"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    Условия сотрудничества
+                  </Link>
+                  <Link
                     href="/faq"
                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
                   >
@@ -230,13 +236,13 @@ export default function AboutPage() {
                 </div>
                 <p className="text-gray-600 leading-relaxed mb-6">
                   Проект активно развивается и мы открыты к диалогу! Если вы хотите стать партнером
-                  платформы, столкнулись с ошибкой или у вас есть идея нового функционала —
-                  обязательно напишите нам. Мы внимательно читаем все пожелания.
+                  платформы, предложить сотрудничество или у вас есть идея нового функционала —
+                  напишите нам. Мы на связи каждый день.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl bg-gray-50 p-6 outline outline-1 outline-gray-200">
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 className="font-semibold text-gray-900">Напишите нам на почту:</h3>
+                    <h3 className="font-semibold text-gray-900">Электронная почта для связи:</h3>
                     <a
                       href="mailto:e-vitrinapmr@mail.ru"
                       className="mt-1 inline-block text-lg font-medium text-rose-600 transition-colors hover:text-rose-700"
@@ -245,6 +251,18 @@ export default function AboutPage() {
                     </a>
                   </div>
                   <CopyEmailButton email="e-vitrinapmr@mail.ru" />
+                </div>
+
+                <div className="mt-4 text-center sm:text-left">
+                  <a
+                    href="https://instagram.com/vitrinapmr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-rose-600 transition-colors"
+                  >
+                    <Instagram className="h-4 w-4 text-rose-500" />
+                    <span>Официальный Instagram: <strong>@vitrinapmr</strong></span>
+                  </a>
                 </div>
               </section>
             </div>
