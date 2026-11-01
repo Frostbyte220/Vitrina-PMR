@@ -55,7 +55,8 @@ model Store {
 
   // 🔥 Добавьте эту строку для связи с продуктами
   products    Product[] 
-  
+  messages    Message[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -84,6 +85,7 @@ model Product {
 
   // Связь с жалобами на товар
   reports     ProductReport[]
+  messages    Message[]
 
   // Аналитика и статистика товара
   viewsCount         Int       @default(0) // Количество просмотров товара
@@ -131,4 +133,22 @@ model Banner {
   updatedAt DateTime @updatedAt
 
   @@index([isActive, order])
+}
+
+// Сообщения покупателей продавцам через сайт
+model Message {
+  id            String   @id @default(cuid())
+  storeId       String
+  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName   String   // Название товара (текстовая копия на случай удаления)
+  senderName    String   // Имя покупателя
+  senderContact String   // Email или телефон для ответа
+  body          String   // Текст сообщения
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([storeId, createdAt(sort: Desc)])
+  @@index([storeId, isRead])
 }

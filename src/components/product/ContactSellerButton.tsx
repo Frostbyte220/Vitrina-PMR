@@ -6,7 +6,7 @@ import {
   Send,
   Phone,
   MessageCircle,
-  MessageSquare,
+  MessageSquareDot,
   X,
   Copy,
   ChevronRight,
@@ -35,6 +35,7 @@ interface ContactSellerButtonProps {
   isCardView?: boolean;
   selectedSize?: string | null;
   availability?: string | null;
+  storeId?: string | null;
 }
 
 // Универсальная функция копирования текста в буфер обмена
@@ -78,10 +79,14 @@ export function ContactSellerButton({
   isCardView = false,
   selectedSize,
   availability,
+  storeId,
 }: ContactSellerButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showInlineForm, setShowInlineForm] = useState(false);
+  const [formData, setFormData] = useState({ name: "", contact: "", body: "" });
+  const [formStatus, setFormStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   useEffect(() => {
     setMounted(true);
@@ -190,18 +195,6 @@ export function ContactSellerButton({
 
   if (rawPhone) {
     const phoneDigits = rawPhone.replace(/[^\d]/g, "");
-    // Если есть телефон, также добавляем WhatsApp (популярен в ПМР)
-    if (phoneDigits.length >= 8) {
-      channels.push({
-        id: "whatsapp",
-        name: "WhatsApp",
-        sub: rawPhone,
-        url: `https://wa.me/${phoneDigits}?text=${encodeURIComponent(greetingMessage)}`,
-        icon: MessageSquare,
-        bgClass: "bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-sm",
-        target: "_blank",
-      });
-    }
 
     channels.push({
       id: "phone",
@@ -260,7 +253,7 @@ export function ContactSellerButton({
   };
 
   // Текст и иконка для кнопки
-  let mainButtonIcon = MessageSquare;
+  let mainButtonIcon = MessageSquareDot;
   let mainButtonText = isCardView ? "Написать" : "Связаться с продавцом";
   let mainButtonBg = "bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 hover:opacity-95 shadow-sm";
 
@@ -381,6 +374,104 @@ export function ContactSellerButton({
                   </a>
                 );
               })}
+            </div>
+
+            {/* Написать на сайте */}
+            <div className="mt-3">
+              {!showInlineForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowInlineForm(true)}
+                  className="w-full flex items-center justify-between gap-3 rounded-2xl p-3 sm:p-3.5 bg-gray-100 hover:bg-gray-200 transition-all duration-200 active:scale-[0.98] border border-gray-200"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-300 text-gray-700">
+                      <MessageSquareDot className="h-5 w-5" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="font-bold text-sm text-gray-800 leading-tight">Написать на сайте</p>
+                      <p className="text-xs text-gray-500 leading-tight mt-0.5">Сообщение придёт продавцу</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400 shrink-0" />
+                </button>
+              ) : formStatus === "sent" ? (
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+                  <Check className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                  <p className="font-bold text-emerald-800">Сообщение отправлено!</p>
+                  <p className="text-xs text-emerald-700 mt-1">Продавец ответит вам на указанный контакт.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-gray-800">Написать продавцу</p>
+                  <input
+                    type="text"
+                    placeholder="Ваше имя"
+                    value={formData.name}
+                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Email или телефон для ответа"
+                    value={formData.contact}
+                    onChange={(e) => setFormData((p) => ({ ...p, contact: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+                  />
+                  <textarea
+                    placeholder="Ваш вопрос о товаре..."
+                    value={formData.body}
+                    onChange={(e) => setFormData((p) => ({ ...p, body: e.target.value }))}
+                    rows={3}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 resize-none"
+                  />
+                  {formStatus === "error" && (
+                    <p className="text-xs text-red-600">Ошибка отправки. Проверьте поля и попробуйте снова.</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setShowInlineForm(false); setFormStatus("idle"); }}
+                      className="flex-1 rounded-xl border border-gray-200 bg-white py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      type="button"
+                      disabled={formStatus === "sending" || !formData.name || !formData.contact || !formData.body}
+                      onClick={async () => {
+                        if (!storeId) return;
+                        setFormStatus("sending");
+                        try {
+                          const res = await fetch("/api/messages", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              storeId,
+                              productId: productId || null,
+                              productName,
+                              senderName: formData.name,
+                              senderContact: formData.contact,
+                              body: formData.body,
+                            }),
+                          });
+                          if (res.ok) {
+                            setFormStatus("sent");
+                            trackEvent("contact_seller", { product: productName, channel: "onsite" });
+                          } else {
+                            setFormStatus("error");
+                          }
+                        } catch {
+                          setFormStatus("error");
+                        }
+                      }}
+                      className="flex-1 rounded-xl bg-rose-600 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                    >
+                      {formStatus === "sending" ? "Отправка..." : "Отправить"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Превью скопированного сообщения */}

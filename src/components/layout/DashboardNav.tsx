@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Package, Store, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Package, Store, ShieldAlert, MessageSquareDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/layout/SignOutButton";
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/products", label: "Товары", icon: Package },
   // Направляем кнопку "Магазин" на страницу кастомизации
   { href: "/dashboard/settings", label: "Магазин", icon: Store },
+  { href: "/dashboard/messages", label: "Сообщения", icon: MessageSquareDot },
 ] as const;
 
 interface DashboardNavProps {

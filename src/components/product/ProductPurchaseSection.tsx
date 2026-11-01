@@ -223,6 +223,7 @@ export function ProductPurchaseSection({
               isCardView={true}
               selectedSize={selectedSize}
               availability={availability}
+              storeId={storeId}
             />
           </div>
 
@@ -305,6 +306,7 @@ export function ProductPurchaseSection({
               isCardView={true}
               selectedSize={selectedSize}
               availability={availability}
+              storeId={storeId}
             />
           </div>
 
