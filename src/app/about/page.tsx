@@ -255,13 +255,13 @@ export default function AboutPage() {
 
                 <div className="mt-4 text-center sm:text-left">
                   <a
-                    href="https://instagram.com/vitrinapmr"
+                    href="https://www.instagram.com/evitrinapmr/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-rose-600 transition-colors"
                   >
                     <Instagram className="h-4 w-4 text-rose-500" />
-                    <span>Официальный Instagram: <strong>@vitrinapmr</strong></span>
+                    <span>Официальный Instagram: <strong>@evitrinapmr</strong></span>
                   </a>
                 </div>
               </section>

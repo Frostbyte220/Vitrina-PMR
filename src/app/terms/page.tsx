@@ -80,7 +80,7 @@ export default function TermsPage() {
         <ul>
           <li>Электронная почта: <strong>e-vitrinapmr@mail.ru</strong></li>
           <li>Официальный сайт: <strong>https://www.e-vitrina.com</strong></li>
-          <li>Instagram: <strong>@vitrinapmr</strong></li>
+          <li>Instagram: <a href="https://www.instagram.com/evitrinapmr/" target="_blank" rel="noopener noreferrer" className="text-rose-600 hover:underline">@evitrinapmr</a></li>
         </ul>
       </div>
     </main>

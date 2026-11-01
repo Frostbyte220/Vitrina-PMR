@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Heart, Store, Info, Home } from "lucide-react";
+import { Mail, Heart, Store, Info, Home, Instagram } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
 
 export function Footer() {
@@ -21,7 +21,19 @@ export function Footer() {
               Находим, объединяем и делаем онлайн-шопинг удобнее.
             </p>
             <div className="pt-2">
-              <CopyEmailIconButton email="e-vitrinapmr@mail.ru" />
+              <div className="flex flex-wrap items-center gap-2">
+                <CopyEmailIconButton email="e-vitrinapmr@mail.ru" />
+                <a
+                  href="https://www.instagram.com/evitrinapmr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Официальный Instagram: @evitrinapmr"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 shadow-2xs hover:border-gray-300 hover:bg-gray-50 hover:text-rose-600 transition-colors"
+                >
+                  <Instagram className="h-4 w-4 text-rose-500" />
+                  <span>@evitrinapmr</span>
+                </a>
+              </div>
             </div>
           </div>
 

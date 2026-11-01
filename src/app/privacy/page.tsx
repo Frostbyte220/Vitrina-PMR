@@ -72,6 +72,7 @@ export default function PrivacyPage() {
         </p>
         <ul>
           <li>Email: <strong>e-vitrinapmr@mail.ru</strong></li>
+          <li>Instagram: <a href="https://www.instagram.com/evitrinapmr/" target="_blank" rel="noopener noreferrer" className="text-rose-600 hover:underline">@evitrinapmr</a></li>
           <li>Сайт: <strong>https://www.e-vitrina.com</strong></li>
         </ul>
       </div>
