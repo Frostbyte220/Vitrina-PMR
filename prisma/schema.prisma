@@ -137,18 +137,34 @@ model Banner {
 
 // Сообщения покупателей продавцам через сайт
 model Message {
-  id            String   @id @default(cuid())
+  id            String         @id @default(cuid())
+  threadToken   String         @unique @default(cuid()) // Публичный токен для треда покупателя
   storeId       String
-  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store         Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   productId     String?
-  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productName   String   // Название товара (текстовая копия на случай удаления)
-  senderName    String   // Имя покупателя
-  senderContact String   // Email или телефон для ответа
-  body          String   // Текст сообщения
-  isRead        Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  product       Product?       @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName   String         // Название товара (текстовая копия на случай удаления)
+  senderName    String         // Имя покупателя
+  senderContact String         // Email или телефон для ответа
+  body          String         // Текст первого сообщения
+  isRead        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  replies       MessageReply[] // Переписка в треде
 
   @@index([storeId, createdAt(sort: Desc)])
   @@index([storeId, isRead])
+  @@index([threadToken])
+}
+
+// Ответы в переписке (продавец ↔ покупатель)
+model MessageReply {
+  id          String   @id @default(cuid())
+  messageId   String
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  senderType  String   // "seller" | "buyer"
+  senderName  String   // Имя отправителя
+  body        String   // Текст ответа
+  createdAt   DateTime @default(now())
+
+  @@index([messageId, createdAt(sort: Asc)])
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Heart, Store, Info, Home, Instagram } from "lucide-react";
+import { Mail, Heart, Store, Info, Home, Instagram, MessageSquareDot } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
 
 export function Footer() {
@@ -57,6 +57,15 @@ export function Footer() {
                 >
                   <Heart className="h-4 w-4" />
                   Избранное
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                >
+                  <MessageSquareDot className="h-4 w-4" />
+                  Мои диалоги
                 </Link>
               </li>
               <li>

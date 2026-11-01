@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, id: message.id });
+    return NextResponse.json({ success: true, id: message.id, threadToken: message.threadToken });
   } catch (e) {
     console.error("POST /api/messages error:", e);
     return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
@@ -56,6 +56,9 @@ export async function GET(req: NextRequest) {
     where: { storeId: store.id, ...(unreadOnly ? { isRead: false } : {}) },
     orderBy: { createdAt: "desc" },
     take: 100,
+    include: {
+      replies: { orderBy: { createdAt: "asc" } },
+    },
   });
 
   return NextResponse.json({ messages });

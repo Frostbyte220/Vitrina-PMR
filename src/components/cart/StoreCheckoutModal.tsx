@@ -100,7 +100,7 @@ export function StoreCheckoutModal({
     .replace(/^@+/, "")
     .replace(/https?:\/\/t\.me\//, "");
 
-  const rawViber = (group.contacts?.viber || "").trim();
+  const rawViber = (group.contacts?.viber || group.contacts?.phone || "").trim();
   const rawPhone = (group.contacts?.phone || "").trim();
 
   const handleCopyMessage = async () => {
@@ -267,16 +267,26 @@ export function StoreCheckoutModal({
             ) : null}
 
             {/* 2. Viber */}
-            {rawViber ? (
-              <a
-                href={`viber://chat?number=%2B${rawViber.replace(/[^\d]/g, "")}`}
-                onClick={() => handleChannelClick("viber")}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#7360F2] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#6350E2] transition-all active:scale-[0.98]"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>Написать в Viber</span>
-              </a>
-            ) : null}
+            {rawViber ? (() => {
+              let viberDigits = rawViber.replace(/[^\d]/g, "");
+              if (viberDigits.length === 8 && viberDigits.startsWith("77")) {
+                viberDigits = "373" + viberDigits;
+              } else if (viberDigits.length === 9 && viberDigits.startsWith("077")) {
+                viberDigits = "373" + viberDigits.slice(1);
+              } else if (viberDigits.startsWith("0") && viberDigits.length >= 9) {
+                viberDigits = "373" + viberDigits.slice(1);
+              }
+              return (
+                <a
+                  href={`viber://chat?number=%2B${viberDigits}`}
+                  onClick={() => handleChannelClick("viber")}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#7360F2] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#6350E2] transition-all active:scale-[0.98]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Написать в Viber</span>
+                </a>
+              );
+            })() : null}
 
             {/* 3. Instagram Direct */}
             {cleanInstagram ? (
