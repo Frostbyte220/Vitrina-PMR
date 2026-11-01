@@ -102,7 +102,7 @@ export function ShareModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const finalUrl = shareData.url || currentUrl || "https://vitrina-pmr.vercel.app";
+  const finalUrl = shareData.url || currentUrl || "https://www.e-vitrina.com";
   const displayTitle = shareData.title || "Товар";
 
   const shareText = useMemo(() => {

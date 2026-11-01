@@ -23,7 +23,7 @@ async function handleDigest(req: Request) {
     const baseUrl =
       process.env.NEXTAUTH_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      "https://vitrina-pmr.vercel.app";
+      "https://www.e-vitrina.com";
 
     // Находим продавцов, у товаров которых зафиксированы переходы в контакты
     const sellersWithClicks = await prisma.user.findMany({

@@ -10,8 +10,26 @@ import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 export const metadata: Metadata = {
-  title: "Магазины и бренды",
-  description: "Каталог всех локальных магазинов, брендов и продавцов Приднестровья (ПМР).",
+  title: "Магазины и бренды Приднестровья — каталог витрин",
+  description: "Каталог всех локальных магазинов, брендов и продавцов Приднестровья (Тирасполь, Бендеры, Рыбница и др.). Выбирайте магазины своего города.",
+  keywords: [
+    "магазины Приднестровья",
+    "магазины Тирасполь",
+    "шоурумы Бендеры",
+    "каталог магазинов ПМР",
+    "E-Vitrina PMR",
+  ],
+  alternates: {
+    canonical: "https://www.e-vitrina.com/shops",
+  },
+  openGraph: {
+    title: "Магазины и бренды Приднестровья — E-Vitrina PMR",
+    description: "Каталог всех локальных магазинов, брендов и продавцов Приднестровья.",
+    url: "https://www.e-vitrina.com/shops",
+    siteName: "E-Vitrina PMR",
+    locale: "ru_RU",
+    type: "website",
+  },
 };
 
 export const revalidate = 60;

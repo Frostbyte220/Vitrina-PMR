@@ -257,7 +257,7 @@ export async function GET(req: NextRequest) {
                 letterSpacing: "0.3px",
               }}
             >
-              vitrina-pmr.vercel.app
+              e-vitrina.com
             </div>
           </div>
         </div>

@@ -99,8 +99,25 @@ export default async function HomePage({
 
   const initialTotalPages = Math.ceil(initialTotalCount / ITEMS_PER_PAGE);
 
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "E-Vitrina PMR",
+    url: "https://www.e-vitrina.com",
+    description: "Единый каталог товаров из локальных магазинов Приднестровья",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://www.e-vitrina.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <main className="relative min-h-screen bg-gray-50 pb-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
+      />
       {/* Фирменный прелоадер при входе на главную страницу */}
       <HomePreloader />
       

@@ -117,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 4. SEO-страницы одежда + размер
   const clothingSizePages: MetadataRoute.Sitemap = CLOTHING_SIZES_SEO.map((size) => ({
-    url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}&amp;sizes=${encodeURIComponent(size)}`,
+    url: `${BASE_URL}/?category=${encodeURIComponent("Одежда")}&sizes=${encodeURIComponent(size)}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.65,
@@ -125,7 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 5. SEO-страницы обувь + размер
   const shoeSizePages: MetadataRoute.Sitemap = SHOE_SIZES_SEO.map((size) => ({
-    url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}&amp;sizes=${encodeURIComponent(size)}`,
+    url: `${BASE_URL}/?category=${encodeURIComponent("Обувь")}&sizes=${encodeURIComponent(size)}`,
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.65,

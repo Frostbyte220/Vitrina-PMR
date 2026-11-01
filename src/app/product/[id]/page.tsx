@@ -28,7 +28,10 @@ interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vitrina-pmr.vercel.app";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://www.e-vitrina.com";
 
 // React.cache дедуплицирует запрос: generateMetadata и ProductPage делают ровно 1 запрос к БД, а не 2!
 const getProduct = cache(async (id: string) => {

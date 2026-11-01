@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     "купить Тирасполь",
     "магазины Бендеры",
     "шопинг Приднестровье",
-    "E-Vitrina PMR",
     "локальные магазины ПМР",
   ],
   authors: [{ name: "E-Vitrina PMR", url: "https://www.e-vitrina.com" }],
@@ -49,6 +48,21 @@ export const metadata: Metadata = {
     title: "E-Vitrina PMR — Магазины Тирасполя и Приднестровья",
     description:
       "Единый каталог товаров из локальных магазинов Приднестровья. Одежда, обувь, косметика, электроника — всё в одном месте.",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "E-Vitrina PMR",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "E-Vitrina PMR — Магазины Тирасполя и Приднестровья",
+    description:
+      "Единый каталог товаров из локальных магазинов Приднестровья. Одежда, обувь, косметика, электроника — всё в одном месте.",
+    images: ["/icon.png"],
   },
   robots: {
     index: true,

@@ -65,7 +65,7 @@ export async function POST(
           const baseUrl =
             process.env.NEXTAUTH_URL ||
             process.env.NEXT_PUBLIC_APP_URL ||
-            "https://vitrina-pmr.vercel.app";
+            "https://www.e-vitrina.com";
 
           await sendSellerNotification({
             to: product.user.email,

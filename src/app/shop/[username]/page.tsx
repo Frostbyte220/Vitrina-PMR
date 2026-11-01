@@ -12,6 +12,11 @@ import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 export const revalidate = 60;
 
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://www.e-vitrina.com";
+
 interface ShopPageProps {
   params: Promise<{ username: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -36,7 +41,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
   if (!store || isHiddenStore(store)) return { title: "Магазин не найден | E-Vitrina PMR" };
 
-  const baseUrl = "https://vitrina-pmr.vercel.app";
+
   const cityText = store.cities?.length ? `в ${store.cities[0]}` : "в ПМР";
   const description =
     store.description ||
@@ -161,8 +166,31 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
 
   const storeInitial = store.name.charAt(0).toUpperCase();
 
+  const storeJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: store.name,
+    description: store.description || `Витрина магазина ${store.name} на E-Vitrina PMR`,
+    url: `${baseUrl}/shop/${encodeURIComponent(cleanInstagram || store.slug || store.id)}`,
+    image: store.avatarUrl || store.coverUrl || undefined,
+    telephone: store.phone || undefined,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: store.cities?.[0] || "Тирасполь",
+      addressCountry: "MD",
+    },
+    areaServed: {
+      "@type": "AdministrativeArea",
+      name: "Приднестровье",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(storeJsonLd).replace(/</g, "\\u003c") }}
+      />
       <Header />
       <main className="pb-12 bg-gray-50/50 min-h-screen">
         {/* Шапка профиля (Обложка на всю ширину) */}
