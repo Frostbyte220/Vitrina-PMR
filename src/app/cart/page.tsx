@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Send,
   Heart,
-  Sparkles,
+  Info,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
@@ -31,6 +31,23 @@ const StoreCheckoutModal = dynamic(
     ),
   { ssr: false }
 );
+
+function pluralizeItems(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod100 >= 11 && mod100 <= 14) return "товаров";
+  if (mod10 === 1) return "товар";
+  if (mod10 >= 2 && mod10 <= 4) return "товара";
+  return "товаров";
+}
+
+function pluralizeStores(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod100 >= 11 && mod100 <= 14) return "магазинах";
+  if (mod10 === 1) return "магазине";
+  return "магазинах";
+}
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
@@ -53,8 +70,8 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <div className="container mx-auto px-4 py-16 max-w-5xl flex items-center justify-center min-h-[50vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-rose-600 border-t-transparent" />
+      <div className="container mx-auto px-4 py-16 max-w-4xl flex items-center justify-center min-h-[50vh]">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-rose-600 border-t-transparent" />
       </div>
     );
   }
@@ -64,31 +81,20 @@ export default function CartPage() {
   const totalPrice = getTotalPrice();
 
   const handleClearAll = () => {
-    if (window.confirm("Вы уверены, что хотите полностью очистить корзину?")) {
+    if (window.confirm("Вы уверены, что хотите очистить корзину?")) {
       clearCart();
       toast.success("Корзина очищена");
     }
   };
 
-  const handleClearStore = (group: StoreCartGroup) => {
-    if (
-      window.confirm(
-        `Удалить все товары магазина «${group.storeName}» из корзины?`
-      )
-    ) {
-      clearStore(group.storeKey);
-      toast.success(`Товары магазина «${group.storeName}» удалены`);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50/60 pb-24 pt-6 sm:pt-8">
-      <div className="container mx-auto px-4 max-w-5xl">
+    <div className="min-h-screen bg-gray-50/40 pb-20 pt-6 sm:pt-8">
+      <div className="container mx-auto px-4 max-w-4xl">
         {/* Верхняя навигация */}
         <div className="mb-6 flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Вернуться в каталог</span>
@@ -98,66 +104,52 @@ export default function CartPage() {
             <button
               type="button"
               onClick={handleClearAll}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-600 transition-colors"
+              className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span>Очистить всё</span>
+              Очистить всё
             </button>
           )}
         </div>
 
         {/* Заголовок страницы */}
-        <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 shadow-xs">
-            <ShoppingBag className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              Корзина покупок
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {totalCount > 0 ? (
-                <>
-                  В вашей корзине {totalCount}{" "}
-                  {totalCount === 1
-                    ? "товар"
-                    : totalCount > 1 && totalCount < 5
-                    ? "товара"
-                    : "товаров"}
-                  {storeGroups.length > 1
-                    ? ` из ${storeGroups.length} магазинов`
-                    : ""}
-                </>
-              ) : (
-                "Ваша корзина пуста"
-              )}
-            </p>
-          </div>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 border-b border-gray-200/60 pb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+            Корзина
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {totalCount > 0 ? (
+              <>
+                {totalCount} {pluralizeItems(totalCount)} в {storeGroups.length}{" "}
+                {pluralizeStores(storeGroups.length)}
+              </>
+            ) : (
+              "Ваша корзина пуста"
+            )}
+          </p>
         </div>
 
         {/* Пустая корзина */}
         {items.length === 0 ? (
-          <div className="rounded-3xl border border-gray-100 bg-white p-8 sm:p-12 text-center shadow-xs max-w-md mx-auto my-8">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-rose-400 mb-5">
-              <ShoppingBag className="h-10 w-10 stroke-[1.5]" />
+          <div className="rounded-2xl border border-gray-200/70 bg-white p-8 sm:p-12 text-center max-w-md mx-auto my-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 text-gray-400 mb-4">
+              <ShoppingBag className="h-7 w-7 stroke-[1.5]" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              В корзине пока ничего нет
+            <h2 className="text-lg font-semibold text-gray-900 mb-1.5">
+              В корзине пока пусто
             </h2>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              Выбирайте понравившиеся товары в каталоге и добавляйте их в
-              корзину для быстрого заказа в мессенджерах продавцов.
+            <p className="text-xs sm:text-sm text-gray-500 mb-6 leading-relaxed">
+              Выбирайте понравившиеся товары в каталоге и добавляйте их для быстрого заказа напрямую у продавцов.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 transition-all active:scale-95"
+                className="inline-flex items-center justify-center rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-rose-700 transition-colors"
               >
-                <span>Перейти к покупкам</span>
+                Перейти к покупкам
               </Link>
               <Link
                 href="/favorites"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Heart className="h-4 w-4 text-rose-500" />
                 <span>Избранное</span>
@@ -165,27 +157,17 @@ export default function CartPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Информационная подсказка о мульти-заказе */}
-            <div className="rounded-2xl border border-rose-100 bg-gradient-to-r from-rose-50/60 to-orange-50/40 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-                <div className="text-xs sm:text-sm text-gray-700 space-y-1">
-                  <p className="font-semibold text-gray-900">
-                    Как устроен заказ на Витрине ПМР:
-                  </p>
-                  <p className="text-gray-600 leading-relaxed">
-                    Каждый магазин работает независимо. Ваши товары
-                    сгруппированы по продавцам — нажмите кнопку «Оформить заказ в
-                    магазине», чтобы отправить продавцу готовый список с размерами
-                    и ссылками в Telegram или Viber.
-                  </p>
-                </div>
-              </div>
+          <div className="space-y-6">
+            {/* Лаконичная подсказка */}
+            <div className="flex items-center gap-2.5 rounded-xl border border-gray-200/60 bg-white px-4 py-3 text-xs text-gray-500">
+              <Info className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>
+                Каждый продавец работает независимо. Заказ оформляется отдельно по каждому магазину через мессенджер.
+              </span>
             </div>
 
             {/* Группы товаров по магазинам */}
-            <div className="space-y-6">
+            <div className="space-y-5">
               {storeGroups.map((group) => {
                 const shopHref = group.storeSlug
                   ? `/shop/${group.storeSlug}`
@@ -194,13 +176,13 @@ export default function CartPage() {
                 return (
                   <div
                     key={group.storeKey}
-                    className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xs transition-shadow hover:shadow-md"
+                    className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white"
                   >
-                    {/* Шапка магазина */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/70 px-5 py-4">
-                      <div className="flex items-center gap-3 min-w-0">
+                    {/* Шапка магазина (без кнопки удалить) */}
+                    <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-4 sm:px-5 py-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         {group.storeAvatar ? (
-                          <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-gray-200 shrink-0 bg-white">
+                          <div className="relative h-8 w-8 overflow-hidden rounded-full border border-gray-200 shrink-0 bg-white">
                             <Image
                               src={group.storeAvatar}
                               alt={group.storeName}
@@ -209,70 +191,54 @@ export default function CartPage() {
                             />
                           </div>
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
-                            <StoreIcon className="h-5 w-5" />
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600 shrink-0">
+                            <StoreIcon className="h-4 w-4" />
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            {shopHref ? (
-                              <Link
-                                href={shopHref}
-                                className="font-bold text-gray-900 hover:text-rose-600 transition-colors truncate text-base"
-                              >
-                                {group.storeName}
-                              </Link>
-                            ) : (
-                              <span className="font-bold text-gray-900 truncate text-base">
-                                {group.storeName}
-                              </span>
-                            )}
-                            {group.isVerified && <VerifiedBadge size="sm" />}
-                          </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {shopHref ? (
+                            <Link
+                              href={shopHref}
+                              className="font-semibold text-sm text-gray-900 hover:text-rose-600 transition-colors truncate"
+                            >
+                              {group.storeName}
+                            </Link>
+                          ) : (
+                            <span className="font-semibold text-sm text-gray-900 truncate">
+                              {group.storeName}
+                            </span>
+                          )}
+                          {group.isVerified && <VerifiedBadge size="sm" />}
                           {shopHref && (
                             <Link
                               href={shopHref}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600"
+                              className="hidden sm:inline-flex items-center gap-0.5 text-[11px] text-gray-400 hover:text-gray-600 ml-1.5"
                             >
-                              <span>Перейти на витрину продавца</span>
+                              <span>Витрина</span>
                               <ChevronRight className="h-3 w-3" />
                             </Link>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-3 self-end sm:self-auto">
-                        <span className="text-xs text-gray-500 font-medium">
-                          {group.totalQuantity}{" "}
-                          {group.totalQuantity === 1
-                            ? "товар"
-                            : group.totalQuantity < 5
-                            ? "товара"
-                            : "товаров"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleClearStore(group)}
-                          title="Удалить товары этого магазина"
-                          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {/* Счетчик товаров магазина (лаконичный текст без кнопки удаления) */}
+                      <span className="text-xs text-gray-400 font-medium shrink-0">
+                        {group.totalQuantity} {pluralizeItems(group.totalQuantity)}
+                      </span>
                     </div>
 
-                    {/* Список товаров в магазине */}
-                    <div className="divide-y divide-gray-100 px-5">
+                    {/* Список товаров магазина */}
+                    <div className="divide-y divide-gray-100 px-4 sm:px-5">
                       {group.items.map((item) => (
                         <div
                           key={item.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-3.5"
                         >
-                          {/* Картинка + Название + Размер */}
-                          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          {/* Фото + Название + Размер */}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
                             <Link
                               href={`/product/${item.productId}`}
-                              className="relative h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-2xl border border-gray-100 shrink-0 bg-gray-50"
+                              className="relative h-16 w-16 sm:h-18 sm:w-18 overflow-hidden rounded-xl border border-gray-100 shrink-0 bg-gray-50"
                             >
                               {item.image ? (
                                 <Image
@@ -282,8 +248,8 @@ export default function CartPage() {
                                   className="object-cover transition-transform duration-300 hover:scale-105"
                                 />
                               ) : (
-                                <div className="flex h-full w-full items-center justify-center text-gray-400">
-                                  <ShoppingBag className="h-6 w-6 stroke-[1.5]" />
+                                <div className="flex h-full w-full items-center justify-center text-gray-300">
+                                  <ShoppingBag className="h-5 w-5" />
                                 </div>
                               )}
                             </Link>
@@ -291,69 +257,64 @@ export default function CartPage() {
                             <div className="min-w-0 flex-1">
                               <Link
                                 href={`/product/${item.productId}`}
-                                className="font-semibold text-sm sm:text-base text-gray-900 hover:text-rose-600 transition-colors line-clamp-2 leading-snug"
+                                className="font-medium text-sm text-gray-900 hover:text-rose-600 transition-colors line-clamp-1 sm:line-clamp-2"
                               >
                                 {item.title}
                               </Link>
 
                               <div className="mt-1 flex flex-wrap items-center gap-2">
                                 {item.selectedSize && (
-                                  <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                                  <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-gray-600">
                                     Размер: {item.selectedSize}
                                   </span>
                                 )}
                                 <span className="text-xs text-gray-400">
-                                  {formatPrice(item.price)} / шт.
+                                  {formatPrice(item.price)}
                                 </span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Количество + Итого по позиции + Удаление */}
-                          <div className="flex items-center justify-between sm:justify-end gap-5 pl-20 sm:pl-0">
-                            {/* Степпер количества */}
-                            <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50/50 p-1">
+                          {/* Степпер + Сумма + Удалить */}
+                          <div className="flex items-center justify-between sm:justify-end gap-4 pl-19 sm:pl-0">
+                            {/* Минималистичный степпер */}
+                            <div className="flex items-center rounded-lg border border-gray-200 bg-white">
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(item.id, -1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-xs transition-all active:scale-90"
-                                aria-label="Уменьшить количество"
+                                className="flex h-7 w-7 items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-l-lg transition-colors active:scale-95"
+                                aria-label="Уменьшить"
                               >
-                                <Minus className="h-3.5 w-3.5" />
+                                <Minus className="h-3 w-3" />
                               </button>
-                              <span className="w-8 text-center text-xs font-bold text-gray-900">
+                              <span className="w-7 text-center text-xs font-semibold text-gray-800 select-none">
                                 {item.quantity}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-xs transition-all active:scale-90"
-                                aria-label="Увеличить количество"
+                                className="flex h-7 w-7 items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-r-lg transition-colors active:scale-95"
+                                aria-label="Увеличить"
                               >
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
 
-                            {/* Итого по товару */}
-                            <div className="text-right min-w-[90px]">
-                              <p className="text-sm sm:text-base font-extrabold text-gray-900">
+                            {/* Стоимость */}
+                            <div className="text-right min-w-[80px]">
+                              <p className="text-sm sm:text-base font-semibold text-gray-900">
                                 {formatPrice(item.price * item.quantity)}
                               </p>
-                              {item.quantity > 1 && (
-                                <p className="text-[10px] text-gray-400">
-                                  {item.quantity} × {formatPrice(item.price)}
-                                </p>
-                              )}
                             </div>
 
-                            {/* Кнопка удалить */}
+                            {/* Удаление конкретного товара */}
                             <button
                               type="button"
                               onClick={() => {
                                 removeItem(item.id);
-                                toast.success("Товар удален из корзины");
+                                toast.success("Товар удален");
                               }}
-                              className="rounded-lg p-2 text-gray-300 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              className="rounded-lg p-1.5 text-gray-300 hover:bg-gray-100 hover:text-red-500 transition-colors"
                               title="Удалить из корзины"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -363,26 +324,23 @@ export default function CartPage() {
                       ))}
                     </div>
 
-                    {/* Подвал карточки магазина с кнопкой оформления */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-gray-100 bg-gray-50/50 p-5">
-                      <div>
-                        <span className="text-xs text-gray-500 font-medium">
-                          Сумма заказа в этом магазине:
-                        </span>
-                        <div className="text-xl sm:text-2xl font-extrabold text-rose-600">
+                    {/* Подвал магазина с итогом и кнопкой оформления */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/30 px-4 sm:px-5 py-3.5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs text-gray-500">Итого в магазине:</span>
+                        <span className="text-base sm:text-lg font-bold text-gray-900">
                           {formatPrice(group.totalPrice)}
-                        </div>
+                        </span>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => setCheckoutGroup(group)}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-6 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-rose-700 transition-all active:scale-[0.98]"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all active:scale-[0.99]"
                       >
-                        <Send className="h-4 w-4" />
+                        <Send className="h-3.5 w-3.5" />
                         <span>
-                          Оформить заказ ({group.totalQuantity}{" "}
-                          {group.totalQuantity === 1 ? "товар" : "товара"})
+                          Оформить заказ ({group.totalQuantity})
                         </span>
                       </button>
                     </div>
@@ -392,36 +350,27 @@ export default function CartPage() {
             </div>
 
             {/* Итоговая сводка по всей корзине */}
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold">
-                  Общий итог по корзине
-                </p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl sm:text-3xl font-black text-gray-900">
+            <div className="rounded-2xl border border-gray-200/70 bg-white p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="w-full sm:w-auto text-left">
+                <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">
+                  Общий итог
+                </span>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className="text-xl sm:text-2xl font-bold text-gray-900">
                     {formatPrice(totalPrice)}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium">
-                    ({totalCount}{" "}
-                    {totalCount === 1
-                      ? "товар"
-                      : totalCount < 5
-                      ? "товара"
-                      : "товаров"}{" "}
-                    в {storeGroups.length}{" "}
-                    {storeGroups.length === 1 ? "магазине" : "магазинах"})
+                  <span className="text-xs text-gray-400">
+                    ({totalCount} {pluralizeItems(totalCount)})
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <Link
-                  href="/"
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  <span>Продолжить покупки</span>
-                </Link>
-              </div>
+              <Link
+                href="/"
+                className="w-full sm:w-auto text-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Продолжить покупки
+              </Link>
             </div>
           </div>
         )}

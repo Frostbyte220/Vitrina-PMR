@@ -5,7 +5,6 @@ import {
   Handshake,
   Store,
   TrendingUp,
-  CheckCircle2,
   ArrowRight,
   Smartphone,
   Instagram,
