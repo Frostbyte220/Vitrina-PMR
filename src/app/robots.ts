@@ -28,6 +28,8 @@ export default function robots(): MetadataRoute.Robots {
           "/login",
           "/cart",
           "/favorites",
+          "/chat",
+          "/chat/",
           "/reset-password/",
           "/forgot-password",
         ],
