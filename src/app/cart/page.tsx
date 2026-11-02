@@ -23,6 +23,7 @@ import {
   StoreCartGroup,
 } from "@/store/useCartStore";
 import toast from "react-hot-toast";
+import { trackEvent } from "@/lib/analytics";
 
 const StoreCheckoutModal = dynamic(
   () =>
@@ -335,7 +336,14 @@ export default function CartPage() {
 
                       <button
                         type="button"
-                        onClick={() => setCheckoutGroup(group)}
+                        onClick={() => {
+                          setCheckoutGroup(group);
+                          trackEvent("cart_checkout_click", {
+                            store: group.storeName,
+                            totalPrice: group.totalPrice,
+                            quantity: group.totalQuantity,
+                          });
+                        }}
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all active:scale-[0.99]"
                       >
                         <Send className="h-3.5 w-3.5" />

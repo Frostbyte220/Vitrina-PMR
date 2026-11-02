@@ -136,6 +136,7 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
         setIsSuccess(true);
         toast.success("Сообщение отправлено продавцу!");
         trackEvent("contact_seller", { product: product.title, channel: "onsite_dedicated_page" });
+        trackEvent("onsite_message_sent", { product: product.title, store: store.name });
 
         // Сохраняем тред в локальное хранилище переписок
         try {

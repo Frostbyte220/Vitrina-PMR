@@ -21,6 +21,7 @@ import {
   StoreCartGroup,
   generateStoreOrderMessage,
 } from "@/store/useCartStore";
+import { trackEvent } from "@/lib/analytics";
 
 interface StoreCheckoutModalProps {
   isOpen: boolean;
@@ -115,6 +116,24 @@ export function StoreCheckoutModal({
   };
 
   const handleChannelClick = async (channel: "telegram" | "viber" | "instagram" | "phone") => {
+    // Аналитика: фиксируем целевое действие отправки заказа из корзины
+    trackEvent("cart_order_send", {
+      channel,
+      store: group.storeName,
+      totalPrice: group.totalPrice,
+      totalQuantity: group.totalQuantity,
+    });
+    trackEvent("contact_seller", {
+      channel,
+      store: group.storeName,
+      source: "cart_checkout",
+    });
+    // Фиксируем отдельную цель по конкретному каналу
+    if (channel === "viber") trackEvent("lead_viber", { source: "cart" });
+    if (channel === "telegram") trackEvent("lead_telegram", { source: "cart" });
+    if (channel === "instagram") trackEvent("lead_instagram", { source: "cart" });
+    if (channel === "phone") trackEvent("lead_phone", { source: "cart" });
+
     // Для каналов, которые не могут автоматически подставить сообщение через URL (Viber, Instagram),
     // сразу копируем текст заказа в буфер обмена
     if (channel === "viber" || channel === "instagram") {

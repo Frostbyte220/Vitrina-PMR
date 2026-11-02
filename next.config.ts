@@ -2,15 +2,15 @@ import type { NextConfig } from "next";
 
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://mc.yandex.ru https://upload-widget.cloudinary.com https://widget.cloudinary.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://mc.yandex.ru https://*.yandex.ru https://upload-widget.cloudinary.com https://widget.cloudinary.com;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://res.cloudinary.com https://mc.yandex.ru https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://ui-avatars.com https://via.placeholder.com https://picsum.photos https://fastly.picsum.photos;
+  img-src 'self' data: blob: https://res.cloudinary.com https://mc.yandex.ru https://*.yandex.ru https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://ui-avatars.com https://via.placeholder.com https://picsum.photos https://fastly.picsum.photos;
   font-src 'self' data:;
-  connect-src 'self' https://mc.yandex.ru https://api.cloudinary.com https://res.cloudinary.com;
-  frame-src 'self' https://upload-widget.cloudinary.com https://mc.yandex.ru;
+  connect-src 'self' https://mc.yandex.ru https://*.yandex.ru wss://*.yandex.ru wss://mc.yandex.ru https://api.cloudinary.com https://res.cloudinary.com;
+  frame-src 'self' https://upload-widget.cloudinary.com https://mc.yandex.ru https://*.yandex.ru;
   media-src 'self' https://res.cloudinary.com;
   worker-src 'self' blob:;
-  child-src 'self' blob: https://mc.yandex.ru;
+  child-src 'self' blob: https://mc.yandex.ru https://*.yandex.ru;
   object-src 'none';
   base-uri 'self';
   form-action 'self';

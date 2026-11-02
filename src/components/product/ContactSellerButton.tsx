@@ -247,6 +247,11 @@ export function ContactSellerButton({
       channel: channel.id,
       shop: cleanInstagram || cleanTelegram || rawPhone,
     });
+    // Фиксируем конверсионную цель по конкретному каналу
+    if (channel.id === "viber") trackEvent("lead_viber", { product: productName });
+    if (channel.id === "telegram") trackEvent("lead_telegram", { product: productName });
+    if (channel.id === "instagram") trackEvent("lead_instagram", { product: productName });
+    if (channel.id === "phone") trackEvent("lead_phone", { product: productName });
   };
 
   const handleMainButtonClick = (e: React.MouseEvent) => {
@@ -519,6 +524,7 @@ export function ContactSellerButton({
                               setThreadToken(data.threadToken || null);
                               setFormStatus("sent");
                               trackEvent("contact_seller", { product: productName, channel: "onsite" });
+                              trackEvent("onsite_message_sent", { product: productName, storeId });
                             } else {
                               setFormStatus("error");
                             }
