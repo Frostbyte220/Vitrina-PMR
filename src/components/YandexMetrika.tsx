@@ -15,7 +15,7 @@ export function YandexMetrika() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  const ymId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID;
+  const ymId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || "114028755";
 
   // Отслеживаем переходы по страницам в SPA (Next.js App Router)
   useEffect(() => {

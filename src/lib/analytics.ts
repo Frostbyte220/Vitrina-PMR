@@ -29,7 +29,7 @@ export const METRIKA_GOALS = {
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
   if (typeof window === "undefined") return;
 
-  const ymId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID;
+  const ymId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || "114028755";
 
   if (process.env.NODE_ENV !== "production") {
     console.log(`[YM Analytics] reachGoal: "${eventName}"`, eventParams || {});
