@@ -15,6 +15,7 @@ import { getBanners } from "@/lib/banners";
 import { AdBannerCarousel } from "@/components/ads/AdBannerCarousel";
 import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import { HomePreloader } from "@/components/ui/HomePreloader";
+import { CATEGORY_ALIASES } from "@/lib/constants/categories";
 
 // Мета-теги для SEO главной страницы
 export const metadata: Metadata = {
@@ -60,8 +61,24 @@ export default async function HomePage({
   const conditions: any[] = [];
   if (discount === "true") conditions.push({ oldPrice: { not: null, gt: 0 } });
   if (availability)        conditions.push({ availability });
-  if (category && category !== "Все") conditions.push({ category });
-  if (sub)                 conditions.push({ subCategory: sub });
+  if (category && category !== "Все") {
+    const aliases = CATEGORY_ALIASES[category];
+    if (aliases && aliases.length > 0) {
+      conditions.push({ category: { in: aliases } });
+    } else {
+      conditions.push({ category });
+    }
+  }
+
+  if (sub) {
+    conditions.push({
+      OR: [
+        { subCategory: sub },
+        { subCategory: { contains: sub, mode: "insensitive" } },
+        { title: { contains: sub, mode: "insensitive" } },
+      ],
+    });
+  }
   if (selectedSizes.length > 0) conditions.push({ sizes: { hasSome: selectedSizes } });
   if (minPrice || maxPrice) {
     const priceFilter: any = {};

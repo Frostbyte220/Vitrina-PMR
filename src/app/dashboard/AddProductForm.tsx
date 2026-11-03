@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
+import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AVAILABILITY_OPTIONS } from "@/lib/availability";
@@ -16,22 +17,14 @@ interface AddProductFormProps {
   initialData?: any; // Р”РѕР±Р°РІР»РµРЅРѕ СЃРІРѕР№СЃС‚РІРѕ РґР»СЏ РїРµСЂРµРґР°С‡Рё СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґР°РЅРЅС‹С… С‚РѕРІР°СЂР°
 }
 
-const CATEGORIES_WITH_SUBCATEGORIES = [
-  "РћРґРµР¶РґР°",
-  "РћР±СѓРІСЊ",
-  "РЎРїРѕСЂС‚ Рё РѕС‚РґС‹С…",
-  "РљРѕСЃРјРµС‚РёРєР°",
-  "РџР°СЂС„СЋРјРµСЂРёСЏ",
-];
+const CATEGORIES_WITH_SUBCATEGORIES = Object.keys(SUBCATEGORIES_MAP);
 
 const getSubCategories = (category: string) => {
-  if (["РћРґРµР¶РґР°", "РћР±СѓРІСЊ", "РЎРїРѕСЂС‚ Рё РѕС‚РґС‹С…"].includes(category)) {
-    return ["РќРµС‚", "Р”Р»СЏ Р¶РµРЅС‰РёРЅ", "Р”Р»СЏ РјСѓР¶С‡РёРЅ", "Р”Р»СЏ РґРµС‚РµР№"];
+  const subs = SUBCATEGORIES_MAP[category];
+  if (subs && subs.length > 0) {
+    return ["Нет", ...subs];
   }
-  if (["РљРѕСЃРјРµС‚РёРєР°", "РџР°СЂС„СЋРјРµСЂРёСЏ"].includes(category)) {
-    return ["РќРµС‚", "Р”Р»СЏ Р¶РµРЅС‰РёРЅ", "Р”Р»СЏ РјСѓР¶С‡РёРЅ", "РЈРЅРёСЃРµРєСЃ"];
-  }
-  return ["РќРµС‚"];
+  return ["Нет"];
 };
 
 export default function AddProductForm({ onSuccess, initialData }: AddProductFormProps) {

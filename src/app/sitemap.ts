@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { HIDDEN_STORE_PRISMA_NOT, isHiddenStore } from "@/lib/storeFilter";
+import { ALL_CATEGORIES } from "@/lib/constants/categories";
 
 // Динамическое обновление sitemap: ревалидация каждый час (ISR).
 // Это гарантирует, что новые товары и магазины всегда попадают в Google и Яндекс без повторного деплоя!
@@ -10,21 +11,6 @@ const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
   "https://www.e-vitrina.com";
-
-// Все категории каталога
-const ALL_CATEGORIES = [
-  "Одежда",
-  "Обувь",
-  "Косметика",
-  "Парфюмерия",
-  "Детские товары",
-  "Handmade",
-  "Электроника",
-  "Дом и декор",
-  "Подарки",
-  "Еда и десерты",
-  "Спорт и отдых",
-];
 
 // Города Приднестровья для регионального SEO
 const PMR_CITIES = [

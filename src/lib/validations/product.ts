@@ -1,18 +1,7 @@
 import { z } from "zod";
+import { ALL_CATEGORIES } from "@/lib/constants/categories";
 
-export const CATEGORIES = [
-  "Одежда",
-  "Обувь",
-  "Косметика",
-  "Парфюмерия",
-  "Детские товары",
-  "Handmade",
-  "Электроника",
-  "Дом и декор",
-  "Подарки",
-  "Еда и десерты",
-  "Спорт и отдых",
-];
+export const CATEGORIES = ALL_CATEGORIES as unknown as string[];
 
 export const productSchema = z.object({
   title: z
@@ -28,7 +17,7 @@ export const productSchema = z.object({
     .optional()
     .or(z.literal("")),
   
-price: z
+  price: z
     .coerce
     .number()
     .positive("Укажите корректную цену больше 0")

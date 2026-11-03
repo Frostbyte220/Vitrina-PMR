@@ -9,14 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, cloudinaryLoader } from "@/lib/utils";
 import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
-
-const SUBCATEGORIES_MAP: Record<string, string[]> = {
-  "Одежда": ["Для женщин", "Для мужчин", "Для детей"],
-  "Обувь": ["Для женщин", "Для мужчин", "Для детей"],
-  "Спорт и отдых": ["Для женщин", "Для мужчин", "Для детей"],
-  "Косметика": ["Для женщин", "Для мужчин", "Унисекс"],
-  "Парфюмерия": ["Для женщин", "Для мужчин", "Унисекс"],
-};
+import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
 
 const SORT_OPTIONS = [
   { value: "newest",     label: "Сначала новые",       Icon: ArrowUpDown },
@@ -1189,8 +1182,8 @@ export function SearchAndFilter() {
         </div>
       )}
 
-      {/* 3. Подкатегории */}
-      <div className="mx-auto max-w-4xl h-[40px] flex items-center justify-center relative z-20">
+      {/* 3. Подкатегории (Чипсы фильтрации) */}
+      <div className="mx-auto max-w-5xl min-h-[40px] flex items-center justify-center relative z-20">
         <AnimatePresence mode="popLayout">
           {activeSubCategories && (
             <motion.div
@@ -1198,20 +1191,21 @@ export function SearchAndFilter() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="flex flex-wrap justify-center gap-2 px-4"
+              className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-1 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {activeSubCategories.map((sub) => {
                 const isActive = currentSubCategory === sub;
                 return (
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     key={sub}
+                    type="button"
                     onClick={() => toggleSubCategory(sub)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors sm:text-sm sm:px-5 sm:py-2 ${
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all sm:text-xs sm:px-4 sm:py-2 select-none ${
                       isActive
-                        ? "bg-rose-600 text-white shadow-sm"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-rose-600 text-white shadow-xs font-semibold"
+                        : "bg-gray-100/90 text-gray-700 hover:bg-gray-200/90 hover:text-gray-900 border border-transparent"
                     }`}
                   >
                     {sub}

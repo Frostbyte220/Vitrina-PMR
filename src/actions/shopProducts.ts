@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import type { Product } from "@/types";
+import { CATEGORY_ALIASES } from "@/lib/constants/categories";
 
 export interface FetchShopProductsParams {
   storeUserId: string;
@@ -53,11 +54,22 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
   ];
 
   if (category && category !== "all" && category !== "Все товары") {
-    conditions.push({ category });
+    const aliases = CATEGORY_ALIASES[category];
+    if (aliases && aliases.length > 0) {
+      conditions.push({ category: { in: aliases } });
+    } else {
+      conditions.push({ category });
+    }
   }
 
   if (subCategory && subCategory !== "all") {
-    conditions.push({ subCategory });
+    conditions.push({
+      OR: [
+        { subCategory },
+        { subCategory: { contains: subCategory, mode: "insensitive" } },
+        { title: { contains: subCategory, mode: "insensitive" } },
+      ],
+    });
   }
 
   if (searchQuery && searchQuery.trim()) {
