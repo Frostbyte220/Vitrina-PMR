@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Store,
   Phone,
   Send,
   MessageCircle,

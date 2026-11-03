@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -56,7 +56,7 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const previousRepliesCount = useRef<number>(0);
 
-  const fetchThread = async (isBackground = false) => {
+  const fetchThread = useCallback(async (isBackground = false) => {
     if (!isBackground) setIsRefreshing(true);
     try {
       const res = await fetch(`/api/messages/thread/${token}`);
@@ -116,7 +116,7 @@ export default function ChatPage() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchThread();
@@ -127,7 +127,7 @@ export default function ChatPage() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [token]);
+  }, [fetchThread]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

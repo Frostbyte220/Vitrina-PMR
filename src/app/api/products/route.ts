@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
+import { CATEGORY_ALIASES } from "@/lib/constants/categories";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -39,10 +40,21 @@ export async function GET(request: Request) {
     conditions.push({ availability });
   }
   if (category && category !== "Все") {
-    conditions.push({ category });
+    const aliases = CATEGORY_ALIASES[category];
+    if (aliases && aliases.length > 0) {
+      conditions.push({ category: { in: aliases } });
+    } else {
+      conditions.push({ category });
+    }
   }
   if (sub) {
-    conditions.push({ subCategory: sub });
+    conditions.push({
+      OR: [
+        { subCategory: sub },
+        { subCategory: { contains: sub, mode: "insensitive" } },
+        { title: { contains: sub, mode: "insensitive" } },
+      ],
+    });
   }
   if (selectedSizes.length > 0) {
     conditions.push({ sizes: { hasSome: selectedSizes } });

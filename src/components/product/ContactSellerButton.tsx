@@ -10,7 +10,6 @@ import {
   X,
   Copy,
   ChevronRight,
-  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -117,7 +116,6 @@ export function ContactSellerButton({
     .replace(/^@+/, "")
     .replace(/https?:\/\/t\.me\//, "");
 
-  const rawViber = (contacts?.viber || "").trim();
   const rawPhone = (contacts?.phone || "").trim();
 
   // Формируем ссылку на товар и текст сообщения для продавца

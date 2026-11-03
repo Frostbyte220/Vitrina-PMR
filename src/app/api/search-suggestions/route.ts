@@ -36,7 +36,6 @@ export async function GET(request: Request) {
     console.warn("pg_trgm недоступен, переключаемся на ILIKE fallback:", fuzzyError);
     // Fallback: простой ILIKE поиск без pg_trgm
     try {
-      const pattern = `%${q}%`;
       [products, stores] = await Promise.all([
         prisma.product.findMany({
           where: {

@@ -13,7 +13,6 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowRight,
-  Store,
   Plus,
 } from "lucide-react";
 import { uploadToCloudinary } from "@/lib/cloudinary";

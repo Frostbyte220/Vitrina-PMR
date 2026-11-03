@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";

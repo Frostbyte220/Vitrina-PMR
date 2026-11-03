@@ -12,7 +12,6 @@ import {
   MessageCircle,
   Phone,
   Instagram,
-  Sparkles,
   ShieldCheck,
   Check,
 } from "lucide-react";
@@ -72,9 +71,12 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
   // Предварительно заполняем текст сообщения при смене размера
   useEffect(() => {
     const sizeInfo = selectedSize ? `, размер: ${selectedSize}` : "";
-    if (!body || body.startsWith("Здравствуйте! Интересует товар")) {
-      setBody(`Здравствуйте! Интересует товар «${product.title}»${sizeInfo}. Подскажите, пожалуйста, есть ли в наличии и как можно получить?`);
-    }
+    setBody((prev) => {
+      if (!prev || prev.startsWith("Здравствуйте! Интересует товар")) {
+        return `Здравствуйте! Интересует товар «${product.title}»${sizeInfo}. Подскажите, пожалуйста, есть ли в наличии и как можно получить?`;
+      }
+      return prev;
+    });
   }, [selectedSize, product.title]);
 
   const availInfo = getAvailabilityInfo(product.availability);
