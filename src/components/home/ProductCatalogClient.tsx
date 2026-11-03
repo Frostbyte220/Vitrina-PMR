@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Pagination } from "@/components/Pagination";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { CATEGORY_ALIASES } from "@/lib/constants/categories";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -61,11 +62,25 @@ export function ProductCatalogClient({
     const hasMinPrice = minPrice !== null && !isNaN(minPrice);
     const hasMaxPrice = maxPrice !== null && !isNaN(maxPrice);
 
-    // 1. Быстрая фильтрация O(N) в 1 проход
+    // 1. Быстрая фильтрация O(N) в 1 проход (< 1 мс)
     const list = pool.filter((p: any) => {
-      // Категория
-      if (hasCategory && p.category !== category) return false;
-      if (subCategory && p.subCategory !== subCategory) return false;
+      // Категория с учётом синонимов (алиасов)
+      if (hasCategory) {
+        const aliases = CATEGORY_ALIASES[category!] || [category!];
+        if (!aliases.includes(p.category)) return false;
+      }
+
+      // Подкатегория (умный поиск: точное совпадение subCategory, вхождение подстроки или вхождение в title)
+      if (subCategory) {
+        const subLower = subCategory.toLowerCase();
+        const pSubLower = (p.subCategory || "").toLowerCase();
+        const pTitleLower = (p.title || "").toLowerCase();
+        const matchesSub =
+          pSubLower === subLower ||
+          pSubLower.includes(subLower) ||
+          pTitleLower.includes(subLower);
+        if (!matchesSub) return false;
+      }
 
       // Скидка
       if (discount && (!p.oldPrice || p.oldPrice <= p.price)) return false;

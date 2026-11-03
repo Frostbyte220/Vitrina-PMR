@@ -338,12 +338,16 @@ export function SearchAndFilter() {
     updateParams({ minPrice, maxPrice });
   };
 
+  const [optimisticSub, setOptimisticSub] = useState(currentSubCategory);
+
+  useEffect(() => {
+    setOptimisticSub(currentSubCategory);
+  }, [currentSubCategory]);
+
   const toggleSubCategory = (sub: string) => {
-    if (currentSubCategory === sub) {
-      updateParams({ sub: null });
-    } else {
-      updateParams({ sub });
-    }
+    const nextSub = (optimisticSub === sub || currentSubCategory === sub) ? null : sub;
+    setOptimisticSub(nextSub || "");
+    updateParams({ sub: nextSub });
   };
 
   const activeSubCategories = SUBCATEGORIES_MAP[currentCategory] || null;
@@ -1194,7 +1198,7 @@ export function SearchAndFilter() {
               className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-1 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {activeSubCategories.map((sub) => {
-                const isActive = currentSubCategory === sub;
+                const isActive = (optimisticSub || currentSubCategory) === sub;
                 return (
                   <motion.button
                     whileHover={{ scale: 1.04 }}
