@@ -48,19 +48,28 @@ export function SearchAndFilter() {
   const {
     selectedCategory: storeCat,
     selectedSubCategory: storeSub,
+    sort: storeSort,
+    discount: storeDiscount,
+    availability: storeAvailability,
+    minPrice: storeMinPrice,
+    maxPrice: storeMaxPrice,
+    cities: storeCities,
+    sizes: storeSizes,
     isInitialized: storeInitialized,
     setCategory: setStoreCategory,
     setSubCategory: setStoreSubCategory,
+    setSort: setStoreSort,
+    setDiscount: setStoreDiscount,
+    setAvailability: setStoreAvailability,
+    setPriceRange: setStorePriceRange,
+    setCities: setStoreCities,
+    setSizes: setStoreSizes,
     initFromUrl,
   } = useCatalogFilterStore();
 
   useEffect(() => {
     if (!storeInitialized) {
-      initFromUrl(
-        searchParams.get("category"),
-        searchParams.get("sub"),
-        Number(searchParams.get("page")) || 1
-      );
+      initFromUrl(searchParams);
     }
   }, [storeInitialized, searchParams, initFromUrl]);
 
@@ -68,45 +77,39 @@ export function SearchAndFilter() {
   useEffect(() => {
     const handlePopState = () => {
       const url = new URL(window.location.href);
-      initFromUrl(
-        url.searchParams.get("category"),
-        url.searchParams.get("sub"),
-        Number(url.searchParams.get("page")) || 1
-      );
+      initFromUrl(url.searchParams);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [initFromUrl]);
 
-  const currentCategory    = storeInitialized ? (storeCat || "Все") : (searchParams.get("category") || "Все");
-  const currentSubCategory = storeInitialized ? (storeSub || "") : (searchParams.get("sub") || "");
-  const currentQuery       = searchParams.get("q") || "";
-  const currentSort        = (searchParams.get("sort") || "newest") as SortValue;
-  
-  const currentMinPrice    = searchParams.get("minPrice") || "";
-  const currentMaxPrice    = searchParams.get("maxPrice") || "";
-
-  const currentCitiesRaw   = searchParams.get("cities") || "";
-  const currentCities      = useMemo(
-    () => (currentCitiesRaw ? currentCitiesRaw.split(",") : []),
-    [currentCitiesRaw]
+  // Текущие значения из стора (приоритет) или URL (до инициализации)
+  const urlCities = useMemo(
+    () => (searchParams.get("cities") || "").split(",").filter(Boolean),
+    [searchParams]
+  );
+  const urlSizes = useMemo(
+    () => (searchParams.get("sizes") || "").split(",").map(s => s.trim()).filter(Boolean),
+    [searchParams]
   );
 
-  const currentSizesRaw    = searchParams.get("sizes") || "";
-  const currentSizes       = useMemo(
-    () => (currentSizesRaw ? currentSizesRaw.split(",") : []),
-    [currentSizesRaw]
-  );
-
-  const currentDiscount    = searchParams.get("discount") === "true";
-  const currentAvailability = searchParams.get("availability") || "";
+  const currentCategory     = storeInitialized ? (storeCat  || "Все") : (searchParams.get("category") || "Все");
+  const currentSubCategory  = storeInitialized ? (storeSub  || "")    : (searchParams.get("sub")      || "");
+  const currentSort         = (storeInitialized ? storeSort  : (searchParams.get("sort") || "newest")) as SortValue;
+  const currentDiscount     = storeInitialized ? storeDiscount         : (searchParams.get("discount") === "true");
+  const currentAvailability = storeInitialized ? (storeAvailability || "") : (searchParams.get("availability") || "");
+  const currentMinPrice     = storeInitialized ? storeMinPrice         : (searchParams.get("minPrice") || "");
+  const currentMaxPrice     = storeInitialized ? storeMaxPrice         : (searchParams.get("maxPrice") || "");
+  const currentCities       = storeInitialized ? storeCities : urlCities;
+  const currentSizes        = storeInitialized ? storeSizes  : urlSizes;
+  const currentQuery        = searchParams.get("q") || "";
 
   const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
   const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
 
   const [searchQuery, setSearchQuery] = useState(currentQuery);
-  const [minPrice, setMinPrice] = useState(currentMinPrice);
-  const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
+  const [minPrice, setMinPrice]       = useState(currentMinPrice);
+  const [maxPrice, setMaxPrice]       = useState(currentMaxPrice);
   
   // Автокомплит (Live Search)
   const [productSuggestions, setProductSuggestions] = useState<any[]>([]);
@@ -265,101 +268,42 @@ export function SearchAndFilter() {
       discount?: boolean | null;
       availability?: string | null;
     }) => {
-      const params = typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams(searchParams.toString());
-
+      // Категория и подкатегория — мгновенно через стор (0 мс, URL через replaceState)
       if (updates.category !== undefined) {
         setStoreCategory(updates.category);
-        if (updates.category === "Все") {
-          params.delete("category");
-        } else {
-          params.set("category", updates.category);
-        }
-        params.delete("sub");
-        // Если переключились на категорию, где нет размеров — удаляем фильтр размеров
-        if (updates.category !== "Одежда" && updates.category !== "Обувь") {
-          params.delete("sizes");
-        }
       }
-
       if (updates.sub !== undefined) {
-        setStoreSubCategory(updates.sub);
-        if (updates.sub === null) {
-          params.delete("sub");
-        } else {
-          params.set("sub", updates.sub);
-        }
+        setStoreSubCategory(updates.sub ?? null);
       }
 
-      const currentStoreCat = useCatalogFilterStore.getState().selectedCategory;
-      const currentStoreSub = useCatalogFilterStore.getState().selectedSubCategory;
-      if (updates.category === undefined && currentStoreCat && currentStoreCat !== "Все") {
-        params.set("category", currentStoreCat);
-      }
-      if (updates.sub === undefined && currentStoreSub) {
-        params.set("sub", currentStoreSub);
+      // Все остальные фильтры — тоже через стор (0 мс)
+      if (updates.sort !== undefined)         setStoreSort(updates.sort);
+      if (updates.discount !== undefined)     setStoreDiscount(updates.discount ?? false);
+      if (updates.availability !== undefined) setStoreAvailability(updates.availability ?? null);
+      if (updates.cities !== undefined)       setStoreCities(updates.cities ?? []);
+      if (updates.sizes !== undefined)        setStoreSizes(updates.sizes ?? []);
+      if (updates.minPrice !== undefined || updates.maxPrice !== undefined) {
+        setStorePriceRange(
+          updates.minPrice ?? useCatalogFilterStore.getState().minPrice,
+          updates.maxPrice ?? useCatalogFilterStore.getState().maxPrice,
+        );
       }
 
+      // Текстовый поиск q — единственный, кто требует серверного запроса (fuzzy-поиск)
       if (updates.q !== undefined) {
+        const params = new URLSearchParams(window.location.search);
         if (updates.q.trim() === "") {
           params.delete("q");
         } else {
           params.set("q", updates.q.trim());
         }
+        params.delete("page");
+        startTransition(() => {
+          router.replace(`/?${params.toString()}`, { scroll: false });
+        });
       }
-
-      if (updates.sort !== undefined) {
-        if (updates.sort === "newest") {
-          params.delete("sort");
-        } else {
-          params.set("sort", updates.sort);
-        }
-      }
-      
-      if (updates.minPrice !== undefined) {
-        if (!updates.minPrice) params.delete("minPrice");
-        else params.set("minPrice", updates.minPrice);
-      }
-      
-      if (updates.maxPrice !== undefined) {
-        if (!updates.maxPrice) params.delete("maxPrice");
-        else params.set("maxPrice", updates.maxPrice);
-      }
-
-      if (updates.cities !== undefined) {
-        if (!updates.cities || updates.cities.length === 0) params.delete("cities");
-        else params.set("cities", updates.cities.join(","));
-      }
-
-      if (updates.sizes !== undefined) {
-        if (!updates.sizes || updates.sizes.length === 0) params.delete("sizes");
-        else params.set("sizes", updates.sizes.join(","));
-      }
-
-      if (updates.discount !== undefined) {
-        if (!updates.discount) params.delete("discount");
-        else params.set("discount", "true");
-      }
-
-      if (updates.availability !== undefined) {
-        if (!updates.availability) params.delete("availability");
-        else params.set("availability", updates.availability);
-      }
-
-      // Если обновилась только категория или подкатегория, состояние стора и URL уже синхронизированы мгновенно (0 мс)
-      const keys = Object.keys(updates);
-      const isOnlyCategoryOrSub = keys.length > 0 && keys.every((k) => k === "category" || k === "sub");
-      if (isOnlyCategoryOrSub) {
-        return;
-      }
-
-      params.delete("page");
-      startTransition(() => {
-        router.replace(`/?${params.toString()}`, { scroll: false });
-      });
     },
-    [searchParams, router, setStoreCategory, setStoreSubCategory]
+    [setStoreCategory, setStoreSubCategory, setStoreSort, setStoreDiscount, setStoreAvailability, setStorePriceRange, setStoreCities, setStoreSizes, router]
   );
 
   // Переключает один город в/из набора выбранных
@@ -367,16 +311,16 @@ export function SearchAndFilter() {
     const next = currentCities.includes(city)
       ? currentCities.filter((c) => c !== city)
       : [...currentCities, city];
-    updateParams({ cities: next.length > 0 ? next : null });
-  }, [currentCities, updateParams]);
+    setStoreCities(next);
+  }, [currentCities, setStoreCities]);
 
   // Переключает один размер в/из набора выбранных
   const toggleSize = useCallback((size: string) => {
     const next = currentSizes.includes(size)
       ? currentSizes.filter((s) => s !== size)
       : [...currentSizes, size];
-    updateParams({ sizes: next.length > 0 ? next : null });
-  }, [currentSizes, updateParams]);
+    setStoreSizes(next);
+  }, [currentSizes, setStoreSizes]);
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -385,11 +329,11 @@ export function SearchAndFilter() {
       trackEvent("search", { query: searchQuery.trim() });
       saveSearchQuery(searchQuery.trim());
     }
-    updateParams({ q: searchQuery, minPrice, maxPrice });
+    updateParams({ q: searchQuery });
   };
   
   const applyPriceFilter = () => {
-    updateParams({ minPrice, maxPrice });
+    setStorePriceRange(minPrice, maxPrice);
   };
 
   const toggleSubCategory = (sub: string) => {

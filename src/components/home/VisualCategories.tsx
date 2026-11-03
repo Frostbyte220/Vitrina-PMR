@@ -47,10 +47,7 @@ export function VisualCategories() {
   // Инициализация при первой загрузке из URL (если пользователь пришел по прямой ссылке)
   useEffect(() => {
     if (!isInitialized) {
-      const urlCat = searchParams.get("category");
-      const urlSub = searchParams.get("sub");
-      const urlPage = Number(searchParams.get("page")) || 1;
-      initFromUrl(urlCat, urlSub, urlPage);
+      initFromUrl(searchParams);
     }
   }, [searchParams, initFromUrl, isInitialized]);
 
@@ -58,11 +55,7 @@ export function VisualCategories() {
   useEffect(() => {
     const handlePopState = () => {
       const url = new URL(window.location.href);
-      initFromUrl(
-        url.searchParams.get("category"),
-        url.searchParams.get("sub"),
-        Number(url.searchParams.get("page")) || 1
-      );
+      initFromUrl(url.searchParams);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);

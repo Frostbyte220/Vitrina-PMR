@@ -24,26 +24,28 @@ export function ProductCatalogClient({
   catalogPool,
 }: ProductCatalogClientProps) {
   const searchParams = useSearchParams();
-  const paramsStr = searchParams.toString();
 
   const {
     selectedCategory: storeCat,
     selectedSubCategory: storeSub,
     currentPage: storePage,
+    sort: storeSort,
+    discount: storeDiscount,
+    availability: storeAvailability,
+    minPrice: storeMinPrice,
+    maxPrice: storeMaxPrice,
+    cities: storeCities,
+    sizes: storeSizes,
     setPage,
     isInitialized,
     initFromUrl,
     resetFilters,
   } = useCatalogFilterStore();
 
-  // Инициализация при первой загрузке (SSR)
+  // Инициализация при первой загрузке — читаем всё из URL
   useEffect(() => {
     if (!isInitialized) {
-      initFromUrl(
-        searchParams.get("category"),
-        searchParams.get("sub"),
-        Number(searchParams.get("page")) || initialPage || 1
-      );
+      initFromUrl(searchParams);
     }
   }, [isInitialized, searchParams, initFromUrl, initialPage]);
 
@@ -51,51 +53,51 @@ export function ProductCatalogClient({
   useEffect(() => {
     const handlePopState = () => {
       const url = new URL(window.location.href);
-      initFromUrl(
-        url.searchParams.get("category"),
-        url.searchParams.get("sub"),
-        Number(url.searchParams.get("page")) || 1
-      );
+      initFromUrl(url.searchParams);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [initFromUrl]);
 
-  // Параметры фильтрации (приоритет у стора для мгновенного отклика 0 мс)
-  const category       = isInitialized ? (storeCat || undefined) : (searchParams.get("category") ?? undefined);
-  const subCategory    = isInitialized ? (storeSub || undefined) : (searchParams.get("sub") ?? undefined);
-  const page           = isInitialized ? (storePage || 1) : (Number(searchParams.get("page")) || initialPage || 1);
-  const q              = (searchParams.get("q") ?? "").trim().toLowerCase();
-  const sort           = searchParams.get("sort") || "newest";
-  const minPrice       = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : null;
-  const maxPrice       = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : null;
-  const discount       = searchParams.get("discount") === "true";
-  const availability   = searchParams.get("availability") ?? undefined;
-
-  const selectedCities = useMemo(
+  // URL-фоллбэки для состояния до инициализации стора (читаются всегда, без условий)
+  const urlCities = useMemo(
     () => (searchParams.get("cities") ?? "").split(",").filter(Boolean),
     [searchParams]
   );
-
-  const selectedSizes = useMemo(
-    () => (searchParams.get("sizes") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  const urlSizes = useMemo(
+    () => (searchParams.get("sizes") ?? "").split(",").map(s => s.trim()).filter(Boolean),
     [searchParams]
   );
+
+  // Текстовый поиск читаем всегда из URL (меняется через SearchAndFilter)
+  const q = (searchParams.get("q") ?? "").trim().toLowerCase();
+
+  // Параметры фильтрации — приоритет у стора (0 мс); до инициализации — URL
+  const category     = isInitialized ? (storeCat  || undefined) : (searchParams.get("category") ?? undefined);
+  const subCategory  = isInitialized ? (storeSub  || undefined) : (searchParams.get("sub")      ?? undefined);
+  const page         = isInitialized ? (storePage || 1)         : (Number(searchParams.get("page")) || initialPage || 1);
+  const sort         = isInitialized ? storeSort                : (searchParams.get("sort")         || "newest");
+  const discount     = isInitialized ? storeDiscount            : (searchParams.get("discount")     === "true");
+  const availability = isInitialized ? (storeAvailability || undefined) : (searchParams.get("availability") ?? undefined);
+  const minPrice     = isInitialized ? (storeMinPrice ? Number(storeMinPrice) : null) : (searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : null);
+  const maxPrice     = isInitialized ? (storeMaxPrice ? Number(storeMaxPrice) : null) : (searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : null);
+  const selectedCities = isInitialized ? storeCities : urlCities;
+  const selectedSizes  = isInitialized ? storeSizes  : urlSizes;
 
   // Полный пул каталога (загруженный на сервере)
   const pool = useMemo(() => {
     return catalogPool && catalogPool.length > 0 ? catalogPool : initialProducts;
   }, [catalogPool, initialProducts]);
 
-  // Мгновенная in-memory фильтрация (< 1 мс, 60+ FPS)
+  // Мгновенная in-memory фильтрация (<1 мс, 60+ FPS)
   const inMemoryResult = useMemo(() => {
-    const hasCategory = Boolean(category && category !== "Все");
-    const hasCities = selectedCities.length > 0;
-    const hasSizes = selectedSizes.length > 0;
-    const hasMinPrice = minPrice !== null && !isNaN(minPrice);
-    const hasMaxPrice = maxPrice !== null && !isNaN(maxPrice);
+    const hasCategory  = Boolean(category && category !== "Все");
+    const hasCities    = selectedCities.length > 0;
+    const hasSizes     = selectedSizes.length > 0;
+    const hasMinPrice  = minPrice !== null && !isNaN(minPrice);
+    const hasMaxPrice  = maxPrice !== null && !isNaN(maxPrice);
 
-    // 1. Быстрая фильтрация O(N) в 1 проход (< 1 мс)
+    // 1. Быстрая фильтрация O(N) в 1 проход (<1 мс)
     const list = pool.filter((p: any) => {
       // Категория с учётом синонимов (алиасов)
       if (hasCategory) {
@@ -105,7 +107,7 @@ export function ProductCatalogClient({
 
       // Подкатегория (умный поиск: точное совпадение subCategory, вхождение подстроки или вхождение в title)
       if (subCategory) {
-        const subLower = subCategory.toLowerCase();
+        const subLower  = subCategory.toLowerCase();
         const pSubLower = (p.subCategory || "").toLowerCase();
         const pTitleLower = (p.title || "").toLowerCase();
         const matchesSub =
@@ -131,22 +133,19 @@ export function ProductCatalogClient({
       // Размеры
       if (hasSizes) {
         const pSizes: string[] = Array.isArray(p.sizes) ? p.sizes : [];
-        const matches = selectedSizes.some((s) => pSizes.includes(s));
-        if (!matches) return false;
+        if (!selectedSizes.some((s) => pSizes.includes(s))) return false;
       }
 
       // Города доставки магазина
       if (hasCities) {
-        const storeCities: string[] =
-          p.store?.cities || p.user?.store?.cities || [];
-        const matches = selectedCities.some((c) => storeCities.includes(c));
-        if (!matches) return false;
+        const storeCities: string[] = p.store?.cities || p.user?.store?.cities || [];
+        if (!selectedCities.some((c) => storeCities.includes(c))) return false;
       }
 
       // Поисковый запрос (по названию, описанию и имени магазина)
       if (q) {
         const titleMatch = (p.title || "").toLowerCase().includes(q);
-        const descMatch = (p.description || "").toLowerCase().includes(q);
+        const descMatch  = (p.description || "").toLowerCase().includes(q);
         const storeMatch = (p.store?.name || p.user?.store?.name || "").toLowerCase().includes(q);
         if (!titleMatch && !descMatch && !storeMatch) return false;
       }
@@ -168,32 +167,15 @@ export function ProductCatalogClient({
       list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
-    const count = list.length;
-    const pages = Math.ceil(count / ITEMS_PER_PAGE) || 1;
+    const count      = list.length;
+    const pages      = Math.ceil(count / ITEMS_PER_PAGE) || 1;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginated = list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const paginated  = list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    return {
-      products: paginated,
-      totalCount: count,
-      totalPages: pages,
-    };
-  }, [
-    pool,
-    category,
-    subCategory,
-    discount,
-    availability,
-    minPrice,
-    maxPrice,
-    selectedSizes,
-    selectedCities,
-    q,
-    sort,
-    page,
-  ]);
+    return { products: paginated, totalCount: count, totalPages: pages };
+  }, [pool, category, subCategory, discount, availability, minPrice, maxPrice, selectedSizes, selectedCities, q, sort, page]);
 
-  // Серверный fallback для глубокого нечеткого поиска, если в памяти 0 совпадений по 'q'
+  // Серверный fallback для глубокого нечеткого поиска (только для текстового 'q')
   const [serverFallbackData, setServerFallbackData] = useState<{
     products: any[];
     totalCount: number;
@@ -203,19 +185,18 @@ export function ProductCatalogClient({
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Если текстовый поиск 'q' не нашел совпадений локально, делаем фоновый серверный fuzzy-поиск
     if (q && inMemoryResult.totalCount === 0) {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
       setIsFetchingFallback(true);
-      fetch(`/api/products?${paramsStr}`, { signal: controller.signal })
+      fetch(`/api/products?${searchParams.toString()}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => {
           if (data.products && data.products.length > 0) {
             setServerFallbackData({
-              products: data.products,
+              products:   data.products,
               totalCount: data.totalCount ?? data.products.length,
               totalPages: data.totalPages ?? 1,
             });
@@ -228,13 +209,13 @@ export function ProductCatalogClient({
     } else {
       setServerFallbackData(null);
     }
-  }, [q, inMemoryResult.totalCount, paramsStr]);
+  }, [q, inMemoryResult.totalCount, searchParams]);
 
   // Данные для отображения
-  const activeData = (q && serverFallbackData) ? serverFallbackData : inMemoryResult;
-  const products = activeData.products;
-  const totalCount = activeData.totalCount;
-  const totalPages = activeData.totalPages;
+  const activeData   = (q && serverFallbackData) ? serverFallbackData : inMemoryResult;
+  const products     = activeData.products;
+  const totalCount   = activeData.totalCount;
+  const totalPages   = activeData.totalPages;
 
   const priceLabel = minPrice && maxPrice
     ? `${minPrice}–${maxPrice} Руб`
@@ -245,7 +226,7 @@ export function ProductCatalogClient({
     : null;
 
   function HeadingText() {
-    const isAvail = availability === "В наличии";
+    const isAvail    = availability === "В наличии";
     const availPrefix = isAvail ? "В наличии: " : "";
 
     if (discount) {
@@ -281,16 +262,14 @@ export function ProductCatalogClient({
     if (priceLabel) {
       return <>{availPrefix}Товары <span className="text-rose-600 font-semibold">({priceLabel})</span></>;
     }
-    if (isAvail) {
-      return <>Товары в наличии</>;
-    }
+    if (isAvail) return <>Товары в наличии</>;
     return <>Каталог товаров</>;
   }
 
   function emptyText() {
     if (discount && availability) return "Пока нет товаров в наличии со скидкой по вашим фильтрам";
     if (availability) return "Пока нет товаров в наличии по вашим фильтрам";
-    if (discount) return "Пока нет товаров со скидкой по вашим фильтрам";
+    if (discount)     return "Пока нет товаров со скидкой по вашим фильтрам";
     if (minPrice || maxPrice) {
       const lbl = priceLabel ?? "";
       return `В диапазоне ${lbl} пока нет товаров`;
