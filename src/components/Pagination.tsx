@@ -3,13 +3,30 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export function Pagination({ totalPages, currentPage }: { totalPages: number; currentPage: number }) {
+export function Pagination({
+  totalPages,
+  currentPage,
+  onPageChange,
+}: {
+  totalPages: number;
+  currentPage: number;
+  onPageChange?: (page: number) => void;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   // Функция для смены страницы с плавным скроллом
   const handlePageChange = (pageNumber: number) => {
+    if (onPageChange) {
+      onPageChange(pageNumber);
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", pageNumber.toString());
     

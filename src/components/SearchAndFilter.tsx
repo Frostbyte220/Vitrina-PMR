@@ -10,6 +10,7 @@ import Image from "next/image";
 import { formatPrice, cloudinaryLoader } from "@/lib/utils";
 import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
+import { useCatalogFilterStore } from "@/store/useCatalogFilterStore";
 
 const SORT_OPTIONS = [
   { value: "newest",     label: "Сначала новые",       Icon: ArrowUpDown },
@@ -44,8 +45,41 @@ export function SearchAndFilter() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const currentCategory    = searchParams.get("category") || "Все";
-  const currentSubCategory = searchParams.get("sub") || "";
+  const {
+    selectedCategory: storeCat,
+    selectedSubCategory: storeSub,
+    isInitialized: storeInitialized,
+    setCategory: setStoreCategory,
+    setSubCategory: setStoreSubCategory,
+    initFromUrl,
+  } = useCatalogFilterStore();
+
+  useEffect(() => {
+    if (!storeInitialized) {
+      initFromUrl(
+        searchParams.get("category"),
+        searchParams.get("sub"),
+        Number(searchParams.get("page")) || 1
+      );
+    }
+  }, [storeInitialized, searchParams, initFromUrl]);
+
+  // Слушаем кнопки Назад/Вперед в браузере (0 мс)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      initFromUrl(
+        url.searchParams.get("category"),
+        url.searchParams.get("sub"),
+        Number(url.searchParams.get("page")) || 1
+      );
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [initFromUrl]);
+
+  const currentCategory    = storeInitialized ? (storeCat || "Все") : (searchParams.get("category") || "Все");
+  const currentSubCategory = storeInitialized ? (storeSub || "") : (searchParams.get("sub") || "");
   const currentQuery       = searchParams.get("q") || "";
   const currentSort        = (searchParams.get("sort") || "newest") as SortValue;
   
@@ -231,9 +265,12 @@ export function SearchAndFilter() {
       discount?: boolean | null;
       availability?: string | null;
     }) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams(searchParams.toString());
 
       if (updates.category !== undefined) {
+        setStoreCategory(updates.category);
         if (updates.category === "Все") {
           params.delete("category");
         } else {
@@ -246,19 +283,29 @@ export function SearchAndFilter() {
         }
       }
 
+      if (updates.sub !== undefined) {
+        setStoreSubCategory(updates.sub);
+        if (updates.sub === null) {
+          params.delete("sub");
+        } else {
+          params.set("sub", updates.sub);
+        }
+      }
+
+      const currentStoreCat = useCatalogFilterStore.getState().selectedCategory;
+      const currentStoreSub = useCatalogFilterStore.getState().selectedSubCategory;
+      if (updates.category === undefined && currentStoreCat && currentStoreCat !== "Все") {
+        params.set("category", currentStoreCat);
+      }
+      if (updates.sub === undefined && currentStoreSub) {
+        params.set("sub", currentStoreSub);
+      }
+
       if (updates.q !== undefined) {
         if (updates.q.trim() === "") {
           params.delete("q");
         } else {
           params.set("q", updates.q.trim());
-        }
-      }
-
-      if (updates.sub !== undefined) {
-        if (updates.sub === null) {
-          params.delete("sub");
-        } else {
-          params.set("sub", updates.sub);
         }
       }
 
@@ -300,12 +347,19 @@ export function SearchAndFilter() {
         else params.set("availability", updates.availability);
       }
 
+      // Если обновилась только категория или подкатегория, состояние стора и URL уже синхронизированы мгновенно (0 мс)
+      const keys = Object.keys(updates);
+      const isOnlyCategoryOrSub = keys.length > 0 && keys.every((k) => k === "category" || k === "sub");
+      if (isOnlyCategoryOrSub) {
+        return;
+      }
+
       params.delete("page");
       startTransition(() => {
         router.replace(`/?${params.toString()}`, { scroll: false });
       });
     },
-    [searchParams, router]
+    [searchParams, router, setStoreCategory, setStoreSubCategory]
   );
 
   // Переключает один город в/из набора выбранных
@@ -338,16 +392,9 @@ export function SearchAndFilter() {
     updateParams({ minPrice, maxPrice });
   };
 
-  const [optimisticSub, setOptimisticSub] = useState(currentSubCategory);
-
-  useEffect(() => {
-    setOptimisticSub(currentSubCategory);
-  }, [currentSubCategory]);
-
   const toggleSubCategory = (sub: string) => {
-    const nextSub = (optimisticSub === sub || currentSubCategory === sub) ? null : sub;
-    setOptimisticSub(nextSub || "");
-    updateParams({ sub: nextSub });
+    const nextSub = currentSubCategory === sub ? null : sub;
+    setStoreSubCategory(nextSub);
   };
 
   const activeSubCategories = SUBCATEGORIES_MAP[currentCategory] || null;
@@ -1198,7 +1245,7 @@ export function SearchAndFilter() {
               className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-1 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {activeSubCategories.map((sub) => {
-                const isActive = (optimisticSub || currentSubCategory) === sub;
+                const isActive = currentSubCategory === sub;
                 return (
                   <motion.button
                     whileHover={{ scale: 1.04 }}

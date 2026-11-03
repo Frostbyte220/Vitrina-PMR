@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Pagination } from "@/components/Pagination";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
 import { CATEGORY_ALIASES } from "@/lib/constants/categories";
+import { useCatalogFilterStore } from "@/store/useCatalogFilterStore";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -20,7 +20,7 @@ interface ProductCatalogClientProps {
 
 export function ProductCatalogClient({
   initialProducts,
-  initialTotalCount,
+  initialTotalCount: _initialTotalCount,
   initialTotalPages: _initialTotalPages,
   initialPage,
   catalogPool,
@@ -28,11 +28,46 @@ export function ProductCatalogClient({
   const searchParams = useSearchParams();
   const paramsStr = searchParams.toString();
 
-  // Параметры фильтрации из URL
-  const category       = searchParams.get("category") ?? undefined;
-  const subCategory    = searchParams.get("sub") ?? undefined;
+  const {
+    selectedCategory: storeCat,
+    selectedSubCategory: storeSub,
+    currentPage: storePage,
+    setPage,
+    isInitialized,
+    initFromUrl,
+    resetFilters,
+  } = useCatalogFilterStore();
+
+  // Инициализация при первой загрузке (SSR)
+  useEffect(() => {
+    if (!isInitialized) {
+      initFromUrl(
+        searchParams.get("category"),
+        searchParams.get("sub"),
+        Number(searchParams.get("page")) || initialPage || 1
+      );
+    }
+  }, [isInitialized, searchParams, initFromUrl, initialPage]);
+
+  // Слушаем кнопки Назад/Вперед в браузере
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      initFromUrl(
+        url.searchParams.get("category"),
+        url.searchParams.get("sub"),
+        Number(url.searchParams.get("page")) || 1
+      );
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [initFromUrl]);
+
+  // Параметры фильтрации (приоритет у стора для мгновенного отклика 0 мс)
+  const category       = isInitialized ? (storeCat || undefined) : (searchParams.get("category") ?? undefined);
+  const subCategory    = isInitialized ? (storeSub || undefined) : (searchParams.get("sub") ?? undefined);
+  const page           = isInitialized ? (storePage || 1) : (Number(searchParams.get("page")) || initialPage || 1);
   const q              = (searchParams.get("q") ?? "").trim().toLowerCase();
-  const page           = Number(searchParams.get("page")) || initialPage || 1;
   const sort           = searchParams.get("sort") || "newest";
   const minPrice       = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : null;
   const maxPrice       = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : null;
@@ -297,12 +332,20 @@ export function ProductCatalogClient({
           <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
             Попробуйте изменить параметры или сбросить фильтры.
           </p>
-          <Link
-            href="/"
-            className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+          <button
+            type="button"
+            onClick={() => {
+              resetFilters();
+              if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.search = "";
+                window.history.replaceState({}, "", url.pathname);
+              }
+            }}
+            className="mt-6 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 cursor-pointer"
           >
             Сбросить фильтры
-          </Link>
+          </button>
         </div>
       ) : (
         <>
@@ -317,7 +360,11 @@ export function ProductCatalogClient({
             ))}
           </div>
           {totalPages > 1 && (
-            <Pagination totalPages={totalPages} currentPage={page} />
+            <Pagination
+              totalPages={totalPages}
+              currentPage={page}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}
