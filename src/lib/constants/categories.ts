@@ -4,23 +4,25 @@ import {
   ShoppingBag,
   Gem,
   Sparkles,
-  Droplet,
-  Baby,
+  Droplets,
   Cake,
+  Baby,
+  Glasses,
   Palette,
   Smartphone,
   Home,
   Dumbbell,
-  Gift,
   Car,
   Grid,
+  Tag,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 
 export interface VisualCategoryItem {
   name: string;
   icon: LucideIcon;
-  color: string;
+  color?: string;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -51,22 +53,68 @@ export const ALL_CATEGORIES = [
 // 📱 Интерактивные круглые бейджи на главной странице
 // ─────────────────────────────────────────────────────────────
 export const VISUAL_CATEGORIES: VisualCategoryItem[] = [
-  { name: "Одежда", icon: Shirt, color: "bg-blue-100 text-blue-600" },
-  { name: "Обувь", icon: Footprints, color: "bg-orange-100 text-orange-600" },
-  { name: "Сумки", icon: ShoppingBag, color: "bg-amber-100 text-amber-700" },
-  { name: "Украшения", icon: Gem, color: "bg-purple-100 text-purple-600" },
-  { name: "Косметика", icon: Sparkles, color: "bg-pink-100 text-pink-600" },
-  { name: "Парфюмерия", icon: Droplet, color: "bg-violet-100 text-violet-600" },
-  { name: "Сладости и десерты", icon: Cake, color: "bg-rose-100 text-rose-600" },
-  { name: "Детские товары", icon: Baby, color: "bg-yellow-100 text-yellow-600" },
-  { name: "Аксессуары", icon: Gift, color: "bg-red-100 text-red-600" },
-  { name: "Для дома", icon: Home, color: "bg-emerald-100 text-emerald-600" },
-  { name: "Электроника", icon: Smartphone, color: "bg-gray-100 text-gray-700" },
-  { name: "Спорт и отдых", icon: Dumbbell, color: "bg-indigo-100 text-indigo-600" },
-  { name: "Автотовары", icon: Car, color: "bg-cyan-100 text-cyan-700" },
-  { name: "Handmade", icon: Palette, color: "bg-teal-100 text-teal-600" },
-  { name: "Разное", icon: Grid, color: "bg-slate-100 text-slate-600" },
+  { name: "Одежда", icon: Shirt },
+  { name: "Обувь", icon: Footprints },
+  { name: "Сумки", icon: ShoppingBag },
+  { name: "Украшения", icon: Gem },
+  { name: "Косметика", icon: Sparkles },
+  { name: "Парфюмерия", icon: Droplets },
+  { name: "Сладости и десерты", icon: Cake },
+  { name: "Детские товары", icon: Baby },
+  { name: "Аксессуары", icon: Glasses },
+  { name: "Для дома", icon: Home },
+  { name: "Электроника", icon: Smartphone },
+  { name: "Спорт и отдых", icon: Dumbbell },
+  { name: "Автотовары", icon: Car },
+  { name: "Handmade", icon: Palette },
+  { name: "Разное", icon: Grid },
 ];
+
+/** Получение единой Lucide-иконки для любой категории маркетплейса */
+export function getCategoryIcon(cat: string): LucideIcon {
+  switch (cat.toLowerCase().trim()) {
+    case "all":
+    case "все товары":
+    case "все":
+      return LayoutGrid;
+    case "одежда":
+      return Shirt;
+    case "обувь":
+      return Footprints;
+    case "сумки":
+      return ShoppingBag;
+    case "украшения":
+      return Gem;
+    case "косметика":
+      return Sparkles;
+    case "парфюмерия":
+      return Droplets;
+    case "сладости и десерты":
+    case "еда и десерты":
+      return Cake;
+    case "детские товары":
+      return Baby;
+    case "аксессуары":
+      return Glasses;
+    case "для дома":
+    case "дом и декор":
+      return Home;
+    case "электроника":
+      return Smartphone;
+    case "спорт и отдых":
+    case "спорт":
+      return Dumbbell;
+    case "автотовары":
+      return Car;
+    case "handmade":
+    case "handmade и подарки":
+      return Palette;
+    case "разное":
+      return Grid;
+    default:
+      return Tag;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
 // 🎯 Предметные подкатегории для чипсов и фильтрации (WB & Ozon стиль)

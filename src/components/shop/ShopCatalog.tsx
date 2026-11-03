@@ -2,13 +2,6 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef, useTransition } from "react";
 import {
-  LayoutGrid,
-  Shirt,
-  Footprints,
-  Sparkles,
-  Flame,
-  Dumbbell,
-  Smartphone,
   Tag,
   ArrowUpDown,
   Check,
@@ -22,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import type { Product } from "@/types";
 import { fetchShopProducts, type FetchShopProductsParams } from "@/actions/shopProducts";
+import { getCategoryIcon } from "@/lib/constants/categories";
 
 /** Метаданные магазина, передаваемые с сервера — нужны для повторных запросов при фильтрации */
 type StoreMetadata = Omit<FetchShopProductsParams, "category" | "subCategory" | "sort" | "searchQuery" | "skip" | "take">;
@@ -53,30 +47,6 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortValue = typeof SORT_OPTIONS[number]["value"];
-
-function getCategoryIcon(cat: string) {
-  switch (cat.toLowerCase().trim()) {
-    case "all":
-    case "все товары":
-    case "все":
-      return LayoutGrid;
-    case "одежда":
-      return Shirt;
-    case "обувь":
-      return Footprints;
-    case "косметика":
-      return Sparkles;
-    case "парфюмерия":
-      return Flame;
-    case "спорт и отдых":
-    case "спорт":
-      return Dumbbell;
-    case "электроника":
-      return Smartphone;
-    default:
-      return Tag;
-  }
-}
 
 function getProductWord(count: number): string {
   const mod10 = count % 10;
