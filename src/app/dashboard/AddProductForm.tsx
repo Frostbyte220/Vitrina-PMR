@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +14,7 @@ import { AVAILABILITY_OPTIONS } from "@/lib/availability";
 
 interface AddProductFormProps {
   onSuccess?: () => void;
-  initialData?: any; // Р”РѕР±Р°РІР»РµРЅРѕ СЃРІРѕР№СЃС‚РІРѕ РґР»СЏ РїРµСЂРµРґР°С‡Рё СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґР°РЅРЅС‹С… С‚РѕРІР°СЂР°
+  initialData?: any; // Свойство для передачи существующих данных товара при редактировании
 }
 
 const CATEGORIES_WITH_SUBCATEGORIES = Object.keys(SUBCATEGORIES_MAP);
@@ -29,20 +29,18 @@ const getSubCategories = (category: string) => {
 
 export default function AddProductForm({ onSuccess, initialData }: AddProductFormProps) {
   const router = useRouter();
-  const isEditing = !!initialData; // Р¤Р»Р°Рі: РµСЃР»Рё РµСЃС‚СЊ initialData, Р·РЅР°С‡РёС‚ СЌС‚Рѕ СЂРµР¶РёРј СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+  const isEditing = Boolean(initialData);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
-  // РџРѕРґСЃС‚Р°РІР»СЏРµРј РїРѕРґРєР°С‚РµРіРѕСЂРёСЋ, РµСЃР»Рё СЂРµРґР°РєС‚РёСЂСѓРµРј, РёРЅР°С‡Рµ "РќРµС‚"
-  const [subCategory, setSubCategory] = useState(initialData?.subCategory || "РќРµС‚");
-  // РЎРѕСЃС‚РѕСЏРЅРёРµ РІС‹Р±СЂР°РЅРЅС‹С… СЂР°Р·РјРµСЂРѕРІ
+  const [subCategory, setSubCategory] = useState<string>(initialData?.subCategory || "Нет");
   const [selectedSizes, setSelectedSizes] = useState<string[]>(
     Array.isArray(initialData?.sizes) ? initialData.sizes : []
   );
   const [customSizeInput, setCustomSizeInput] = useState("");
-  const [availability, setAvailability] = useState<string>(initialData?.availability || "Р’ РЅР°Р»РёС‡РёРё");
+  const [availability, setAvailability] = useState<string>(initialData?.availability || "В наличии");
 
-  // 1. РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ React Hook Form
+  // Инициализация React Hook Form
   const {
     register,
     handleSubmit,
@@ -53,22 +51,23 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
     mode: "onBlur",
-    // Р•СЃР»Рё РµСЃС‚СЊ initialData вЂ” РїРѕРґСЃС‚Р°РІР»СЏРµРј РµС‘, РёРЅР°С‡Рµ РїСѓСЃС‚С‹Рµ Р·РЅР°С‡РµРЅРёСЏ
-    defaultValues: initialData ? {
-      title: initialData.title,
-      description: initialData.description || "",
-      price: initialData.price.toString() as any, // РљРѕРЅРІРµСЂС‚РёСЂСѓРµРј С‡РёСЃР»Рѕ РІ СЃС‚СЂРѕРєСѓ РґР»СЏ input
-      oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
-      category: initialData.category as any,
-      images: initialData.images || [],
-    } : {
-      title: "",
-      description: "",
-      price: "" as any,
-      oldPrice: "" as any,
-      category: CATEGORIES[0] as any,
-      images: [],
-    },
+    defaultValues: initialData
+      ? {
+          title: initialData.title || "",
+          description: initialData.description || "",
+          price: initialData.price ? initialData.price.toString() : ("" as any),
+          oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
+          category: initialData.category || CATEGORIES[0],
+          images: initialData.images || [],
+        }
+      : {
+          title: "",
+          description: "",
+          price: "" as any,
+          oldPrice: "" as any,
+          category: CATEGORIES[0] as any,
+          images: [],
+        },
   });
 
   const selectedCategory = watch("category");
@@ -81,8 +80,21 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   const imageUrls: string[] = watch("images") || [];
   const currentSubCategories = getSubCategories(selectedCategory);
-  const isSizeCategory = ["РћРґРµР¶РґР°", "РћР±СѓРІСЊ"].includes(selectedCategory);
-  const availablePresetSizes = selectedCategory === "РћРґРµР¶РґР°" ? CLOTHING_SIZES : selectedCategory === "РћР±СѓРІСЊ" ? SHOE_SIZES : [];
+  const isSizeCategory = ["Одежда", "Обувь"].includes(selectedCategory);
+  const availablePresetSizes =
+    selectedCategory === "Одежда"
+      ? CLOTHING_SIZES
+      : selectedCategory === "Обувь"
+      ? SHOE_SIZES
+      : [];
+
+  // Сбрасываем подкатегорию при смене категории, если текущая не подходит
+  useEffect(() => {
+    const validSubs = SUBCATEGORIES_MAP[selectedCategory] || [];
+    if (subCategory !== "Нет" && !validSubs.includes(subCategory)) {
+      setSubCategory("Нет");
+    }
+  }, [selectedCategory, subCategory]);
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -104,12 +116,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     setSelectedSizes((prev) => prev.filter((s) => s !== sizeToRemove));
   };
 
-  // 2. РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РїСЂР°РІРєРё
+  // Обработчик сохранения формы
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
     try {
       const payload = {
         ...data,
-        subCategory: subCategory !== "РќРµС‚" ? subCategory : undefined,
+        subCategory: subCategory !== "Нет" ? subCategory : undefined,
         sizes: isSizeCategory ? selectedSizes : [],
         availability,
       };
@@ -125,27 +137,26 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "РћС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё С‚РѕРІР°СЂР°");
+        throw new Error(errorData.message || "Ошибка при сохранении товара");
       }
 
-      toast.success(isEditing ? "РўРѕРІР°СЂ СѓСЃРїРµС€РЅРѕ РѕР±РЅРѕРІР»РµРЅ" : "РўРѕРІР°СЂ СѓСЃРїРµС€РЅРѕ РѕРїСѓР±Р»РёРєРѕРІР°РЅ");
+      toast.success(isEditing ? "Товар успешно обновлен" : "Товар успешно опубликован");
 
       if (isEditing) {
         router.push("/dashboard/products");
         router.refresh();
       } else {
         reset();
-        setSubCategory("РќРµС‚");
+        setSubCategory("Нет");
         setSelectedSizes([]);
         setCustomSizeInput("");
-        setAvailability("Р’ РЅР°Р»РёС‡РёРё");
+        setAvailability("В наличии");
         if (onSuccess) onSuccess();
         router.refresh();
       }
-      
     } catch (error: any) {
-      toast.error(error.message || "РћС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё С‚РѕРІР°СЂР°");
-      console.error("РћС€РёР±РєР°:", error);
+      toast.error(error.message || "Ошибка при сохранении товара");
+      console.error("Ошибка сохранения товара:", error);
     }
   };
 
@@ -156,26 +167,26 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    
+
     const files = Array.from(e.target.files);
-    
-    // РћРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С„РѕС‚РѕРіСЂР°С„РёР№ (РјР°РєСЃ. 10)
+
+    // Ограничение на общее количество фото (макс. 10)
     if (imageUrls.length + files.length > 10) {
       toast.error(
-        `РњР°РєСЃРёРјСѓРј 10 С„РѕС‚РѕРіСЂР°С„РёР№ (СѓР¶Рµ РґРѕР±Р°РІР»РµРЅРѕ: ${imageUrls.length}, РІС‹Р±СЂР°РЅРѕ: ${files.length})`
+        `Максимум 10 фотографий (уже загружено: ${imageUrls.length}, выбрано: ${files.length})`
       );
       e.target.value = "";
       return;
     }
 
     setIsUploading(true);
-    setUploadStatus(`РћРїС‚РёРјРёР·Р°С†РёСЏ ${files.length} С„РѕС‚Рѕ...`);
+    setUploadStatus(`Оптимизация ${files.length} фото...`);
     const toastId = toast.loading(
       files.length === 1
-        ? "РЎР¶Р°С‚РёРµ Рё РїРѕРґРіРѕС‚РѕРІРєР° С„РѕС‚Рѕ..."
-        : `РЎР¶Р°С‚РёРµ Рё РїРѕРґРіРѕС‚РѕРІРєР° ${files.length} С„РѕС‚Рѕ...`
+        ? "Сжатие и подготовка фото..."
+        : `Сжатие и подготовка ${files.length} фото...`
     );
-    
+
     try {
       const uploadPromises = files.map((file, idx) =>
         uploadToCloudinary(file, {
@@ -187,21 +198,21 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         })
       );
       const urls = await Promise.all(uploadPromises);
-      
+
       setValue("images", [...imageUrls, ...urls], { shouldValidate: true });
       toast.success(
         files.length === 1
-          ? "Р¤РѕС‚Рѕ СѓСЃРїРµС€РЅРѕ РѕРїС‚РёРјРёР·РёСЂРѕРІР°РЅРѕ Рё Р·Р°РіСЂСѓР¶РµРЅРѕ!"
-          : `Р’СЃРµ ${files.length} С„РѕС‚Рѕ СѓСЃРїРµС€РЅРѕ СЃР¶Р°С‚С‹ Рё Р·Р°РіСЂСѓР¶РµРЅС‹!`,
+          ? "Фото успешно оптимизировано и загружено!"
+          : `Все ${files.length} фото успешно сжаты и загружены!`,
         { id: toastId }
       );
     } catch (err: any) {
       console.error("Cloudinary upload error:", err);
-      toast.error(err.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С„РѕС‚Рѕ", { id: toastId });
+      toast.error(err.message || "Не удалось загрузить фото", { id: toastId });
     } finally {
       setIsUploading(false);
       setUploadStatus("");
-      e.target.value = ""; 
+      e.target.value = "";
     }
   };
 
@@ -211,30 +222,40 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       className="mt-2 flex w-full flex-col gap-4 max-h-[85vh] overflow-y-auto pr-2 pb-2"
     >
       <h3 className="mb-2 text-xl font-semibold text-gray-800">
-        {isEditing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ С‚РѕРІР°СЂР°" : "РќРѕРІС‹Р№ С‚РѕРІР°СЂ"}
+        {isEditing ? "Редактирование товара" : "Новый товар"}
       </h3>
 
+      {/* Название товара */}
       <div className="flex flex-col gap-1">
-        <label htmlFor="title" className="text-sm font-medium text-gray-700">РќР°Р·РІР°РЅРёРµ С‚РѕРІР°СЂР°</label>
+        <label htmlFor="title" className="text-sm font-medium text-gray-700">
+          Название товара <span className="text-rose-500">*</span>
+        </label>
         <input
           {...register("title")}
+          id="title"
           type="text"
-          className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? "border-red-500" : "border-gray-300"}`}
-          placeholder="РќР°РїСЂРёРјРµСЂ: РЎРІРµС‡Рё СЂСѓС‡РЅРѕР№ СЂР°Р±РѕС‚С‹"
+          className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+            errors.title ? "border-red-500" : "border-gray-300"
+          }`}
+          placeholder="Например: Платье миди из льна"
         />
         {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
       </div>
 
+      {/* Цены */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="price" className="text-sm font-medium text-gray-700">
-            РўРµРєСѓС‰Р°СЏ С†РµРЅР° (СЂСѓР±.) <span className="text-rose-500">*</span>
+            Текущая цена (руб.) <span className="text-rose-500">*</span>
           </label>
           <input
             {...register("price")}
+            id="price"
             type="number"
             step="0.01"
-            className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
+            className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+              errors.price ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="150"
           />
           {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
@@ -243,39 +264,42 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
-              РЎС‚Р°СЂР°СЏ С†РµРЅР° (СЂСѓР±.)
+              Старая цена (руб.)
             </label>
             {discountPercent !== null && (
               <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
-                РЎРєРёРґРєР° -{discountPercent}%
+                Скидка -{discountPercent}%
               </span>
             )}
           </div>
           <input
             {...register("oldPrice")}
+            id="oldPrice"
             type="number"
             step="0.01"
-            className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.oldPrice ? "border-red-500" : "border-gray-300"}`}
-            placeholder="200 (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)"
+            className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+              errors.oldPrice ? "border-red-500" : "border-gray-300"
+            }`}
+            placeholder="200 (необязательно)"
           />
           {errors.oldPrice ? (
             <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
           ) : (
             <span className="text-[11px] text-gray-400">
-              РЈРєР°Р¶РёС‚Рµ, С‡С‚РѕР±С‹ РїРѕРєР°Р·Р°С‚СЊ СЃРєРёРґРєСѓ Рё Р·Р°С‡РµСЂРєРЅСѓС‚СѓСЋ С†РµРЅСѓ
+              Укажите, чтобы показать скидку и зачеркнутую цену
             </span>
           )}
         </div>
       </div>
 
-      {/* РЎРўРђРўРЈРЎ РќРђР›РР§РРЇ РўРћР’РђР Рђ */}
+      {/* Статус наличия товара */}
       <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200">
         <div className="flex items-center justify-between">
           <label className="text-sm font-semibold text-gray-800">
-            РќР°Р»РёС‡РёРµ С‚РѕРІР°СЂР° <span className="text-rose-500">*</span>
+            Наличие товара <span className="text-rose-500">*</span>
           </label>
           <span className="text-xs text-gray-400">
-            РЎРЅРёРјР°РµС‚ РІРѕРїСЂРѕСЃС‹ РїРѕРєСѓРїР°С‚РµР»РµР№
+            Снимает лишние вопросы покупателей
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
@@ -286,7 +310,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                 key={opt.code}
                 type="button"
                 onClick={() => setAvailability(opt.label)}
-                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? `${opt.badgeClass} ring-2 ring-rose-200 border-transparent shadow-xs font-semibold`
                     : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
@@ -294,7 +318,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
               >
                 <span className={`w-2 h-2 rounded-full ${opt.dotClass} shrink-0`} />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold truncate leading-tight">{opt.label}</p>
+                  <p className="text-xs font-semibold truncate leading-tight">{opt.shortLabel}</p>
                   <p className="text-[10px] text-gray-400 truncate leading-tight mt-0.5">{opt.description}</p>
                 </div>
               </button>
@@ -303,52 +327,66 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         </div>
       </div>
 
+      {/* Категория */}
       <div className="flex flex-col gap-1">
-        <label htmlFor="category" className="text-sm font-medium text-gray-700">РљР°С‚РµРіРѕСЂРёСЏ</label>
+        <label htmlFor="category" className="text-sm font-medium text-gray-700">
+          Категория <span className="text-rose-500">*</span>
+        </label>
         <select
           {...register("category")}
-          className={`w-full rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.category ? "border-red-500" : "border-gray-300"}`}
+          id="category"
+          className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 cursor-pointer ${
+            errors.category ? "border-red-500" : "border-gray-300"
+          }`}
         >
           {CATEGORIES.map((category) => (
-            <option key={category} value={category}>{category}</option>
+            <option key={category} value={category}>
+              {category}
+            </option>
           ))}
         </select>
         {errors.category && <span className="text-xs text-red-500">{errors.category.message}</span>}
       </div>
 
+      {/* Подкатегория */}
       {CATEGORIES_WITH_SUBCATEGORIES.includes(selectedCategory) && (
         <div className="flex flex-col gap-1 transition-all duration-300">
-          <label className="text-sm font-medium text-gray-700">РџРѕРґРєР°С‚РµРіРѕСЂРёСЏ</label>
+          <label htmlFor="subCategory" className="text-sm font-medium text-gray-700">
+            Подкатегория
+          </label>
           <select
+            id="subCategory"
             value={subCategory}
             onChange={(e) => setSubCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-300 p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 cursor-pointer"
           >
             {currentSubCategories.map((sub) => (
-              <option key={sub} value={sub}>{sub}</option>
+              <option key={sub} value={sub}>
+                {sub}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Р РђР—РњР•Р Р« РўРћР’РђР Рђ (РґР»СЏ РћРґРµР¶РґС‹ Рё РћР±СѓРІРё) */}
+      {/* Размеры товара (для Одежды и Обуви) */}
       {isSizeCategory && (
         <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-gray-800">
-              Р Р°Р·РјРµСЂС‹ РІ РЅР°Р»РёС‡РёРё {selectedCategory === "РћРґРµР¶РґР°" ? "(РѕРґРµР¶РґР°)" : "(РѕР±СѓРІСЊ)"}
+              Размеры в наличии {selectedCategory === "Одежда" ? "(одежда)" : "(обувь)"}
             </label>
             {selectedSizes.length > 0 && (
               <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                Р’С‹Р±СЂР°РЅРѕ: {selectedSizes.length}
+                Выбрано: {selectedSizes.length}
               </span>
             )}
           </div>
           <p className="text-xs text-gray-500">
-            РЈРєР°Р¶РёС‚Рµ СЂР°Р·РјРµСЂС‹, РєРѕС‚РѕСЂС‹Рµ РµСЃС‚СЊ Сѓ РІР°СЃ РІ РЅР°Р»РёС‡РёРё. РџРѕРєСѓРїР°С‚РµР»Рё СЃРјРѕРіСѓС‚ РІС‹Р±СЂР°С‚СЊ РЅСѓР¶РЅС‹Р№ СЂР°Р·РјРµСЂ РїРµСЂРµРґ РѕР±СЂР°С‰РµРЅРёРµРј.
+            Укажите размеры в наличии. Покупатели смогут отфильтровать товар по размеру.
           </p>
 
-          {/* РџСЂРµРґСѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Рµ СЂР°Р·РјРµСЂС‹ */}
+          {/* Предустановленные размеры */}
           <div className="flex flex-wrap gap-1.5 pt-1">
             {availablePresetSizes.map((size) => {
               const isSelected = selectedSizes.includes(size);
@@ -357,9 +395,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                   key={size}
                   type="button"
                   onClick={() => toggleSize(size)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200"
+                      ? "bg-rose-600 text-white shadow-xs ring-2 ring-rose-200"
                       : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
                   }`}
                 >
@@ -369,7 +407,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             })}
           </div>
 
-          {/* Р”РѕР±Р°РІР»РµРЅРёРµ РЅРµСЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ СЂР°Р·РјРµСЂР° */}
+          {/* Добавление нестандартного размера */}
           <div className="mt-1.5 flex items-center gap-2">
             <input
               type="text"
@@ -381,23 +419,27 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                   handleAddCustomSize();
                 }
               }}
-              placeholder={selectedCategory === "РћР±СѓРІСЊ" ? "РЎРІРѕР№ СЂР°Р·РјРµСЂ (РЅР°РїСЂРёРјРµСЂ: 38.5, 41.5)" : "РЎРІРѕР№ СЂР°Р·РјРµСЂ (РЅР°РїСЂРёРјРµСЂ: 46-48, 110-116)"}
+              placeholder={
+                selectedCategory === "Обувь"
+                  ? "Свой размер (например: 38.5, 41.5)"
+                  : "Свой размер (например: 46-48, 110-116)"
+              }
               className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
             />
             <button
               type="button"
               onClick={handleAddCustomSize}
               disabled={!customSizeInput.trim()}
-              className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50 shrink-0"
+              className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50 shrink-0 cursor-pointer"
             >
-              + Р”РѕР±Р°РІРёС‚СЊ
+              + Добавить
             </button>
           </div>
 
-          {/* Р’С‹Р±СЂР°РЅРЅС‹Рµ РєР°СЃС‚РѕРјРЅС‹Рµ СЂР°Р·РјРµСЂС‹ */}
+          {/* Выбранные кастомные размеры */}
           {selectedSizes.filter((s) => !availablePresetSizes.includes(s)).length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1.5 items-center">
-              <span className="text-[11px] text-gray-400">РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ:</span>
+              <span className="text-[11px] text-gray-400">Пользовательские:</span>
               {selectedSizes
                 .filter((s) => !availablePresetSizes.includes(s))
                 .map((customSize) => (
@@ -409,7 +451,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                     <button
                       type="button"
                       onClick={() => removeSize(customSize)}
-                      className="text-rose-400 hover:text-rose-700 font-bold ml-0.5"
+                      className="text-rose-400 hover:text-rose-700 font-bold ml-0.5 cursor-pointer"
                     >
                       &times;
                     </button>
@@ -420,19 +462,30 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         </div>
       )}
 
-      {/* Р¤РћРўРћР“Р РђР¤РР */}
+      {/* Фотографии */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">Р¤РѕС‚РѕРіСЂР°С„РёРё С‚РѕРІР°СЂР° (РјРёРЅРёРјСѓРј 1) <span className="text-red-500">*</span></label>
-        
+        <label className="text-sm font-medium text-gray-700">
+          Фотографии товара (минимум 1) <span className="text-rose-500">*</span>
+        </label>
+
         {imageUrls.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-2">
             {imageUrls.map((url: string, index: number) => (
-              <div key={index} className="relative h-24 w-24 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                <Image fill sizes="(max-width: 768px) 100vw, 20vw" src={url} alt={`Р¤РѕС‚Рѕ ${index + 1}`} className="object-cover" />
+              <div
+                key={index}
+                className="relative h-24 w-24 rounded-lg border border-gray-200 overflow-hidden shadow-xs"
+              >
+                <Image
+                  fill
+                  sizes="(max-width: 768px) 100vw, 20vw"
+                  src={url}
+                  alt={`Фото ${index + 1}`}
+                  className="object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500/90 text-white hover:bg-red-600 transition-colors"
+                  className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500/90 text-white hover:bg-red-600 transition-colors cursor-pointer"
                 >
                   &times;
                 </button>
@@ -440,35 +493,50 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             ))}
           </div>
         )}
-        
-        <label className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+
+        <label
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:bg-gray-100 ${
+            isUploading ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
             {isUploading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span>{uploadStatus || "РћРїС‚РёРјРёР·Р°С†РёСЏ Рё Р·Р°РіСЂСѓР·РєР°..."}</span>
+                <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+                <span>{uploadStatus || "Оптимизация и загрузка..."}</span>
               </>
             ) : (
-              <span>+ Р’С‹Р±СЂР°С‚СЊ С„РѕС‚РѕРіСЂР°С„РёРё</span>
+              <span>+ Выбрать фотографии</span>
             )}
           </div>
           <span className="mt-1 text-xs text-gray-400">
-            РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРµ СЃР¶Р°С‚РёРµ С„РѕС‚Рѕ (JPG, PNG, WebP РґРѕ 30 РњР‘, РјР°РєСЃ. 10 С„РѕС‚Рѕ)
+            Автоматическое сжатие фото (JPG, PNG, WebP до 30 МБ, макс. 10 фото)
           </span>
-          <input 
-            type="file" multiple accept="image/*" 
-            onChange={handleFileChange} 
-            className="hidden" 
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
             disabled={isUploading || isSubmitting}
           />
         </label>
         {errors.images && <span className="text-xs text-red-500">{errors.images.message}</span>}
       </div>
 
+      {/* Описание */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label htmlFor="description" className="text-sm font-medium text-gray-700">Описание</label>
-          <span className={`text-xs ${(watch("description") || "").length > 900 ? "text-red-500 font-semibold" : "text-gray-400"}`}>
+          <label htmlFor="description" className="text-sm font-medium text-gray-700">
+            Описание
+          </label>
+          <span
+            className={`text-xs ${
+              (watch("description") || "").length > 900
+                ? "text-red-500 font-semibold"
+                : "text-gray-400"
+            }`}
+          >
             {(watch("description") || "").length}/1000
           </span>
         </div>
@@ -476,23 +544,31 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           {...register("description")}
           id="description"
           rows={3}
-          className={`w-full resize-none rounded-lg border p-2.5 outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? "border-red-500" : "border-gray-300"}`}
-          placeholder="Напишите подробнее о товаре..."
+          className={`w-full resize-none rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+            errors.description ? "border-red-500" : "border-gray-300"
+          }`}
+          placeholder="Напишите подробнее о товаре, материале, комплектации..."
         />
-        {errors.description && <span className="text-xs text-red-500">{errors.description.message}</span>}
+        {errors.description && (
+          <span className="text-xs text-red-500">{errors.description.message}</span>
+        )}
       </div>
 
+      {/* Кнопка сохранения / публикации */}
       <button
         type="submit"
         disabled={isUploading || isSubmitting || imageUrls.length === 0}
-        className="mt-4 w-full shrink-0 rounded-lg bg-primary py-3 font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 w-full shrink-0 rounded-xl bg-rose-600 py-3 font-semibold text-white shadow-sm transition-all hover:bg-rose-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
       >
-        {isSubmitting 
-          ? (isEditing ? "РЎРѕС…СЂР°РЅРµРЅРёРµ..." : "РџСѓР±Р»РёРєР°С†РёСЏ...") 
-          : imageUrls.length > 0 
-            ? (isEditing ? "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ" : "РћРїСѓР±Р»РёРєРѕРІР°С‚СЊ РЅР° РІРёС‚СЂРёРЅРµ") 
-            : "РЎРЅР°С‡Р°Р»Р° Р·Р°РіСЂСѓР·РёС‚Рµ С„РѕС‚Рѕ"
-        }
+        {isSubmitting
+          ? isEditing
+            ? "Сохранение..."
+            : "Публикация..."
+          : imageUrls.length > 0
+          ? isEditing
+            ? "Сохранить изменения"
+            : "Опубликовать на витрине"
+          : "Сначала загрузите фото"}
       </button>
     </form>
   );
