@@ -67,7 +67,6 @@ export const VISUAL_CATEGORIES: VisualCategoryItem[] = [
   { name: "Спорт и отдых", icon: Dumbbell },
   { name: "Автотовары", icon: Car },
   { name: "Handmade", icon: Palette },
-  { name: "Разное", icon: Grid },
 ];
 
 /** Получение единой Lucide-иконки для любой категории маркетплейса */
