@@ -137,7 +137,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Ошибка при сохранении товара");
+        const msg = errorData.message || errorData.issues?.[0]?.message || "Ошибка при сохранении товара";
+        throw new Error(msg);
       }
 
       toast.success(isEditing ? "Товар успешно обновлен" : "Товар успешно опубликован");

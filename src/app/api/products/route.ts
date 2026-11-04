@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
 import { CATEGORY_ALIASES } from "@/lib/constants/categories";
+import { prisma } from "@/lib/prisma";
+import { productSchema } from "@/lib/validations/product";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { productRateLimiter } from "@/lib/rate-limit";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -106,3 +113,80 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id && !session?.user?.email) {
+      return NextResponse.json({ message: "Не авторизован" }, { status: 401 });
+    }
+
+    const userId =
+      session.user.id ||
+      (
+        await prisma.user.findUnique({
+          where: { email: session.user.email! },
+          select: { id: true },
+        })
+      )?.id;
+
+    if (!userId) {
+      return NextResponse.json({ message: "Пользователь не найден" }, { status: 401 });
+    }
+
+    const isAllowed = await productRateLimiter.check(userId);
+    if (!isAllowed) {
+      return NextResponse.json(
+        { message: "Слишком много запросов. Подождите минуту." },
+        { status: 429 }
+      );
+    }
+
+    const body = await req.json();
+    const validatedData = productSchema.parse(body);
+
+    // Находим магазин текущего пользователя, чтобы привязать товар
+    const store = await prisma.store.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    const newProduct = await prisma.product.create({
+      data: {
+        title: validatedData.title,
+        description: validatedData.description || "",
+        price: validatedData.price,
+        oldPrice: validatedData.oldPrice ?? null,
+        category: validatedData.category,
+        subCategory: validatedData.subCategory || null,
+        sizes: validatedData.sizes || [],
+        images: validatedData.images,
+        availability: validatedData.availability || "В наличии",
+        userId,
+        // Привязываем storeId, если магазин найден
+        storeId: store ? store.id : null,
+      },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/shops");
+    revalidatePath("/dashboard/products");
+    revalidateTag("products");
+
+    return NextResponse.json(newProduct, { status: 201 });
+  } catch (error: any) {
+    if (error?.name === "ZodError" || error instanceof z.ZodError) {
+      const message = error.issues?.[0]?.message || "Ошибка валидации данных";
+      return NextResponse.json(
+        { message, issues: error.issues },
+        { status: 422 }
+      );
+    }
+    console.error("[PRODUCTS_POST]", error);
+    return NextResponse.json(
+      { message: "Внутренняя ошибка сервера при добавлении товара" },
+      { status: 500 }
+    );
+  }
+}
+
