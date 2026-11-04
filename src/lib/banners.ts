@@ -22,7 +22,7 @@ export const FALLBACK_BANNERS: BannerItem[] = [
   {
     id: "fallback-1",
     bg: "from-rose-600 to-rose-800",
-    label: "Реклама",
+    label: null,
     title: "Разместите магазин бесплатно",
     sub: "Тысячи покупателей ПМР увидят ваши товары уже сегодня",
     cta: "Зарегистрироваться",
