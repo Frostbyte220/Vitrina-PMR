@@ -187,7 +187,7 @@ export default async function ShopsPage({
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 text-3xl font-bold text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-500 via-pink-600 to-rose-700 text-white text-3xl font-black shadow-inner">
                           {store.name.charAt(0).toUpperCase()}
                         </div>
                       )}
