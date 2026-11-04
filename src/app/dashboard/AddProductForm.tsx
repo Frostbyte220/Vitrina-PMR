@@ -57,7 +57,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           description: initialData.description || "",
           price: initialData.price ? initialData.price.toString() : ("" as any),
           oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
-          category: initialData.category || CATEGORIES[0],
+          category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : CATEGORIES[0],
           images: initialData.images || [],
         }
       : {
