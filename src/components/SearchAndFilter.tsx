@@ -180,6 +180,18 @@ export function SearchAndFilter() {
     }
   }, []);
 
+  // Функция плавного скролла к результатам каталога
+  const scrollToResults = useCallback(() => {
+    setTimeout(() => {
+      const target = document.getElementById("catalog-products");
+      if (target) {
+        const yOffset = -75; // учитываем высоту sticky header
+        const y = target.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      }
+    }, 120);
+  }, []);
+
   // Клик по запросу из истории
   const handleHistoryItemClick = (item: string) => {
     setSearchQuery(item);
@@ -187,6 +199,7 @@ export function SearchAndFilter() {
     setShowSuggestions(false);
     trackEvent("search", { query: item });
     updateParams({ q: item });
+    scrollToResults();
   };
 
   // Всплывающее меню диапазона цен
@@ -322,7 +335,7 @@ export function SearchAndFilter() {
     setStoreSizes(next);
   }, [currentSizes, setStoreSizes]);
 
-  const handleSearch = (e?: React.FormEvent) => {
+  const handleSearch = (e?: React.FormEvent, shouldScroll = true) => {
     if (e) e.preventDefault();
     setShowSuggestions(false);
     if (searchQuery.trim()) {
@@ -330,6 +343,9 @@ export function SearchAndFilter() {
       saveSearchQuery(searchQuery.trim());
     }
     updateParams({ q: searchQuery });
+    if (shouldScroll) {
+      scrollToResults();
+    }
   };
   
   const applyPriceFilter = () => {
@@ -458,6 +474,7 @@ export function SearchAndFilter() {
                           updateParams({ category: cat, q: "" });
                           setShowSuggestions(false);
                           setSearchQuery("");
+                          scrollToResults();
                         }}
                         className="inline-flex items-center gap-1.5 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-xs"
                       >
@@ -592,10 +609,9 @@ export function SearchAndFilter() {
                   <button 
                     type="button"
                     onClick={() => {
-                      handleSearch();
-                      setShowSuggestions(false);
+                      handleSearch(undefined, true);
                     }}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer w-full py-1"
                   >
                     Смотреть все результаты по запросу «{searchQuery}» →
                   </button>

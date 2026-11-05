@@ -226,7 +226,7 @@ export default async function HomePage({
       )}
 
       {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
-      <section className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
+      <section id="catalog-products" className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
         <React.Suspense fallback={<ProductsSkeleton />}>
           <ProductCatalogClient
             initialProducts={initialProducts as any[]}
