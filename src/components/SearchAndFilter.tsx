@@ -40,77 +40,24 @@ const CITIES = [
   "Днестровск",
 ];
 
-export function SearchAndFilter() {
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. ПОИСКОВАЯ СТРОКА С «ЖИВЫМ» АВТОКОМПЛИТОМ И ИСТОРИЕЙ ПОИСКА
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function SearchInput({ className = "" }: { className?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const setStoreCategory = useCatalogFilterStore((s) => s.setCategory);
 
-  const {
-    selectedCategory: storeCat,
-    selectedSubCategory: storeSub,
-    sort: storeSort,
-    discount: storeDiscount,
-    availability: storeAvailability,
-    minPrice: storeMinPrice,
-    maxPrice: storeMaxPrice,
-    cities: storeCities,
-    sizes: storeSizes,
-    isInitialized: storeInitialized,
-    setCategory: setStoreCategory,
-    setSubCategory: setStoreSubCategory,
-    setSort: setStoreSort,
-    setDiscount: setStoreDiscount,
-    setAvailability: setStoreAvailability,
-    setPriceRange: setStorePriceRange,
-    setCities: setStoreCities,
-    setSizes: setStoreSizes,
-    initFromUrl,
-  } = useCatalogFilterStore();
-
-  useEffect(() => {
-    if (!storeInitialized) {
-      initFromUrl(searchParams);
-    }
-  }, [storeInitialized, searchParams, initFromUrl]);
-
-  // Слушаем кнопки Назад/Вперед в браузере (0 мс)
-  useEffect(() => {
-    const handlePopState = () => {
-      const url = new URL(window.location.href);
-      initFromUrl(url.searchParams);
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [initFromUrl]);
-
-  // Текущие значения из стора (приоритет) или URL (до инициализации)
-  const urlCities = useMemo(
-    () => (searchParams.get("cities") || "").split(",").filter(Boolean),
-    [searchParams]
-  );
-  const urlSizes = useMemo(
-    () => (searchParams.get("sizes") || "").split(",").map(s => s.trim()).filter(Boolean),
-    [searchParams]
-  );
-
-  const currentCategory     = storeInitialized ? (storeCat  || "Все") : (searchParams.get("category") || "Все");
-  const currentSubCategory  = storeInitialized ? (storeSub  || "")    : (searchParams.get("sub")      || "");
-  const currentSort         = (storeInitialized ? storeSort  : (searchParams.get("sort") || "newest")) as SortValue;
-  const currentDiscount     = storeInitialized ? storeDiscount         : (searchParams.get("discount") === "true");
-  const currentAvailability = storeInitialized ? (storeAvailability || "") : (searchParams.get("availability") || "");
-  const currentMinPrice     = storeInitialized ? storeMinPrice         : (searchParams.get("minPrice") || "");
-  const currentMaxPrice     = storeInitialized ? storeMaxPrice         : (searchParams.get("maxPrice") || "");
-  const currentCities       = storeInitialized ? storeCities : urlCities;
-  const currentSizes        = storeInitialized ? storeSizes  : urlSizes;
-  const currentQuery        = searchParams.get("q") || "";
-
-  const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
-  const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
-
+  const currentQuery = searchParams.get("q") || "";
   const [searchQuery, setSearchQuery] = useState(currentQuery);
-  const [minPrice, setMinPrice]       = useState(currentMinPrice);
-  const [maxPrice, setMaxPrice]       = useState(currentMaxPrice);
-  
+
+  // Синхронизация поиска с изменением URL (например, кнопки вперед/назад)
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+  }, [searchParams]);
+
   // Автокомплит (Live Search)
   const [productSuggestions, setProductSuggestions] = useState<any[]>([]);
   const [storeSuggestions, setStoreSuggestions] = useState<any[]>([]);
@@ -192,48 +139,11 @@ export function SearchAndFilter() {
     }, 120);
   }, []);
 
-  // Клик по запросу из истории
-  const handleHistoryItemClick = (item: string) => {
-    setSearchQuery(item);
-    saveSearchQuery(item);
-    setShowSuggestions(false);
-    trackEvent("search", { query: item });
-    updateParams({ q: item });
-    scrollToResults();
-  };
-
-  // Всплывающее меню диапазона цен
-  const [isPriceOpen, setIsPriceOpen] = useState(false);
-  const pricePopoverRef = useRef<HTMLDivElement>(null);
-
-  // Выпадающее меню выбора города
-  const [isCityOpen, setIsCityOpen] = useState(false);
-  const cityPopoverRef = useRef<HTMLDivElement>(null);
-
-  // Всплывающее меню выбора размера (для Одежда и Обувь)
-  const [isSizeOpen, setIsSizeOpen] = useState(false);
-  const sizePopoverRef = useRef<HTMLDivElement>(null);
-
-  // Синхронизация цен с параметрами URL
-  useEffect(() => {
-    setMinPrice(currentMinPrice);
-    setMaxPrice(currentMaxPrice);
-  }, [currentMinPrice, currentMaxPrice]);
-
-  // Закрытие подсказок и меню цены при клике вне
+  // Закрытие подсказок при клике вне
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
-      }
-      if (pricePopoverRef.current && !pricePopoverRef.current.contains(event.target as Node)) {
-        setIsPriceOpen(false);
-      }
-      if (cityPopoverRef.current && !cityPopoverRef.current.contains(event.target as Node)) {
-        setIsCityOpen(false);
-      }
-      if (sizePopoverRef.current && !sizePopoverRef.current.contains(event.target as Node)) {
-        setIsSizeOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -268,10 +178,414 @@ export function SearchAndFilter() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  const updateQuery = useCallback(
+    (q: string) => {
+      const params = new URLSearchParams(window.location.search);
+      if (q.trim() === "") {
+        params.delete("q");
+      } else {
+        params.set("q", q.trim());
+      }
+      params.delete("page");
+      startTransition(() => {
+        router.replace(`/?${params.toString()}`, { scroll: false });
+      });
+    },
+    [router]
+  );
+
+  const handleSearch = (e?: React.FormEvent, shouldScroll = true) => {
+    if (e) e.preventDefault();
+    setShowSuggestions(false);
+    if (searchQuery.trim()) {
+      trackEvent("search", { query: searchQuery.trim() });
+      saveSearchQuery(searchQuery.trim());
+    }
+    updateQuery(searchQuery);
+    if (shouldScroll) {
+      scrollToResults();
+    }
+  };
+
+  const handleHistoryItemClick = (item: string) => {
+    setSearchQuery(item);
+    saveSearchQuery(item);
+    setShowSuggestions(false);
+    trackEvent("search", { query: item });
+    updateQuery(item);
+    scrollToResults();
+  };
+
+  return (
+    <form ref={searchRef} onSubmit={handleSearch} className={`relative mx-auto max-w-2xl px-4 sm:px-0 z-40 ${className}`}>
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          placeholder="Поиск товаров, брендов или магазинов..."
+          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-10 text-sm text-gray-900 shadow-sm outline-none transition-all focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+        />
+        {isPending || isDebouncing ? (
+          <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
+        ) : (
+          <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+        )}
+
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setProductSuggestions([]);
+              setStoreSuggestions([]);
+              setCategorySuggestions([]);
+              updateQuery("");
+              setShowSuggestions(true);
+            }}
+            className="absolute right-3.5 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            title="Очистить поиск"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      <button type="submit" className="hidden" aria-label="Искать" />
+      
+      {/* Выпадающий список «живого» поиска и недавней истории */}
+      <AnimatePresence>
+        {showSuggestions && (
+          (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
+          searchQuery.trim().length >= 2
+        ) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
+          >
+            {/* История поиска (показывается при фокусе, когда запрос пуст или короче 2 символов) */}
+            {searchQuery.trim().length < 2 && searchHistory.length > 0 && (
+              <div className="p-2">
+                <div className="flex items-center justify-between px-2.5 py-1.5 mb-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <History className="h-3.5 w-3.5 text-rose-500" />
+                    История поиска
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSearchHistory}
+                    className="text-xs text-gray-400 hover:text-rose-600 transition-colors font-medium px-1 py-0.5 rounded"
+                  >
+                    Очистить
+                  </button>
+                </div>
+                <ul className="space-y-0.5">
+                  {searchHistory.map((item) => (
+                    <li key={item}>
+                      <div className="flex items-center justify-between rounded-xl hover:bg-gray-50 transition-colors group px-2.5 py-2">
+                        <button
+                          type="button"
+                          onClick={() => handleHistoryItemClick(item)}
+                          className="flex items-center gap-2.5 text-left flex-1 min-w-0"
+                        >
+                          <History className="h-4 w-4 text-gray-400 shrink-0 group-hover:text-rose-500 transition-colors" />
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 truncate">
+                            {item}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => removeHistoryItem(item, e)}
+                          className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-200/60 transition-colors shrink-0"
+                          title="Удалить из истории"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {/* Категории */}
+            {categorySuggestions.length > 0 && (
+              <div className="p-3 bg-gray-50/60">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 px-1">
+                  Категории
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {categorySuggestions.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        setStoreCategory(cat);
+                        updateQuery("");
+                        setShowSuggestions(false);
+                        setSearchQuery("");
+                        scrollToResults();
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-xs"
+                    >
+                      <Tag className="h-3 w-3 text-rose-500" />
+                      <span>{cat}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Магазины */}
+            {storeSuggestions.length > 0 && (
+              <div className="p-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 px-2 py-1">
+                  <Store className="h-3 w-3 text-rose-500" />
+                  Магазины
+                </span>
+                <ul className="space-y-0.5">
+                  {storeSuggestions.map((s) => {
+                    const shopHref = `/shop/${s.instagram?.replace(/^@/, '') || s.slug}`;
+                    return (
+                      <li key={s.id}>
+                        <Link 
+                          href={shopHref}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition-colors group"
+                          onClick={() => setShowSuggestions(false)}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-rose-50 border border-gray-200 flex items-center justify-center font-bold text-xs text-rose-600">
+                              {s.avatarUrl ? (
+                                <Image 
+                                  src={s.avatarUrl} 
+                                  alt={s.name} 
+                                  fill 
+                                  loader={cloudinaryLoader}
+                                  sizes="36px"
+                                  className="object-cover" 
+                                />
+                              ) : (
+                                s.name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 group-hover:text-rose-600 transition-colors truncate">
+                                {s.name}
+                              </p>
+                              <p className="text-xs text-gray-400 truncate">
+                                {s.cities && s.cities.length > 0 ? s.cities.join(", ") : "Магазин"}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-400 shrink-0 font-medium">
+                            {s._count?.products || 0} тов. →
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* Товары */}
+            {productSuggestions.length > 0 && (
+              <div className="p-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-2 py-1">
+                  Товары
+                </span>
+                <ul className="space-y-0.5">
+                  {productSuggestions.map((product) => {
+                    const shopName = product.store?.name || product.user?.store?.name || product.user?.name;
+                    const imageUrl = product.images?.[0];
+                    return (
+                      <li key={product.id}>
+                        <Link 
+                          href={`/product/${product.id}`}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group"
+                          onClick={() => setShowSuggestions(false)}
+                        >
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400">
+                            {imageUrl ? (
+                              <Image 
+                                src={imageUrl} 
+                                alt={product.title || "Товар"} 
+                                fill 
+                                loader={cloudinaryLoader}
+                                sizes="48px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-sm font-medium text-gray-900 group-hover:text-rose-600 transition-colors">
+                              {product.title}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {product.category}{shopName ? ` · ${shopName}` : ""}
+                            </p>
+                          </div>
+                          <span className="font-bold text-sm text-primary shrink-0 whitespace-nowrap">
+                            {formatPrice(product.price)}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* Состояние загрузки */}
+            {searchQuery.trim().length >= 2 && isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
+              <div className="flex items-center justify-center gap-2 p-4 text-sm text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin text-rose-400" />
+                Поиск...
+              </div>
+            )}
+
+            {/* Нет результатов */}
+            {searchQuery.trim().length >= 2 && !isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
+              <div className="p-4 text-center text-sm text-gray-400">
+                Ничего не найдено по запросу «{searchQuery}»
+              </div>
+            )}
+
+            {/* Футер: перейти ко всем результатам (только при вводе поискового запроса) */}
+            {searchQuery.trim().length >= 2 && (
+              <div className="p-2.5 bg-gray-50 text-center">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    handleSearch(undefined, true);
+                  }}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer w-full py-1"
+                >
+                  Смотреть все результаты по запросу «{searchQuery}» →
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. БЛОК ФИЛЬТРОВ, СОРТИРОВКИ И ПОДКАТЕГОРИЙ
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function FilterBar({ className = "" }: { className?: string }) {
+  const searchParams = useSearchParams();
+
+  const {
+    selectedCategory: storeCat,
+    selectedSubCategory: storeSub,
+    sort: storeSort,
+    discount: storeDiscount,
+    availability: storeAvailability,
+    minPrice: storeMinPrice,
+    maxPrice: storeMaxPrice,
+    cities: storeCities,
+    sizes: storeSizes,
+    isInitialized: storeInitialized,
+    setSort: setStoreSort,
+    setDiscount: setStoreDiscount,
+    setAvailability: setStoreAvailability,
+    setPriceRange: setStorePriceRange,
+    setCities: setStoreCities,
+    setSizes: setStoreSizes,
+    setSubCategory: setStoreSubCategory,
+    initFromUrl,
+  } = useCatalogFilterStore();
+
+  useEffect(() => {
+    if (!storeInitialized) {
+      initFromUrl(searchParams);
+    }
+  }, [storeInitialized, searchParams, initFromUrl]);
+
+  // Слушаем кнопки Назад/Вперед в браузере (0 мс)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      initFromUrl(url.searchParams);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [initFromUrl]);
+
+  // Текущие значения из стора (приоритет) или URL (до инициализации)
+  const urlCities = useMemo(
+    () => (searchParams.get("cities") || "").split(",").filter(Boolean),
+    [searchParams]
+  );
+  const urlSizes = useMemo(
+    () => (searchParams.get("sizes") || "").split(",").map((s) => s.trim()).filter(Boolean),
+    [searchParams]
+  );
+
+  const currentCategory     = storeInitialized ? (storeCat  || "Все") : (searchParams.get("category") || "Все");
+  const currentSubCategory  = storeInitialized ? (storeSub  || "")    : (searchParams.get("sub")      || "");
+  const currentSort         = (storeInitialized ? storeSort  : (searchParams.get("sort") || "newest")) as SortValue;
+  const currentDiscount     = storeInitialized ? storeDiscount         : (searchParams.get("discount") === "true");
+  const currentAvailability = storeInitialized ? (storeAvailability || "") : (searchParams.get("availability") || "");
+  const currentMinPrice     = storeInitialized ? storeMinPrice         : (searchParams.get("minPrice") || "");
+  const currentMaxPrice     = storeInitialized ? storeMaxPrice         : (searchParams.get("maxPrice") || "");
+  const currentCities       = storeInitialized ? storeCities : urlCities;
+  const currentSizes        = storeInitialized ? storeSizes  : urlSizes;
+
+  const isCategoryWithSize = currentCategory === "Одежда" || currentCategory === "Обувь";
+  const categorySizes      = currentCategory === "Одежда" ? CLOTHING_SIZES : currentCategory === "Обувь" ? SHOE_SIZES : [];
+
+  const [minPrice, setMinPrice] = useState(currentMinPrice);
+  const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
+
+  // Всплывающее меню диапазона цен
+  const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const pricePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Выпадающее меню выбора города
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const cityPopoverRef = useRef<HTMLDivElement>(null);
+
+  // Всплывающее меню выбора размера (для Одежда и Обувь)
+  const [isSizeOpen, setIsSizeOpen] = useState(false);
+  const sizePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Синхронизация цен с параметрами URL / стора
+  useEffect(() => {
+    setMinPrice(currentMinPrice);
+    setMaxPrice(currentMaxPrice);
+  }, [currentMinPrice, currentMaxPrice]);
+
+  // Закрытие popover при клике вне
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (pricePopoverRef.current && !pricePopoverRef.current.contains(event.target as Node)) {
+        setIsPriceOpen(false);
+      }
+      if (cityPopoverRef.current && !cityPopoverRef.current.contains(event.target as Node)) {
+        setIsCityOpen(false);
+      }
+      if (sizePopoverRef.current && !sizePopoverRef.current.contains(event.target as Node)) {
+        setIsSizeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const updateParams = useCallback(
     (updates: {
-      category?: string;
-      q?: string;
       sub?: string | null;
       sort?: string;
       minPrice?: string;
@@ -281,15 +595,7 @@ export function SearchAndFilter() {
       discount?: boolean | null;
       availability?: string | null;
     }) => {
-      // Категория и подкатегория — мгновенно через стор (0 мс, URL через replaceState)
-      if (updates.category !== undefined) {
-        setStoreCategory(updates.category);
-      }
-      if (updates.sub !== undefined) {
-        setStoreSubCategory(updates.sub ?? null);
-      }
-
-      // Все остальные фильтры — тоже через стор (0 мс)
+      if (updates.sub !== undefined)          setStoreSubCategory(updates.sub ?? null);
       if (updates.sort !== undefined)         setStoreSort(updates.sort);
       if (updates.discount !== undefined)     setStoreDiscount(updates.discount ?? false);
       if (updates.availability !== undefined) setStoreAvailability(updates.availability ?? null);
@@ -301,22 +607,8 @@ export function SearchAndFilter() {
           updates.maxPrice ?? useCatalogFilterStore.getState().maxPrice,
         );
       }
-
-      // Текстовый поиск q — единственный, кто требует серверного запроса (fuzzy-поиск)
-      if (updates.q !== undefined) {
-        const params = new URLSearchParams(window.location.search);
-        if (updates.q.trim() === "") {
-          params.delete("q");
-        } else {
-          params.set("q", updates.q.trim());
-        }
-        params.delete("page");
-        startTransition(() => {
-          router.replace(`/?${params.toString()}`, { scroll: false });
-        });
-      }
     },
-    [setStoreCategory, setStoreSubCategory, setStoreSort, setStoreDiscount, setStoreAvailability, setStorePriceRange, setStoreCities, setStoreSizes, router]
+    [setStoreSubCategory, setStoreSort, setStoreDiscount, setStoreAvailability, setStorePriceRange, setStoreCities, setStoreSizes]
   );
 
   // Переключает один город в/из набора выбранных
@@ -335,19 +627,6 @@ export function SearchAndFilter() {
     setStoreSizes(next);
   }, [currentSizes, setStoreSizes]);
 
-  const handleSearch = (e?: React.FormEvent, shouldScroll = true) => {
-    if (e) e.preventDefault();
-    setShowSuggestions(false);
-    if (searchQuery.trim()) {
-      trackEvent("search", { query: searchQuery.trim() });
-      saveSearchQuery(searchQuery.trim());
-    }
-    updateParams({ q: searchQuery });
-    if (shouldScroll) {
-      scrollToResults();
-    }
-  };
-  
   const applyPriceFilter = () => {
     setStorePriceRange(minPrice, maxPrice);
   };
@@ -359,271 +638,20 @@ export function SearchAndFilter() {
 
   const activeSubCategories = SUBCATEGORIES_MAP[currentCategory] || null;
 
+  const hasActiveFilters = Boolean(
+    currentMinPrice ||
+    currentMaxPrice ||
+    currentCities.length > 0 ||
+    currentSizes.length > 0 ||
+    currentDiscount ||
+    currentAvailability
+  );
+
   return (
-    <div className="w-full space-y-4 relative">
+    <div className={`w-full space-y-3.5 relative ${className}`}>
 
-      {/* 1. Поисковая строка с «живым» автокомплитом */}
-      <form ref={searchRef} onSubmit={handleSearch} className="relative mx-auto max-w-2xl px-4 sm:px-0 z-40">
-        <div className="relative flex items-center">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder="Поиск товаров, брендов или магазинов..."
-            className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-10 text-sm text-gray-900 shadow-sm outline-none transition-all focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-          />
-          {isPending || isDebouncing ? (
-            <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
-          ) : (
-            <Search className="absolute left-4 h-5 w-5 text-gray-400" />
-          )}
-
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setProductSuggestions([]);
-                setStoreSuggestions([]);
-                setCategorySuggestions([]);
-                updateParams({ q: "" });
-                setShowSuggestions(true);
-              }}
-              className="absolute right-3.5 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-              title="Очистить поиск"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <button type="submit" className="hidden" aria-label="Искать" />
-        
-        {/* Выпадающий список «живого» поиска и недавней истории */}
-        <AnimatePresence>
-          {showSuggestions && (
-            (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
-            searchQuery.trim().length >= 2
-          ) && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-              className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
-            >
-              {/* История поиска (показывается при фокусе, когда запрос пуст или короче 2 символов) */}
-              {searchQuery.trim().length < 2 && searchHistory.length > 0 && (
-                <div className="p-2">
-                  <div className="flex items-center justify-between px-2.5 py-1.5 mb-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <History className="h-3.5 w-3.5 text-rose-500" />
-                      История поиска
-                    </span>
-                    <button
-                      type="button"
-                      onClick={clearSearchHistory}
-                      className="text-xs text-gray-400 hover:text-rose-600 transition-colors font-medium px-1 py-0.5 rounded"
-                    >
-                      Очистить
-                    </button>
-                  </div>
-                  <ul className="space-y-0.5">
-                    {searchHistory.map((item) => (
-                      <li key={item}>
-                        <div className="flex items-center justify-between rounded-xl hover:bg-gray-50 transition-colors group px-2.5 py-2">
-                          <button
-                            type="button"
-                            onClick={() => handleHistoryItemClick(item)}
-                            className="flex items-center gap-2.5 text-left flex-1 min-w-0"
-                          >
-                            <History className="h-4 w-4 text-gray-400 shrink-0 group-hover:text-rose-500 transition-colors" />
-                            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 truncate">
-                              {item}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => removeHistoryItem(item, e)}
-                            className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-200/60 transition-colors shrink-0"
-                            title="Удалить из истории"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {/* Категории */}
-              {categorySuggestions.length > 0 && (
-                <div className="p-3 bg-gray-50/60">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 px-1">
-                    Категории
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {categorySuggestions.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          updateParams({ category: cat, q: "" });
-                          setShowSuggestions(false);
-                          setSearchQuery("");
-                          scrollToResults();
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-700 transition-colors shadow-xs"
-                      >
-                        <Tag className="h-3 w-3 text-rose-500" />
-                        <span>{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Магазины */}
-              {storeSuggestions.length > 0 && (
-                <div className="p-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 px-2 py-1">
-                    <Store className="h-3 w-3 text-rose-500" />
-                    Магазины
-                  </span>
-                  <ul className="space-y-0.5">
-                    {storeSuggestions.map((s) => {
-                      const shopHref = `/shop/${s.instagram?.replace(/^@/, '') || s.slug}`;
-                      return (
-                        <li key={s.id}>
-                          <Link 
-                            href={shopHref}
-                            className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition-colors group"
-                            onClick={() => setShowSuggestions(false)}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-rose-50 border border-gray-200 flex items-center justify-center font-bold text-xs text-rose-600">
-                                {s.avatarUrl ? (
-                                  <Image 
-                                    src={s.avatarUrl} 
-                                    alt={s.name} 
-                                    fill 
-                                    loader={cloudinaryLoader}
-                                    sizes="36px"
-                                    className="object-cover" 
-                                  />
-                                ) : (
-                                  s.name.charAt(0).toUpperCase()
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 group-hover:text-rose-600 transition-colors truncate">
-                                  {s.name}
-                                </p>
-                                <p className="text-xs text-gray-400 truncate">
-                                  {s.cities && s.cities.length > 0 ? s.cities.join(", ") : "Магазин"}
-                                </p>
-                              </div>
-                            </div>
-                            <span className="text-xs text-gray-400 shrink-0 font-medium">
-                              {s._count?.products || 0} тов. →
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              {/* Товары */}
-              {productSuggestions.length > 0 && (
-                <div className="p-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-2 py-1">
-                    Товары
-                  </span>
-                  <ul className="space-y-0.5">
-                    {productSuggestions.map((product) => {
-                      const shopName = product.store?.name || product.user?.store?.name || product.user?.name;
-                      const imageUrl = product.images?.[0];
-                      return (
-                        <li key={product.id}>
-                          <Link 
-                            href={`/product/${product.id}`}
-                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group"
-                            onClick={() => setShowSuggestions(false)}
-                          >
-                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400">
-                              {imageUrl ? (
-                                <Image 
-                                  src={imageUrl} 
-                                  alt={product.title || "Товар"} 
-                                  fill 
-                                  loader={cloudinaryLoader}
-                                  sizes="48px"
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <Search className="h-4 w-4" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="truncate text-sm font-medium text-gray-900 group-hover:text-rose-600 transition-colors">
-                                {product.title}
-                              </p>
-                              <p className="text-xs text-gray-400 truncate">
-                                {product.category}{shopName ? ` · ${shopName}` : ""}
-                              </p>
-                            </div>
-                            <span className="font-bold text-sm text-primary shrink-0 whitespace-nowrap">
-                              {formatPrice(product.price)}
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              {/* Состояние загрузки */}
-              {searchQuery.trim().length >= 2 && isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
-                <div className="flex items-center justify-center gap-2 p-4 text-sm text-gray-400">
-                  <Loader2 className="h-4 w-4 animate-spin text-rose-400" />
-                  Поиск...
-                </div>
-              )}
-
-              {/* Нет результатов */}
-              {searchQuery.trim().length >= 2 && !isDebouncing && productSuggestions.length === 0 && storeSuggestions.length === 0 && categorySuggestions.length === 0 && (
-                <div className="p-4 text-center text-sm text-gray-400">
-                  Ничего не найдено по запросу «{searchQuery}»
-                </div>
-              )}
-
-              {/* Футер: перейти ко всем результатам (только при вводе поискового запроса) */}
-              {searchQuery.trim().length >= 2 && (
-                <div className="p-2.5 bg-gray-50 text-center">
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      handleSearch(undefined, true);
-                    }}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer w-full py-1"
-                  >
-                    Смотреть все результаты по запросу «{searchQuery}» →
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </form>
-
-      {/* 2. Фильтры и сортировка (Лаконичный объединенный ряд) */}
-      <div className="mx-auto max-w-4xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
+      {/* 1. Фильтры и сортировка (Объединенный адаптивный ряд) */}
+      <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
         
         {/* Кнопка фильтра по городу (выпадающий popover) */}
         <div className="relative" ref={cityPopoverRef}>
@@ -858,7 +886,7 @@ export function SearchAndFilter() {
             )}
           </button>
 
-          {/* Всплывающее аккуратное меню цены с пресетами и инпутами */}
+          {/* Всплывающее меню цены с пресетами и инпутами */}
           <AnimatePresence>
             {isPriceOpen && (
               <motion.div
@@ -1073,10 +1101,9 @@ export function SearchAndFilter() {
         })}
       </div>
 
-
-      {/* 2.5 Активные фильтры (быстрые теги для сброса) */}
-      {(Boolean(currentMinPrice || currentMaxPrice || currentCities.length > 0 || currentSizes.length > 0 || currentDiscount || currentAvailability)) && (
-        <div className="mx-auto max-w-4xl px-4 flex flex-wrap items-center justify-center gap-1.5 text-xs z-20 relative">
+      {/* 2. Активные фильтры (быстрые теги для сброса) */}
+      {hasActiveFilters && (
+        <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-1.5 text-xs z-20 relative">
           <span className="text-gray-400 font-medium mr-0.5">Выбрано:</span>
 
           {/* Тег цены */}
@@ -1194,13 +1221,13 @@ export function SearchAndFilter() {
       )}
 
       {/* 3. Подкатегории (Чипсы фильтрации) */}
-      <div className="mx-auto max-w-5xl min-h-[40px] flex items-center justify-center relative z-20">
+      <div className="mx-auto max-w-6xl min-h-[36px] flex items-center justify-center relative z-20">
         <AnimatePresence mode="popLayout">
           {activeSubCategories && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-1 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
@@ -1213,10 +1240,10 @@ export function SearchAndFilter() {
                     key={sub}
                     type="button"
                     onClick={() => toggleSubCategory(sub)}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all sm:text-xs sm:px-4 sm:py-2 select-none ${
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all sm:text-xs sm:px-4 sm:py-2 select-none shadow-2xs ${
                       isActive
                         ? "bg-rose-600 text-white shadow-xs font-semibold"
-                        : "bg-gray-100/90 text-gray-700 hover:bg-gray-200/90 hover:text-gray-900 border border-transparent"
+                        : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border border-gray-200"
                     }`}
                   >
                     {sub}
@@ -1230,3 +1257,18 @@ export function SearchAndFilter() {
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. УНИВЕРСАЛЬНАЯ ОБЁРТКА ДЛЯ ОБРАТНОЙ СОВМЕСТИМОСТИ
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function SearchAndFilter({ className = "" }: { className?: string }) {
+  return (
+    <div className={`w-full space-y-4 relative ${className}`}>
+      <SearchInput />
+      <FilterBar />
+    </div>
+  );
+}
+
+export default SearchAndFilter;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { LogIn, LayoutDashboard, Store } from "lucide-react";
 import { authOptions } from "@/lib/auth";
-import { SearchAndFilter } from "@/components/SearchAndFilter";
+import { SearchInput, FilterBar } from "@/components/SearchAndFilter";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { CartButton } from "@/components/layout/CartButton";
 import { VisualCategories } from "@/components/home/VisualCategories";
@@ -176,7 +176,7 @@ export default async function HomePage({
       </div>
 
       {/* Hero-секция (заголовок сайта) */}
-      <section className="bg-white px-4 pt-8 pb-4 shadow-sm sm:px-6 lg:px-8">
+      <section className="bg-white px-4 pt-8 pb-5 shadow-sm sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-6 mt-8 sm:mt-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-rose-800 sm:text-4xl">
             E-Vitrina PMR
@@ -187,23 +187,43 @@ export default async function HomePage({
         </div>
         <div className="mx-auto max-w-2xl">
           <React.Suspense fallback={<div className="h-12 w-full animate-pulse rounded-full bg-gray-100" />}>
-            <SearchAndFilter />
+            <SearchInput />
           </React.Suspense>
         </div>
       </section>
 
+      {/* Рекламная карусель — Баннер #1 (динамический из БД, перемещен выше категорий) */}
+      <div className="mt-4 sm:mt-5">
+        <AdBannerCarousel banners={banners} />
+      </div>
+
       {/* Категории (визуальные) */}
-      <div>
+      <div className="mt-3 sm:mt-4">
         <VisualCategories />
       </div>
 
-      {/* Рекламная карусель — Баннер #1 (динамический из БД) */}
-      <AdBannerCarousel banners={banners} />
+      {/* Фильтры, сортировка и подкатегории (перемещены под категории, непосредственно перед товарами) */}
+      <div className="mt-3 sm:mt-4">
+        <React.Suspense fallback={null}>
+          <FilterBar />
+        </React.Suspense>
+      </div>
 
-      {/* ── CTA для продавцов ────────────────────────────── */}
-      {!session && (
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 my-6">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-600 to-rose-800 px-6 py-7 sm:px-10 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
+      {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
+      <section id="catalog-products" className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
+        <React.Suspense fallback={<ProductsSkeleton />}>
+          <ProductCatalogClient
+            initialProducts={initialProducts as any[]}
+            initialTotalCount={initialTotalCount}
+            initialTotalPages={initialTotalPages}
+            initialPage={currentPage}
+            catalogPool={catalogPool as any[]}
+          />
+        </React.Suspense>
+
+        {/* ── CTA для продавцов ────────────────────────────── */}
+        {!session && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-600 to-rose-800 px-6 py-7 sm:px-10 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg my-10">
             <div className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/10" />
             <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-white/10" />
             <div className="relative z-10 text-center sm:text-left">
@@ -222,20 +242,7 @@ export default async function HomePage({
               Разместить магазин →
             </Link>
           </div>
-        </section>
-      )}
-
-      {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
-      <section id="catalog-products" className="mx-auto max-w-7xl px-3 pt-4 sm:px-6 lg:px-8 min-h-[500px]">
-        <React.Suspense fallback={<ProductsSkeleton />}>
-          <ProductCatalogClient
-            initialProducts={initialProducts as any[]}
-            initialTotalCount={initialTotalCount}
-            initialTotalPages={initialTotalPages}
-            initialPage={currentPage}
-            catalogPool={catalogPool as any[]}
-          />
-        </React.Suspense>
+        )}
 
         {/* Недавно просмотренные товары */}
         <RecentlyViewedSection className="mt-12 border-t border-gray-200/70 pt-8" />
