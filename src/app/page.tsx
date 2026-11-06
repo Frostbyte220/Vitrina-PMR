@@ -192,10 +192,10 @@ export default async function HomePage({
         <AdBannerCarousel banners={banners} />
       </div>
 
-      {/* Поисковая строка (перемещена под баннер) */}
-      <div className="relative z-40 mt-4 sm:mt-5">
-        <React.Suspense fallback={<div className="mx-auto max-w-2xl px-4 h-12 w-full animate-pulse rounded-full bg-white shadow-sm" />}>
-          <SearchInput />
+      {/* Фильтры, сортировка и подкатегории (перемещены под баннер, над категориями) */}
+      <div className="mt-4 sm:mt-5">
+        <React.Suspense fallback={null}>
+          <FilterBar />
         </React.Suspense>
       </div>
 
@@ -204,10 +204,10 @@ export default async function HomePage({
         <VisualCategories />
       </div>
 
-      {/* Фильтры, сортировка и подкатегории (перемещены под категории, непосредственно перед товарами) */}
-      <div className="mt-3 sm:mt-4">
-        <React.Suspense fallback={null}>
-          <FilterBar />
+      {/* Поисковая строка (перемещена под категории, непосредственно перед товарами) */}
+      <div className="relative z-40 mt-4 sm:mt-5 mb-2">
+        <React.Suspense fallback={<div className="mx-auto max-w-2xl px-4 h-12 w-full animate-pulse rounded-full bg-white shadow-sm" />}>
+          <SearchInput />
         </React.Suspense>
       </div>
 
