@@ -175,30 +175,32 @@ export default async function HomePage({
         )}
       </div>
 
-      {/* Hero-секция (заголовок сайта) */}
-      <section className="bg-white px-4 pt-8 pb-5 shadow-sm sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center mb-6 mt-8 sm:mt-0">
+      {/* Шапка сайта / Бренд */}
+      <section className="bg-white px-4 pt-7 pb-5 shadow-2xs sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center mt-7 sm:mt-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-rose-800 sm:text-4xl">
             E-Vitrina PMR
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-1.5 text-sm text-gray-500">
             Единая витрина локальных магазинов Приднестровья
           </p>
         </div>
-        <div className="mx-auto max-w-2xl">
-          <React.Suspense fallback={<div className="h-12 w-full animate-pulse rounded-full bg-gray-100" />}>
-            <SearchInput />
-          </React.Suspense>
-        </div>
       </section>
 
-      {/* Рекламная карусель — Баннер #1 (динамический из БД, перемещен выше категорий) */}
+      {/* Рекламная карусель — Баннер #1 (увеличен по высоте) */}
       <div className="mt-4 sm:mt-5">
         <AdBannerCarousel banners={banners} />
       </div>
 
+      {/* Поисковая строка (перемещена под баннер) */}
+      <div className="relative z-40 mt-4 sm:mt-5">
+        <React.Suspense fallback={<div className="mx-auto max-w-2xl px-4 h-12 w-full animate-pulse rounded-full bg-white shadow-sm" />}>
+          <SearchInput />
+        </React.Suspense>
+      </div>
+
       {/* Категории (визуальные) */}
-      <div className="mt-3 sm:mt-4">
+      <div className="mt-4 sm:mt-5">
         <VisualCategories />
       </div>
 

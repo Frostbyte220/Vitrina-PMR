@@ -228,7 +228,7 @@ export function SearchInput({ className = "" }: { className?: string }) {
           }}
           onFocus={() => setShowSuggestions(true)}
           placeholder="Поиск товаров, брендов или магазинов..."
-          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-10 text-sm text-gray-900 shadow-sm outline-none transition-all focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+          className="w-full rounded-full border border-gray-200/90 bg-white py-3.5 sm:py-4 pl-12 pr-11 text-sm sm:text-base text-gray-900 shadow-sm hover:shadow-md focus:shadow-md outline-none transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
         />
         {isPending || isDebouncing ? (
           <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
