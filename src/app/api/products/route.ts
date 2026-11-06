@@ -99,12 +99,19 @@ export async function GET(request: Request) {
       ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
       : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
 
-    return NextResponse.json({
-      products,
-      totalCount,
-      totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
-      currentPage: page,
-    });
+    return NextResponse.json(
+      {
+        products,
+        totalCount,
+        totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
+        currentPage: page,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (error) {
     console.error("Products API error:", error);
     return NextResponse.json(

@@ -49,14 +49,22 @@ export function SearchInput({ className = "" }: { className?: string }) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const setStoreCategory = useCatalogFilterStore((s) => s.setCategory);
+  const storeSearchQuery = useCatalogFilterStore((s) => s.searchQuery);
+  const setStoreSearchQuery = useCatalogFilterStore((s) => s.setSearchQuery);
+  const isInitialized = useCatalogFilterStore((s) => s.isInitialized);
 
-  const currentQuery = searchParams.get("q") || "";
-  const [searchQuery, setSearchQuery] = useState(currentQuery);
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return (searchParams.get("q") || "").trim();
+  });
 
-  // Синхронизация поиска с изменением URL (например, кнопки вперед/назад)
+  // Синхронизация поиска с изменением стора и URL (например, кнопки вперед/назад, сброс фильтров)
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") || "");
-  }, [searchParams]);
+    if (isInitialized) {
+      setSearchQuery(storeSearchQuery);
+    } else {
+      setSearchQuery(searchParams.get("q") || "");
+    }
+  }, [storeSearchQuery, isInitialized, searchParams]);
 
   // Автокомплит (Live Search)
   const [productSuggestions, setProductSuggestions] = useState<any[]>([]);
@@ -180,18 +188,15 @@ export function SearchInput({ className = "" }: { className?: string }) {
 
   const updateQuery = useCallback(
     (q: string) => {
-      const params = new URLSearchParams(window.location.search);
-      if (q.trim() === "") {
-        params.delete("q");
-      } else {
-        params.set("q", q.trim());
+      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+        const params = new URLSearchParams();
+        if (q.trim()) params.set("q", q.trim());
+        router.push(`/?${params.toString()}`);
+        return;
       }
-      params.delete("page");
-      startTransition(() => {
-        router.replace(`/?${params.toString()}`, { scroll: false });
-      });
+      setStoreSearchQuery(q);
     },
-    [router]
+    [router, setStoreSearchQuery]
   );
 
   const handleSearch = (e?: React.FormEvent, shouldScroll = true) => {

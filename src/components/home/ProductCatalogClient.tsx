@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Pagination } from "@/components/Pagination";
 import { Loader2 } from "lucide-react";
 import { CATEGORY_ALIASES } from "@/lib/constants/categories";
+import { BRAND_SYNONYMS, fuzzyMatchText } from "@/lib/searchUtils";
 import { useCatalogFilterStore } from "@/store/useCatalogFilterStore";
 
 const ITEMS_PER_PAGE = 12;
@@ -36,6 +37,7 @@ export function ProductCatalogClient({
     maxPrice: storeMaxPrice,
     cities: storeCities,
     sizes: storeSizes,
+    searchQuery: storeSearchQuery,
     setPage,
     isInitialized,
     initFromUrl,
@@ -69,8 +71,8 @@ export function ProductCatalogClient({
     [searchParams]
   );
 
-  // Текстовый поиск читаем всегда из URL (меняется через SearchAndFilter)
-  const q = (searchParams.get("q") ?? "").trim().toLowerCase();
+  // Текстовый поиск читаем с приоритетом стора (<1 мс), fallback из URL до гидратации
+  const q = (isInitialized ? storeSearchQuery : (searchParams.get("q") ?? "")).trim().toLowerCase();
 
   // Параметры фильтрации — приоритет у стора (0 мс); до инициализации — URL
   const category     = isInitialized ? (storeCat  || undefined) : (searchParams.get("category") ?? undefined);
@@ -142,12 +144,29 @@ export function ProductCatalogClient({
         if (!selectedCities.some((c) => storeCities.includes(c))) return false;
       }
 
-      // Поисковый запрос (по названию, описанию и имени магазина)
+      // Поисковый запрос (умный мгновенный поиск: мультитокены, синонимы брендов, стемминг русских падежей)
       if (q) {
-        const titleMatch = (p.title || "").toLowerCase().includes(q);
-        const descMatch  = (p.description || "").toLowerCase().includes(q);
-        const storeMatch = (p.store?.name || p.user?.store?.name || "").toLowerCase().includes(q);
-        if (!titleMatch && !descMatch && !storeMatch) return false;
+        const title = (p.title || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        const cat = (p.category || "").toLowerCase();
+        const sub = (p.subCategory || "").toLowerCase();
+        const storeName = (p.store?.name || p.user?.store?.name || "").toLowerCase();
+        const combined = `${title} ${desc} ${cat} ${sub} ${storeName}`;
+
+        let matched = combined.includes(q);
+
+        if (!matched && BRAND_SYNONYMS[q]) {
+          matched = combined.includes(BRAND_SYNONYMS[q]);
+        }
+
+        if (!matched) {
+          const words = q.split(/\s+/).filter(Boolean);
+          if (words.length > 0) {
+            matched = words.every((w) => fuzzyMatchText(combined, w));
+          }
+        }
+
+        if (!matched) return false;
       }
 
       return true;
@@ -191,7 +210,11 @@ export function ProductCatalogClient({
       abortRef.current = controller;
 
       setIsFetchingFallback(true);
-      fetch(`/api/products?${searchParams.toString()}`, { signal: controller.signal })
+      const search = typeof window !== "undefined" && window.location.search
+        ? window.location.search
+        : `?q=${encodeURIComponent(q)}`;
+
+      fetch(`/api/products${search}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => {
           if (data.products && data.products.length > 0) {
@@ -209,7 +232,7 @@ export function ProductCatalogClient({
     } else {
       setServerFallbackData(null);
     }
-  }, [q, inMemoryResult.totalCount, searchParams]);
+  }, [q, inMemoryResult.totalCount]);
 
   // Данные для отображения
   const activeData   = (q && serverFallbackData) ? serverFallbackData : inMemoryResult;

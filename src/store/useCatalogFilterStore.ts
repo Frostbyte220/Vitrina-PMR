@@ -1,7 +1,8 @@
 import { create } from "zustand";
 
 interface CatalogFilterState {
-  // Категории и пагинация
+  // Поиск, категории и пагинация
+  searchQuery: string;
   selectedCategory: string | null;
   selectedSubCategory: string | null;
   currentPage: number;
@@ -18,6 +19,7 @@ interface CatalogFilterState {
   isInitialized: boolean;
 
   // Сеттеры
+  setSearchQuery: (query: string) => void;
   setCategory: (category: string | null) => void;
   setSubCategory: (subCategory: string | null) => void;
   setPage: (page: number) => void;
@@ -45,6 +47,13 @@ function syncUrl(url: URL) {
 /** Строит URL на основе полного состояния стора */
 function buildUrl(state: CatalogFilterState): URL {
   const url = new URL(window.location.href);
+
+  // Поисковый запрос
+  if (state.searchQuery && state.searchQuery.trim() !== "") {
+    url.searchParams.set("q", state.searchQuery.trim());
+  } else {
+    url.searchParams.delete("q");
+  }
 
   // Категория
   if (state.selectedCategory && state.selectedCategory !== "Все") {
@@ -119,6 +128,7 @@ function buildUrl(state: CatalogFilterState): URL {
 }
 
 export const useCatalogFilterStore = create<CatalogFilterState>((set, get) => ({
+  searchQuery: "",
   selectedCategory: null,
   selectedSubCategory: null,
   currentPage: 1,
@@ -130,6 +140,11 @@ export const useCatalogFilterStore = create<CatalogFilterState>((set, get) => ({
   cities: [],
   sizes: [],
   isInitialized: false,
+
+  setSearchQuery: (query) => {
+    set({ searchQuery: query.trim(), currentPage: 1 });
+    syncUrl(buildUrl(get()));
+  },
 
   setCategory: (category) => {
     const nextCat = category === "Все" ? null : category;
@@ -187,6 +202,7 @@ export const useCatalogFilterStore = create<CatalogFilterState>((set, get) => ({
     const cat = params.get("category");
     const normalizedCat = cat === "Все" ? null : cat;
     set({
+      searchQuery: (params.get("q") || "").trim(),
       selectedCategory: normalizedCat,
       selectedSubCategory: params.get("sub") || null,
       currentPage: Number(params.get("page")) || 1,
@@ -203,6 +219,7 @@ export const useCatalogFilterStore = create<CatalogFilterState>((set, get) => ({
 
   resetFilters: () => {
     set({
+      searchQuery: "",
       sort: "newest",
       discount: false,
       availability: null,
