@@ -207,7 +207,7 @@ export default async function HomePage({
       </div>
 
       {/* Категории (визуальные) */}
-      <div className="mt-4 sm:mt-5">
+      <div className="mt-1 sm:mt-1.5">
         <VisualCategories />
       </div>
 

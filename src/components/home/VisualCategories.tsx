@@ -36,9 +36,9 @@ export function VisualCategories() {
   }, [selectedCategory, setCategory]);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 pt-1 sm:px-6 lg:px-8">
       {/* Лента категорий — перенос вместо прокрутки */}
-      <div className="flex flex-wrap items-start justify-center gap-2 sm:gap-3 py-2">
+      <div className="flex flex-wrap items-start justify-center gap-2 sm:gap-3 py-1">
         {VISUAL_CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat.name;
 

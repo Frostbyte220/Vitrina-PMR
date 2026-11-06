@@ -648,7 +648,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
   );
 
   return (
-    <div className={`w-full space-y-3.5 relative ${className}`}>
+    <div className={`w-full space-y-2.5 relative ${className}`}>
 
       {/* 1. Фильтры и сортировка (Объединенный адаптивный ряд) */}
       <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
@@ -1221,15 +1221,15 @@ export function FilterBar({ className = "" }: { className?: string }) {
       )}
 
       {/* 3. Подкатегории (Чипсы фильтрации) */}
-      <div className="mx-auto max-w-6xl min-h-[36px] flex items-center justify-center relative z-20">
-        <AnimatePresence mode="popLayout">
-          {activeSubCategories && (
+      {activeSubCategories && activeSubCategories.length > 0 && (
+        <div className="mx-auto max-w-6xl flex items-center justify-center relative z-20">
+          <AnimatePresence mode="popLayout">
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              exit={{ opacity: 0, y: -6, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-1 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-0.5 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {activeSubCategories.map((sub) => {
                 const isActive = currentSubCategory === sub;
@@ -1251,9 +1251,9 @@ export function FilterBar({ className = "" }: { className?: string }) {
                 );
               })}
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
