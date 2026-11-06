@@ -1,6 +1,11 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  future: {
+    // Оборачивает все hover: в @media (hover: hover) and (pointer: fine)
+    // Это устраняет "залипающий" hover на Android/iOS (double-tap баг)
+    hoverOnlyWhenSupported: true,
+  },
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
