@@ -59,7 +59,7 @@ export function MobileTabBar() {
             <Link
               key={tab.name}
               href={tab.href}
-              className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-300 ${
+              className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-300 touch-manipulation ${
                 isActive ? "text-rose-700" : "text-gray-500 hover:text-gray-900"
               }`}
             >

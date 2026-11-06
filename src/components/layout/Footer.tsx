@@ -11,7 +11,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
           {/* Блок 1: О бренде */}
           <div className="space-y-4">
-            <Link href="/" className="inline-block">
+            <Link href="/" className="inline-block touch-manipulation">
               <h3 className="text-2xl font-extrabold tracking-tight text-rose-800 transition-opacity hover:opacity-80">
                 E-Vitrina PMR
               </h3>
@@ -28,7 +28,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Официальный Instagram: @evitrinapmr"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 shadow-2xs hover:border-gray-300 hover:bg-gray-50 hover:text-rose-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 shadow-2xs hover:border-gray-300 hover:bg-gray-50 hover:text-rose-600 transition-colors touch-manipulation"
                 >
                   <Instagram className="h-4 w-4 text-rose-500" />
                   <span>@evitrinapmr</span>
@@ -44,7 +44,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Home className="h-4 w-4" />
                   Главная
@@ -53,7 +53,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/favorites"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Heart className="h-4 w-4" />
                   Избранное
@@ -62,7 +62,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/chat"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <MessageSquareDot className="h-4 w-4" />
                   Мои диалоги
@@ -71,7 +71,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Info className="h-4 w-4" />О проекте
                 </Link>
@@ -79,7 +79,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Info className="h-4 w-4" />Частые вопросы
                 </Link>
@@ -94,7 +94,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Store className="h-4 w-4" />
                   Вход для продавцов
@@ -104,7 +104,7 @@ export function Footer() {
                 {/* 🔥 Изменили a на Link, а href заменили на /partnership */}
                 <Link
                   href="/partnership"
-                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
                 >
                   <Mail className="h-4 w-4" />
                   Сотрудничество
@@ -121,10 +121,10 @@ export function Footer() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs text-gray-400">
-            <Link href="/privacy" className="hover:text-rose-600 transition-colors">
+            <Link href="/privacy" className="hover:text-rose-600 transition-colors touch-manipulation">
               Политика конфиденциальности
             </Link>
-            <Link href="/terms" className="hover:text-rose-600 transition-colors">
+            <Link href="/terms" className="hover:text-rose-600 transition-colors touch-manipulation">
               Пользовательское соглашение
             </Link>
           </div>

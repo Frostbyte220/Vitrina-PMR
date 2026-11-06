@@ -16,7 +16,7 @@ export function FavoritesButton() {
   return (
     <Link
       href="/favorites"
-      className="group relative flex items-center justify-center rounded-full bg-white p-2.5 text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-rose-50 hover:text-rose-600 hover:shadow-md hover:outline-rose-200"
+      className="group relative flex items-center justify-center rounded-full bg-white p-2.5 text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-rose-50 hover:text-rose-600 hover:shadow-md hover:outline-rose-200 touch-manipulation"
       aria-label="Перейти в избранное"
     >
       <Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:scale-110" />
