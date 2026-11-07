@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage, sendWelcomeNotification } from "@/lib/telegram";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
 /**
  * GET /api/telegram/webhook
  * Вспомогательный эндпоинт для проверки статуса вебхука или его регистрации
  */
 export async function GET(req: NextRequest) {
-  if (!BOT_TOKEN) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) {
     return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN not set" }, { status: 500 });
   }
 
@@ -18,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   // Запрос инфо о вебхуке из Telegram
   if (action === "info") {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`);
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
     const data = await res.json();
     return NextResponse.json(data);
   }
@@ -30,7 +29,7 @@ export async function GET(req: NextRequest) {
     const defaultUrl = `${proto}://${host}/api/telegram/webhook`;
     const targetUrl = searchParams.get("url") || defaultUrl;
 
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

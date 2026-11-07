@@ -72,15 +72,18 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const sent = await sendTelegramMessage(
+      const result = await sendTelegramMessage(
         store.telegramChatId,
         `🔔 <b>Тестовое уведомление от E-Vitrina!</b>\n\n` +
         `Магазин: <b>${store.name}</b>\n\n` +
         `✅ Всё настроено и работает отлично. Сюда будут поступать реальные заказы и вопросы от покупателей!`
       );
 
-      if (!sent) {
-        return NextResponse.json({ error: "Не удалось отправить сообщение" }, { status: 502 });
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || "Не удалось отправить сообщение" },
+          { status: 502 }
+        );
       }
 
       return NextResponse.json({ success: true, message: "Тестовое сообщение отправлено!" });

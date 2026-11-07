@@ -3,12 +3,19 @@
  * Бот: @evitrina_notify_bot
  */
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+function getBotToken(): string | undefined {
+  return process.env.TELEGRAM_BOT_TOKEN;
+}
 
 interface SendTelegramOptions {
   parseMode?: "HTML" | "Markdown";
   disableWebPagePreview?: boolean;
   replyMarkup?: any;
+}
+
+export interface SendTelegramResult {
+  success: boolean;
+  error?: string;
 }
 
 /**
@@ -18,14 +25,17 @@ export async function sendTelegramMessage(
   chatId: string | number,
   text: string,
   options: SendTelegramOptions = { parseMode: "HTML", disableWebPagePreview: true }
-): Promise<boolean> {
-  if (!BOT_TOKEN) {
-    console.warn("[Telegram] TELEGRAM_BOT_TOKEN не задан в переменных окружения");
-    return false;
+): Promise<SendTelegramResult> {
+  const token = getBotToken();
+
+  if (!token) {
+    const errorMsg = "Переменная TELEGRAM_BOT_TOKEN не задана в настройках хостинга (Vercel)";
+    console.warn(`[Telegram] ${errorMsg}`);
+    return { success: false, error: errorMsg };
   }
 
   try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,16 +47,19 @@ export async function sendTelegramMessage(
       }),
     });
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      console.error("[Telegram] Ошибка отправки сообщения:", errData);
-      return false;
+      const errorMsg = data.description || "Ошибка отправки в Telegram API";
+      console.error("[Telegram] Ошибка отправки сообщения:", data);
+      return { success: false, error: errorMsg };
     }
 
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
+    const errorMsg = error?.message || "Ошибка сетевого запроса к Telegram";
     console.error("[Telegram] Ошибка сетевого запроса:", error);
-    return false;
+    return { success: false, error: errorMsg };
   }
 }
 
