@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendSellerNotification } from "@/lib/mail";
+import { notifySellerContactClick } from "@/lib/telegram";
 import { sellerNotificationRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(
@@ -56,20 +57,52 @@ export async function POST(
           select: {
             title: true,
             userId: true,
-            store: { select: { name: true } },
-            user: { select: { email: true, name: true } },
+            store: { select: { name: true, telegramChatId: true } },
+            user: {
+              select: {
+                email: true,
+                name: true,
+                store: { select: { name: true, telegramChatId: true } },
+              },
+            },
           },
         });
 
-        if (product?.user?.email) {
-          const baseUrl =
-            process.env.NEXTAUTH_URL ||
-            process.env.NEXT_PUBLIC_APP_URL ||
-            "https://www.e-vitrina.com";
+        const baseUrl =
+          process.env.NEXTAUTH_URL ||
+          process.env.NEXT_PUBLIC_APP_URL ||
+          "https://www.e-vitrina.com";
 
+        const sellerName =
+          product?.user?.name ||
+          product?.store?.name ||
+          product?.user?.store?.name ||
+          "Продавец";
+
+        const tgChatId =
+          product?.store?.telegramChatId ||
+          product?.user?.store?.telegramChatId;
+
+        // 1. Мгновенный пуш в Telegram продавцу (если бот подключён)
+        if (tgChatId) {
+          try {
+            await notifySellerContactClick({
+              storeTelegramChatId: tgChatId,
+              productTitle: product?.title || "Товар",
+              channel,
+              sellerName,
+              baseUrl,
+            });
+          } catch (tgErr) {
+            console.error("Ошибка при отправке Telegram-уведомления продавцу:", tgErr);
+          }
+        }
+
+        // 2. Email-уведомление (фоллбэк)
+        if (product?.user?.email) {
           await sendSellerNotification({
             to: product.user.email,
-            sellerName: product.user.name || product.store?.name || "Продавец",
+            sellerName,
             productTitle: product.title,
             productId: id,
             channel,

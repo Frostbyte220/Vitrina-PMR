@@ -44,6 +44,7 @@ model Store {
   instagram   String?  
   phone       String?  
   telegram    String?  
+  telegramChatId String? // ID чата продавца в Telegram для отправки уведомлений о заказах и вопросах
   viber       String?  
   cities      String[] 
   

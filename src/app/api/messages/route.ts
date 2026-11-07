@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { notifySellerNewMessage } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +26,28 @@ export async function POST(req: NextRequest) {
         body: body.trim(),
       },
     });
+
+    // Мгновенное Telegram-уведомление продавцу (если бот подключён)
+    try {
+      const store = await prisma.store.findUnique({
+        where: { id: storeId },
+        select: { telegramChatId: true, name: true },
+      });
+
+      if (store?.telegramChatId) {
+        await notifySellerNewMessage({
+          storeTelegramChatId: store.telegramChatId,
+          storeName: store.name,
+          productName,
+          senderName: senderName.trim(),
+          senderContact: senderContact.trim(),
+          body: body.trim(),
+          threadToken: message.threadToken,
+        });
+      }
+    } catch (tgError) {
+      console.error("[Telegram message notification error]", tgError);
+    }
 
     return NextResponse.json({ success: true, id: message.id, threadToken: message.threadToken });
   } catch (e) {

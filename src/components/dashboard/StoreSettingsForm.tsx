@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   ArrowRight,
   Plus,
+  Bell,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
@@ -53,6 +56,12 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   const [coverUrl, setCoverUrl] = useState<string>(initialData?.coverUrl || "");
   const [uploadingType, setUploadingType] = useState<"avatar" | "cover" | null>(null);
 
+  // Telegram Notifications State
+  const [tgChatId, setTgChatId] = useState<string | null>(initialData?.telegramChatId || null);
+  const [isTestingTg, setIsTestingTg] = useState(false);
+  const [isDisconnectingTg, setIsDisconnectingTg] = useState(false);
+  const [isCheckingTg, setIsCheckingTg] = useState(false);
+
   const cleanInsta = (initialData?.instagram || initialData?.slug || "").replace(/^@/, "");
   const hasNoCities = !initialData?.cities || initialData.cities.length === 0;
 
@@ -70,6 +79,73 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   });
 
   const selectedSlug = watch("instagram") || cleanInsta;
+  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || "evitrina_notify_bot";
+  const telegramConnectUrl = initialData?.id
+    ? `https://t.me/${botUsername}?start=${initialData.id}`
+    : `https://t.me/${botUsername}`;
+
+  const handleTestTelegram = async () => {
+    setIsTestingTg(true);
+    try {
+      const res = await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("🔔 Тестовое уведомление отправлено в Telegram! Проверьте чат с ботом.");
+      } else {
+        toast.error(data.error || "Не удалось отправить сообщение");
+      }
+    } catch {
+      toast.error("Ошибка при отправке");
+    } finally {
+      setIsTestingTg(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    if (!confirm("Вы уверены, что хотите отключить уведомления в Telegram?")) return;
+    setIsDisconnectingTg(true);
+    try {
+      const res = await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect" }),
+      });
+      if (res.ok) {
+        setTgChatId(null);
+        toast.success("Telegram-уведомления отключены");
+      } else {
+        toast.error("Не удалось отключить");
+      }
+    } catch {
+      toast.error("Ошибка сети");
+    } finally {
+      setIsDisconnectingTg(false);
+    }
+  };
+
+  const handleCheckTelegram = async () => {
+    setIsCheckingTg(true);
+    try {
+      const res = await fetch("/api/telegram");
+      const data = await res.json();
+      if (data.isConnected) {
+        setTgChatId("connected");
+        toast.success("✅ Telegram успешно подключён!");
+      } else {
+        toast("Бот пока не получил команду /start. Нажмите кнопку «Подключить» и нажмите START в Telegram", {
+          icon: "ℹ️",
+        });
+      }
+    } catch {
+      toast.error("Ошибка проверки");
+    } finally {
+      setIsCheckingTg(false);
+    }
+  };
 
   const onSubmit: SubmitHandler<StoreFormData> = async (data) => {
     setIsSaving(true);
@@ -382,6 +458,105 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
             ))}
           </div>
         </div>
+      </section>
+
+      {/* 4. Telegram-уведомления */}
+      <section className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-2xs">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <Bell className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-text-main flex items-center gap-2">
+                Telegram-уведомления
+                {tgChatId ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Подключён
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                    Не подключён
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5">
+                Моментальные оповещения о новых вопросах и заказах от покупателей прямо в Telegram
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {tgChatId ? (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-emerald-900">
+                ✅ Ваш магазин успешно привязан к боту <span className="font-bold">@{botUsername}</span>
+              </p>
+            </div>
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              Как только покупатель отправит вам вопрос по товару или нажмёт связаться — бот мгновенно пришлёт сообщение со всеми деталями и ссылкой на диалог.
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleTestTelegram}
+                disabled={isTestingTg}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              >
+                <Send className="h-3.5 w-3.5" />
+                {isTestingTg ? "Отправка..." : "Отправить тест"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnectTelegram}
+                disabled={isDisconnectingTg}
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50 transition-colors"
+              >
+                {isDisconnectingTg ? "Отключение..." : "Отключить уведомления"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50/60 to-white p-4 space-y-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-gray-900">
+                Подключите официального бота @{botUsername} в 1 клик
+              </p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Вам не придётся проверять почту — уведомления о новых заказах и вопросах будут приходить прямо на экран телефона за секунду.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <a
+                href={telegramConnectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#229ED9] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-[#1E8EC4] active:scale-[0.98] transition-all"
+              >
+                <Send className="h-4 w-4" />
+                <span>Подключить Telegram</span>
+                <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+              </a>
+
+              <button
+                type="button"
+                onClick={handleCheckTelegram}
+                disabled={isCheckingTg}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${isCheckingTg ? "animate-spin" : ""}`} />
+                <span>Проверить статус</span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-500">
+              💡 Нажмите кнопку выше, в Telegram нажмите кнопку <b>START</b>, и магазин привяжется автоматически.
+            </p>
+          </div>
+        )}
       </section>
 
       <button
