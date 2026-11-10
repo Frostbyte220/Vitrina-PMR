@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/BackButton";
-import { Store, ShoppingBag, HelpCircle } from "lucide-react";
+import { Store, ShoppingBag, HelpCircle, Send, Mail } from "lucide-react";
 
 const FAQS = [
   {
@@ -72,7 +72,7 @@ const FAQS = [
       },
       {
         q: "Как сообщить о проблеме или предложить сотрудничество?",
-        a: "Напишите нам на официальную электронную почту e-vitrinapmr@mail.ru или в Instagram @evitrinapmr (https://www.instagram.com/evitrinapmr/). Мы открыты к предложениям и помогаем каждому локальному продавцу.",
+        a: "Напишите нам в Telegram @Evitrina (https://t.me/Evitrina), на официальную электронную почту e-vitrinapmr@mail.ru или в Instagram @evitrinapmr (https://www.instagram.com/evitrinapmr/). Мы открыты к предложениям и помогаем каждому локальному продавцу.",
       },
       {
         q: "Могу ли я порекомендовать магазин, которого еще нет на сайте?",
@@ -151,15 +151,27 @@ export default function FaqPage() {
         {/* Остались вопросы */}
         <div className="mt-8 rounded-2xl bg-rose-50/70 p-8 text-center border border-rose-100">
           <h2 className="text-lg font-bold text-gray-900 mb-2">Остались вопросы?</h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 mb-5">
             Напишите нам — ответим и поможем с любым вопросом.
           </p>
-          <a
-            href="mailto:e-vitrinapmr@mail.ru"
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-rose-700 shadow-xs"
-          >
-            e-vitrinapmr@mail.ru
-          </a>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="https://t.me/Evitrina"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-600 shadow-xs active:scale-98"
+            >
+              <Send className="h-4 w-4" />
+              <span>Написать в Telegram: @Evitrina</span>
+            </a>
+            <a
+              href="mailto:e-vitrinapmr@mail.ru"
+              className="inline-flex items-center gap-2 rounded-xl bg-white border border-rose-200 px-6 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 shadow-xs"
+            >
+              <Mail className="h-4 w-4" />
+              <span>e-vitrinapmr@mail.ru</span>
+            </a>
+          </div>
         </div>
 
         {/* Ссылка на регистрацию */}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Store, Lightbulb, HeartHandshake, MapPin, ShoppingBag, Users, Rocket, Heart, Instagram } from "lucide-react";
+import { Store, Lightbulb, HeartHandshake, MapPin, ShoppingBag, Users, Rocket, Heart, Instagram, Send } from "lucide-react";
 import Link from "next/link";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
 import { BackButton } from "@/components/ui/BackButton";
@@ -240,25 +240,77 @@ export default function AboutPage() {
                   напишите нам. Мы на связи каждый день.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl bg-gray-50 p-6 outline outline-1 outline-gray-200">
-                  <div className="flex-1 text-center sm:text-left">
-                    <h3 className="font-semibold text-gray-900">Электронная почта для связи:</h3>
-                    <a
-                      href="mailto:e-vitrinapmr@mail.ru"
-                      className="mt-1 inline-block text-lg font-medium text-rose-600 transition-colors hover:text-rose-700"
-                    >
-                      e-vitrinapmr@mail.ru
-                    </a>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Telegram */}
+                  <div className="flex flex-col justify-between gap-3 rounded-xl bg-sky-50/70 p-5 outline outline-1 outline-sky-200">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-sky-800 uppercase tracking-wider">
+                        <Send className="h-3.5 w-3.5 text-sky-600" />
+                        <span>Telegram для связи:</span>
+                      </div>
+                      <a
+                        href="https://t.me/Evitrina"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1.5 inline-block text-lg font-bold text-sky-700 hover:text-sky-800 hover:underline transition-colors"
+                      >
+                        @Evitrina
+                      </a>
+                      <p className="mt-1 text-xs text-sky-900/70">
+                        Быстрый ответ по вопросам сотрудничества и предложений
+                      </p>
+                    </div>
+                    <div>
+                      <a
+                        href="https://t.me/Evitrina"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700 transition shadow-xs"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        <span>Написать в Telegram</span>
+                      </a>
+                    </div>
                   </div>
-                  <CopyEmailButton email="e-vitrinapmr@mail.ru" />
+
+                  {/* Email */}
+                  <div className="flex flex-col justify-between gap-3 rounded-xl bg-gray-50 p-5 outline outline-1 outline-gray-200">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <span className="h-2 w-2 rounded-full bg-rose-500 inline-block" />
+                        <span>Электронная почта:</span>
+                      </div>
+                      <a
+                        href="mailto:e-vitrinapmr@mail.ru"
+                        className="mt-1.5 inline-block text-base font-semibold text-rose-600 hover:text-rose-700 hover:underline transition-colors"
+                      >
+                        e-vitrinapmr@mail.ru
+                      </a>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Для официальных писем и партнерских запросов
+                      </p>
+                    </div>
+                    <div>
+                      <CopyEmailButton email="e-vitrinapmr@mail.ru" />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-4 text-center sm:text-left">
+                <div className="mt-6 flex flex-wrap items-center gap-4 text-center sm:text-left">
+                  <a
+                    href="https://t.me/Evitrina"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
+                  >
+                    <Send className="h-4 w-4 text-sky-500" />
+                    <span>Telegram: <strong>@Evitrina</strong></span>
+                  </a>
                   <a
                     href="https://www.instagram.com/evitrinapmr/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-rose-600 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:text-rose-600 hover:border-gray-300 transition-colors"
                   >
                     <Instagram className="h-4 w-4 text-rose-500" />
                     <span>Официальный Instagram: <strong>@evitrinapmr</strong></span>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Heart, Store, Info, Home, Instagram, MessageSquareDot } from "lucide-react";
+import { Mail, Heart, Store, Info, Home, Instagram, MessageSquareDot, Send } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
 
 export function Footer() {
@@ -23,6 +23,16 @@ export function Footer() {
             <div className="pt-2">
               <div className="flex flex-wrap items-center gap-2">
                 <CopyEmailIconButton email="e-vitrinapmr@mail.ru" />
+                <a
+                  href="https://t.me/Evitrina"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Telegram для связи и сотрудничества: @Evitrina"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 shadow-2xs hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800 transition-colors touch-manipulation"
+                >
+                  <Send className="h-3.5 w-3.5 text-sky-500" />
+                  <span>@Evitrina</span>
+                </a>
                 <a
                   href="https://www.instagram.com/evitrinapmr/"
                   target="_blank"
@@ -101,7 +111,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                {/* 🔥 Изменили a на Link, а href заменили на /partnership */}
                 <Link
                   href="/partnership"
                   className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-rose-600 touch-manipulation"
@@ -109,6 +118,17 @@ export function Footer() {
                   <Mail className="h-4 w-4" />
                   Сотрудничество
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/Evitrina"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-gray-500 transition-colors hover:text-sky-600 touch-manipulation"
+                >
+                  <Send className="h-4 w-4 text-sky-500" />
+                  Telegram: @Evitrina
+                </a>
               </li>
             </ul>
           </div>

@@ -10,6 +10,7 @@ import {
   Instagram,
   Sparkles,
   Users,
+  Send,
 } from "lucide-react";
 import { CopyEmailIconButton } from "@/components/ui/CopyEmailIconButton";
 import { BackButton } from "@/components/ui/BackButton";
@@ -176,6 +177,15 @@ export default function PartnershipPage() {
               </p>
 
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <a
+                  href="https://t.me/Evitrina"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-600 transition shadow-sm active:scale-98"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>Написать в Telegram: @Evitrina</span>
+                </a>
                 <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 border border-gray-200 text-sm">
                   <Mail className="h-4 w-4 text-rose-600" />
                   <span className="font-semibold text-gray-800">
@@ -186,7 +196,7 @@ export default function PartnershipPage() {
               </div>
 
               <p className="mt-4 text-xs text-gray-400">
-                Отвечаем на письма и запросы в течение рабочего дня.
+                Отвечаем на сообщения в Telegram в течение часа, на почту — в течение рабочего дня.
               </p>
             </section>
 

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { StoreSettingsForm } from "@/components/dashboard/StoreSettingsForm";
 import { AccountSecurityForm } from "@/components/dashboard/AccountSecurityForm";
-import { KeyRound, ArrowDown } from "lucide-react";
+import { KeyRound, ArrowDown, Send } from "lucide-react";
 
 export const metadata = {
   title: "Настройки магазина",
@@ -105,6 +105,25 @@ export default async function DashboardSettingsPage({
           currentEmail={user?.email || ""}
           isUnclaimed={isUnclaimed}
         />
+
+        {/* ── Блок связи и поддержки для продавцов ── */}
+        <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-5 text-sm text-gray-600 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <h4 className="font-bold text-gray-900">Нужна помощь с оформлением или товарами?</h4>
+            <p className="mt-0.5 text-xs text-gray-500">
+              По техническим вопросам, предложениям или сотрудничеству пишите нам напрямую в Telegram
+            </p>
+          </div>
+          <a
+            href="https://t.me/Evitrina"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-sky-600 transition shadow-xs active:scale-98"
+          >
+            <Send className="h-4 w-4" />
+            <span>Написать: @Evitrina</span>
+          </a>
+        </div>
       </div>
     </main>
   );
