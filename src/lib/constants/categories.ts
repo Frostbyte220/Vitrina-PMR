@@ -128,6 +128,7 @@ export function getCategoryIcon(cat: string): LucideIcon {
 export const SUBCATEGORIES_MAP: Record<string, string[]> = {
   "Одежда": [
     "Платья",
+    "Свадебные платья",
     "Толстовки и свитшоты",
     "Футболки и топы",
     "Джинсы и брюки",
