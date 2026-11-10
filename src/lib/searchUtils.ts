@@ -29,6 +29,10 @@ export const BRAND_SYNONYMS: Record<string, string> = {
   xiaomi: "сяоми",
   хуавей: "huawei",
   huawei: "хуавей",
+  шавуха: "шаурма",
+  шаурма: "шавуха",
+  донер: "шаурма",
+  дёнер: "шаурма",
 };
 
 /**
