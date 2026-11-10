@@ -20,7 +20,8 @@ import {
   Link as LinkIcon,
   BadgeCheck,
   Instagram,
-  Sparkles
+  Sparkles,
+  Key
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -566,6 +567,20 @@ export function AdminClient({
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {isUnclaimed && s.user?.email && (
+                              <button
+                                onClick={() => {
+                                  const cleanInsta = (s.instagram || s.slug).replace("@", "");
+                                  const pwd = `pmr_${cleanInsta}2026`;
+                                  navigator.clipboard.writeText(`Логин: ${s.user?.email}\nПароль: ${pwd}`);
+                                  toast.success(`Временные логин и пароль "${s.name}" скопированы!`);
+                                }}
+                                className="rounded-lg p-2 text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                                title={`Скопировать данные для входа:\nЛогин: ${s.user.email}\nПароль: pmr_${(s.instagram || s.slug).replace("@", "")}2026`}
+                              >
+                                <Key className="h-4 w-4" />
+                              </button>
+                            )}
                             <a
                               href={`/shop/${s.slug}`}
                               target="_blank"
