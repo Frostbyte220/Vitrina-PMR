@@ -94,7 +94,10 @@ export function ShopCatalog({
     const counts: Record<string, number> = {};
     for (const p of products) {
       if (p.category === selectedCategory && p.subCategory) {
-        counts[p.subCategory] = (counts[p.subCategory] || 0) + 1;
+        const subs = p.subCategory.split(",").map((s) => s.trim()).filter(Boolean);
+        for (const sub of subs) {
+          counts[sub] = (counts[sub] || 0) + 1;
+        }
       }
     }
     return Object.entries(counts).map(([name, count]) => ({ name, count }));

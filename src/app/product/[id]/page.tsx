@@ -216,11 +216,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   if (product.subCategory) {
+    const primarySub = product.subCategory.split(",")[0].trim();
     breadcrumbs.push({
-      label: product.subCategory,
+      label: primarySub,
       href: product.category
-        ? `/?category=${encodeURIComponent(product.category)}&sub=${encodeURIComponent(product.subCategory)}`
-        : `/?sub=${encodeURIComponent(product.subCategory)}`,
+        ? `/?category=${encodeURIComponent(product.category)}&sub=${encodeURIComponent(primarySub)}`
+        : `/?sub=${encodeURIComponent(primarySub)}`,
     });
   }
 

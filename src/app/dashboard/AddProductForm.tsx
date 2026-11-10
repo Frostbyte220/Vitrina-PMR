@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
@@ -19,12 +19,12 @@ interface AddProductFormProps {
 
 const CATEGORIES_WITH_SUBCATEGORIES = Object.keys(SUBCATEGORIES_MAP);
 
-const getSubCategories = (category: string) => {
-  const subs = SUBCATEGORIES_MAP[category];
-  if (subs && subs.length > 0) {
-    return ["Нет", ...subs];
-  }
-  return ["Нет"];
+const parseInitialSubCategories = (rawSub?: string | null): string[] => {
+  if (!rawSub || rawSub === "Нет") return [];
+  return rawSub
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s && s !== "Нет");
 };
 
 export default function AddProductForm({ onSuccess, initialData }: AddProductFormProps) {
@@ -33,7 +33,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
-  const [subCategory, setSubCategory] = useState<string>(initialData?.subCategory || "Нет");
+  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>(() =>
+    parseInitialSubCategories(initialData?.subCategory)
+  );
   const [selectedSizes, setSelectedSizes] = useState<string[]>(
     Array.isArray(initialData?.sizes) ? initialData.sizes : []
   );
@@ -79,7 +81,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       : null;
 
   const imageUrls: string[] = watch("images") || [];
-  const currentSubCategories = getSubCategories(selectedCategory);
+  const availableSubCategories = SUBCATEGORIES_MAP[selectedCategory] || [];
   const isSizeCategory = ["Одежда", "Обувь"].includes(selectedCategory);
   const availablePresetSizes =
     selectedCategory === "Одежда"
@@ -88,13 +90,17 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       ? SHOE_SIZES
       : [];
 
-  // Сбрасываем подкатегорию при смене категории, если текущая не подходит
+  // Сбрасываем подкатегории, которые не принадлежат выбранной категории
   useEffect(() => {
     const validSubs = SUBCATEGORIES_MAP[selectedCategory] || [];
-    if (subCategory !== "Нет" && !validSubs.includes(subCategory)) {
-      setSubCategory("Нет");
-    }
-  }, [selectedCategory, subCategory]);
+    setSelectedSubCategories((prev) => prev.filter((s) => validSubs.includes(s)));
+  }, [selectedCategory]);
+
+  const toggleSubCategory = (sub: string) => {
+    setSelectedSubCategories((prev) =>
+      prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub]
+    );
+  };
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -121,7 +127,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     try {
       const payload = {
         ...data,
-        subCategory: subCategory !== "Нет" ? subCategory : undefined,
+        subCategory: selectedSubCategories.length > 0 ? selectedSubCategories.join(", ") : undefined,
         sizes: isSizeCategory ? selectedSizes : [],
         availability,
       };
@@ -148,7 +154,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         router.refresh();
       } else {
         reset();
-        setSubCategory("Нет");
+        setSelectedSubCategories([]);
         setSelectedSizes([]);
         setCustomSizeInput("");
         setAvailability("В наличии");
@@ -349,24 +355,52 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         {errors.category && <span className="text-xs text-red-500">{errors.category.message}</span>}
       </div>
 
-      {/* Подкатегория */}
+      {/* Подкатегории (мультивыбор) */}
       {CATEGORIES_WITH_SUBCATEGORIES.includes(selectedCategory) && (
-        <div className="flex flex-col gap-1 transition-all duration-300">
-          <label htmlFor="subCategory" className="text-sm font-medium text-gray-700">
-            Подкатегория
-          </label>
-          <select
-            id="subCategory"
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 cursor-pointer"
-          >
-            {currentSubCategories.map((sub) => (
-              <option key={sub} value={sub}>
-                {sub}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-gray-800">
+              Подкатегории (можно выбрать несколько)
+            </label>
+            {selectedSubCategories.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                  Выбрано: {selectedSubCategories.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategories([])}
+                  className="text-xs text-gray-400 hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  Сбросить
+                </button>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">
+            Выберите одну или несколько подходящих подкатегорий, чтобы покупателям было проще найти товар через фильтры.
+          </p>
+
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {availableSubCategories.map((sub) => {
+              const isSelected = selectedSubCategories.includes(sub);
+              return (
+                <button
+                  key={sub}
+                  type="button"
+                  onClick={() => toggleSubCategory(sub)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
+                    isSelected
+                      ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                  }`}
+                >
+                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+                  <span>{sub}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
