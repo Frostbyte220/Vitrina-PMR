@@ -158,7 +158,11 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         setSelectedSizes([]);
         setCustomSizeInput("");
         setAvailability("В наличии");
-        if (onSuccess) onSuccess();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push("/dashboard/products");
+        }
         router.refresh();
       }
     } catch (error: any) {
@@ -226,11 +230,20 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-2 flex w-full flex-col gap-4 max-h-[85vh] overflow-y-auto pr-2 pb-2"
+      className={`mt-2 flex w-full flex-col gap-4 pr-1 pb-2 ${
+        onSuccess ? "max-h-[80vh] overflow-y-auto pr-2" : ""
+      }`}
     >
-      <h3 className="mb-2 text-xl font-semibold text-gray-800">
-        {isEditing ? "Редактирование товара" : "Новый товар"}
-      </h3>
+      {onSuccess && (
+        <h3 className="mb-2 text-xl font-semibold text-gray-800">
+          {isEditing ? "Редактирование товара" : "Новый товар"}
+        </h3>
+      )}
+      {!onSuccess && isEditing && (
+        <h3 className="mb-2 text-xl font-semibold text-gray-800">
+          Редактирование товара
+        </h3>
+      )}
 
       {/* Название товара */}
       <div className="flex flex-col gap-1">
