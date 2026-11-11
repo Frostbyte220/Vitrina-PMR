@@ -19,7 +19,7 @@ import {
 import toast from "react-hot-toast";
 import {
   createStoreByInstagramAdmin,
-  QuickCreateStoreResult,
+  QuickCreateStoreSuccess,
 } from "./actions";
 import { StoreData } from "./AdminClient";
 
@@ -58,7 +58,7 @@ export function CreateStoreModal({
 
   const [showExtraFields, setShowExtraFields] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<QuickCreateStoreResult | null>(null);
+  const [result, setResult] = useState<QuickCreateStoreSuccess | null>(null);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -122,6 +122,11 @@ export function CreateStoreModal({
         viber: viber.trim() || undefined,
         description: description.trim() || undefined,
       });
+
+      if (!res.success) {
+        toast.error(res.error || "Не удалось создать витрину");
+        return;
+      }
 
       setResult(res);
       onStoreCreated(res.store as StoreData);

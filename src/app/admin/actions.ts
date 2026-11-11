@@ -10,8 +10,10 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) {
-    throw new Error("Доступ запрещен");
+  const userEmail = session?.user?.email?.toLowerCase().trim();
+  const adminEmail = ADMIN_EMAIL?.toLowerCase().trim();
+  if (!userEmail || !adminEmail || userEmail !== adminEmail) {
+    throw new Error("Доступ запрещен. Недостаточно прав администратора.");
   }
 }
 
@@ -330,8 +332,8 @@ export type QuickCreateStoreInput = {
   description?: string;
 };
 
-export type QuickCreateStoreResult = {
-  success: boolean;
+export type QuickCreateStoreSuccess = {
+  success: true;
   store: {
     id: string;
     name: string;
@@ -350,119 +352,146 @@ export type QuickCreateStoreResult = {
   directMessageTemplate: string;
 };
 
+export type QuickCreateStoreError = {
+  success: false;
+  error: string;
+};
+
+export type QuickCreateStoreResult = QuickCreateStoreSuccess | QuickCreateStoreError;
+
 export async function createStoreByInstagramAdmin(
   input: QuickCreateStoreInput
 ): Promise<QuickCreateStoreResult> {
-  await checkAdmin();
+  try {
+    await checkAdmin();
 
-  const rawInsta = input.instagram || "";
-  const cleanInsta = rawInsta
-    .replace(/^@+/, "")
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
-    .replace(/[/?#].*$/, "")
-    .replace(/[^a-zA-Z0-9._]/g, "")
-    .trim()
-    .toLowerCase();
+    const rawInsta = input.instagram || "";
+    const cleanInsta = rawInsta
+      .replace(/^@+/, "")
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+      .replace(/[/?#].*$/, "")
+      .replace(/[^a-zA-Z0-9._]/g, "")
+      .trim()
+      .toLowerCase();
 
-  if (!cleanInsta || cleanInsta.length < 2) {
-    throw new Error("Укажите корректный ник в Instagram (минимум 2 символа)");
-  }
+    if (!cleanInsta || cleanInsta.length < 2) {
+      return {
+        success: false,
+        error: "Укажите корректный ник в Instagram (минимум 2 символа)",
+      };
+    }
 
-  // Проверка уникальности слага магазина
-  const existingStore = await prisma.store.findFirst({
-    where: {
-      OR: [
-        { slug: cleanInsta },
-        { instagram: { equals: cleanInsta, mode: "insensitive" } },
-      ],
-    },
-  });
+    // Проверка уникальности слага магазина
+    const existingStore = await prisma.store.findFirst({
+      where: {
+        OR: [
+          { slug: cleanInsta },
+          { instagram: { equals: cleanInsta, mode: "insensitive" } },
+        ],
+      },
+    });
 
-  if (existingStore) {
-    throw new Error(`Магазин со слагом или Instagram «${cleanInsta}» уже существует!`);
-  }
+    if (existingStore) {
+      return {
+        success: false,
+        error: `Магазин со слагом или Instagram «${cleanInsta}» уже существует!`,
+      };
+    }
 
-  // Название витрины
-  const storeName = input.name?.trim() || cleanInsta;
+    // Название витрины
+    const storeName = input.name?.trim() || cleanInsta;
 
-  // Формируем технический dummy email
-  let dummyEmail = `${cleanInsta}@unclaimed.e-vitrina.com`;
-  const existingUser = await prisma.user.findUnique({
-    where: { email: dummyEmail },
-  });
-  if (existingUser) {
-    dummyEmail = `${cleanInsta}_${Math.floor(1000 + Math.random() * 9000)}@unclaimed.e-vitrina.com`;
-  }
+    // Формируем технический dummy email
+    let dummyEmail = `${cleanInsta}@unclaimed.e-vitrina.com`;
+    const existingUser = await prisma.user.findUnique({
+      where: { email: dummyEmail },
+    });
+    if (existingUser) {
+      dummyEmail = `${cleanInsta}_${Math.floor(1000 + Math.random() * 9000)}@unclaimed.e-vitrina.com`;
+    }
 
-  // Генерируем временный пароль для легкой передачи доступа
-  const plainPassword = `pmr_${cleanInsta}2026`;
-  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    // Генерируем временный пароль для легкой передачи доступа
+    const plainPassword = `pmr_${cleanInsta}2026`;
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-  const selectedCities =
-    input.cities && input.cities.length > 0
-      ? input.cities
-      : ["Тирасполь", "Бендеры"];
+    const selectedCities =
+      input.cities && input.cities.length > 0
+        ? input.cities
+        : ["Тирасполь", "Бендеры"];
 
-  const user = await prisma.user.create({
-    data: {
-      name: storeName,
-      email: dummyEmail,
-      password: hashedPassword,
-      instagram: cleanInsta,
-      instagramUrl: `https://instagram.com/${cleanInsta}`,
-      store: {
-        create: {
-          name: storeName,
-          slug: cleanInsta,
-          instagram: cleanInsta,
-          description: input.description?.trim() || null,
-          phone: input.phone?.trim() || null,
-          telegram: input.telegram?.replace(/^@+/, "").replace(/https?:\/\/t\.me\//i, "").trim() || null,
-          viber: input.viber?.trim() || null,
-          cities: selectedCities,
-          isVerified: false,
+    const user = await prisma.user.create({
+      data: {
+        name: storeName,
+        email: dummyEmail,
+        password: hashedPassword,
+        instagram: cleanInsta,
+        instagramUrl: `https://instagram.com/${cleanInsta}`,
+        store: {
+          create: {
+            name: storeName,
+            slug: cleanInsta,
+            instagram: cleanInsta,
+            description: input.description?.trim() || null,
+            phone: input.phone?.trim() || null,
+            telegram: input.telegram?.replace(/^@+/, "").replace(/https?:\/\/t\.me\//i, "").trim() || null,
+            viber: input.viber?.trim() || null,
+            cities: selectedCities,
+            isVerified: false,
+          },
         },
       },
-    },
-    include: {
-      store: {
-        include: {
-          _count: { select: { products: true } },
-          user: { select: { email: true } },
+      include: {
+        store: {
+          include: {
+            _count: { select: { products: true } },
+            user: { select: { email: true } },
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!user.store) {
-    throw new Error("Не удалось создать витрину магазина");
+    if (!user.store) {
+      return {
+        success: false,
+        error: "Не удалось создать профиль магазина в базе данных",
+      };
+    }
+
+    try {
+      revalidateTag("products");
+      revalidatePath("/shops");
+      revalidatePath("/");
+    } catch (revalErr) {
+      console.warn("Revalidation warning (ignored):", revalErr);
+    }
+
+    const showcaseUrl = `https://e-vitrina.com/shop/${cleanInsta}`;
+    const directMessageTemplate = `Здравствуйте! 👋\nОчень понравился ваш ассортимент и подача профиля.\n\nМы запустили локальную платформу E-Vitrina PMR, чтобы местным брендам было проще продавать, а покупателям — находить товары по городам Приднестровья.\n\nСобрали для вас аккуратную онлайн-витрину с каталогом и фильтрами по наличию:\n👉 ${showcaseUrl}\n\nЭто полностью бесплатно. Покупателям удобно листать каталог как в полноценном интернет-магазине, а заказывать они переходят прямо к вам в Direct/Telegram.\n\nВзгляните, как вам такой формат? Будем рады, если витрина сэкономит вам время на однотипных вопросах в переписке 😊`;
+
+    return {
+      success: true,
+      store: {
+        id: user.store.id,
+        name: user.store.name,
+        slug: user.store.slug,
+        instagram: user.store.instagram,
+        isVerified: user.store.isVerified,
+        createdAt: user.store.createdAt,
+        _count: user.store._count,
+        user: user.store.user,
+      },
+      credentials: {
+        email: dummyEmail,
+        password: plainPassword,
+      },
+      url: showcaseUrl,
+      directMessageTemplate,
+    };
+  } catch (err: any) {
+    console.error("[createStoreByInstagramAdmin] Error:", err);
+    return {
+      success: false,
+      error: err?.message || "Произошла ошибка при создании витрины",
+    };
   }
-
-  revalidateTag("products");
-  revalidatePath("/admin");
-  revalidatePath("/shops");
-  revalidatePath("/");
-
-  const showcaseUrl = `https://e-vitrina.com/shop/${cleanInsta}`;
-  const directMessageTemplate = `Здравствуйте! 👋\nОчень понравился ваш ассортимент и подача профиля.\n\nМы запустили локальную платформу E-Vitrina PMR, чтобы местным брендам было проще продавать, а покупателям — находить товары по городам Приднестровья.\n\nСобрали для вас аккуратную онлайн-витрину с каталогом и фильтрами по наличию:\n👉 ${showcaseUrl}\n\nЭто полностью бесплатно. Покупателям удобно листать каталог как в полноценном интернет-магазине, а заказывать они переходят прямо к вам в Direct/Telegram.\n\nВзгляните, как вам такой формат? Будем рады, если витрина сэкономит вам время на однотипных вопросах в переписке 😊`;
-
-  return {
-    success: true,
-    store: {
-      id: user.store.id,
-      name: user.store.name,
-      slug: user.store.slug,
-      instagram: user.store.instagram,
-      isVerified: user.store.isVerified,
-      createdAt: user.store.createdAt,
-      _count: user.store._count,
-      user: user.store.user,
-    },
-    credentials: {
-      email: dummyEmail,
-      password: plainPassword,
-    },
-    url: showcaseUrl,
-    directMessageTemplate,
-  };
 }
