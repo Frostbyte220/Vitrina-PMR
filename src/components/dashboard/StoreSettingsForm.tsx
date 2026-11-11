@@ -65,7 +65,7 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   const cleanInsta = (initialData?.instagram || initialData?.slug || "").replace(/^@/, "");
   const hasNoCities = !initialData?.cities || initialData.cities.length === 0;
 
-  const { register, handleSubmit, watch } = useForm<StoreFormData>({
+  const { register, handleSubmit, watch, setValue } = useForm<StoreFormData>({
     defaultValues: {
       name: initialData?.name || "",
       slug: cleanInsta,
@@ -211,6 +211,25 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
     } finally {
       setUploadingType(null);
       e.target.value = ""; 
+    }
+  };
+
+  const handleDescriptionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const val = textarea.value;
+      const nextVal = val.slice(0, start) + "\n" + val.slice(end);
+
+      setValue("description", nextVal, { shouldValidate: true, shouldDirty: true });
+      textarea.value = nextVal;
+
+      requestAnimationFrame(() => {
+        textarea.selectionStart = start + 1;
+        textarea.selectionEnd = start + 1;
+      });
     }
   };
 
@@ -368,8 +387,9 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
           <label className="text-sm font-medium text-text-main">Описание</label>
           <textarea 
             {...register("description")}
-            rows={3} 
-            className="w-full resize-none rounded-lg border border-gray-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500" 
+            rows={4} 
+            onKeyDown={handleDescriptionKeyDown}
+            className="w-full min-h-[96px] rounded-lg border border-gray-300 p-2.5 outline-none focus:ring-2 focus:ring-blue-500" 
             placeholder="Кратко расскажите о вашем магазине..." 
           />
         </div>

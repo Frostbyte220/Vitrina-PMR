@@ -176,6 +176,26 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     setValue("images", newImages, { shouldValidate: true });
   };
 
+  // Перенос строки при нажатии Ctrl + Enter (или Cmd + Enter) в описании товара
+  const handleDescriptionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const val = textarea.value;
+      const nextVal = val.slice(0, start) + "\n" + val.slice(end);
+
+      setValue("description", nextVal, { shouldValidate: true, shouldDirty: true });
+      textarea.value = nextVal;
+
+      requestAnimationFrame(() => {
+        textarea.selectionStart = start + 1;
+        textarea.selectionEnd = start + 1;
+      });
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
@@ -591,8 +611,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         <textarea
           {...register("description")}
           id="description"
-          rows={3}
-          className={`w-full resize-none rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+          rows={4}
+          onKeyDown={handleDescriptionKeyDown}
+          className={`w-full min-h-[96px] rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
             errors.description ? "border-red-500" : "border-gray-300"
           }`}
           placeholder="Напишите подробнее о товаре, материале, комплектации..."
