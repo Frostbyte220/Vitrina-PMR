@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getInstagramDeepLink } from "@/lib/utils";
 import { getAvailabilityInfo } from "@/lib/availability";
 import { trackEvent } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
@@ -163,14 +163,15 @@ export function ContactSellerButton({
   const channels: Channel[] = [];
 
   if (cleanInstagram) {
+    const igLink = getInstagramDeepLink(cleanInstagram);
     channels.push({
       id: "instagram",
       name: "Instagram Direct",
       sub: `@${cleanInstagram}`,
-      url: `https://ig.me/m/${cleanInstagram}`,
+      url: igLink.url,
       icon: Instagram,
       bgClass: "bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white shadow-sm",
-      target: isMobile ? "_self" : "_blank",
+      target: igLink.target,
     });
   }
 
@@ -228,6 +229,13 @@ export function ContactSellerButton({
           setTimeout(() => setIsCopied(false), 3000);
         }
       });
+
+      // Если iOS не перехватил deep link за 1.5 сек (приложение не установлено), открываем профиль в браузере
+      if (typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        setTimeout(() => {
+          window.location.href = `https://www.instagram.com/${cleanInstagram}/`;
+        }, 1500);
+      }
     } else {
       copyGreeting();
     }

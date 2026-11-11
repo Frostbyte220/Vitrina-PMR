@@ -16,7 +16,7 @@ import {
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getInstagramDeepLink } from "@/lib/utils";
 import {
   StoreCartGroup,
   generateStoreOrderMessage,
@@ -312,18 +312,21 @@ export function StoreCheckoutModal({
             })() : null}
 
             {/* 3. Instagram Direct */}
-            {cleanInstagram ? (
-              <a
-                href={`https://ig.me/m/${cleanInstagram}`}
-                target={isMobile ? "_self" : "_blank"}
-                rel="noopener noreferrer"
-                onClick={() => handleChannelClick("instagram")}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-all active:scale-[0.98]"
-              >
-                <Instagram className="h-4 w-4" />
-                <span>Instagram Direct</span>
-              </a>
-            ) : null}
+            {cleanInstagram ? (() => {
+              const igLink = getInstagramDeepLink(cleanInstagram);
+              return (
+                <a
+                  href={igLink.url}
+                  target={igLink.target}
+                  rel="noopener noreferrer"
+                  onClick={() => handleChannelClick("instagram")}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-all active:scale-[0.98]"
+                >
+                  <Instagram className="h-4 w-4" />
+                  <span>Instagram Direct</span>
+                </a>
+              );
+            })() : null}
 
             {/* 4. Позвонить */}
             {rawPhone ? (

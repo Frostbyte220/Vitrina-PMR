@@ -16,7 +16,7 @@ import {
   Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getInstagramDeepLink } from "@/lib/utils";
 import { getAvailabilityInfo } from "@/lib/availability";
 import { trackEvent } from "@/lib/analytics";
 
@@ -449,22 +449,25 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
             )}
 
             {/* Instagram Direct */}
-            {cleanInstagram && (
-              <a
-                href={`https://ig.me/m/${cleanInstagram}`}
-                target={isMobile ? "_self" : "_blank"}
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-3.5 py-3 text-white hover:opacity-95 transition-opacity active:scale-[0.98] shadow-xs"
-              >
-                <Instagram className="h-5 w-5 shrink-0" />
-                <div className="min-w-0 text-left">
-                  <p className="text-xs font-bold leading-tight">Instagram Direct</p>
-                  <p className="text-[11px] text-white/80 truncate leading-tight mt-0.5">
-                    @{cleanInstagram}
-                  </p>
-                </div>
-              </a>
-            )}
+            {cleanInstagram && (() => {
+              const igLink = getInstagramDeepLink(cleanInstagram);
+              return (
+                <a
+                  href={igLink.url}
+                  target={igLink.target}
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-3.5 py-3 text-white hover:opacity-95 transition-opacity active:scale-[0.98] shadow-xs"
+                >
+                  <Instagram className="h-5 w-5 shrink-0" />
+                  <div className="min-w-0 text-left">
+                    <p className="text-xs font-bold leading-tight">Instagram Direct</p>
+                    <p className="text-[11px] text-white/80 truncate leading-tight mt-0.5">
+                      @{cleanInstagram}
+                    </p>
+                  </div>
+                </a>
+              );
+            })()}
 
             {/* Позвонить */}
             {store.phone && (
