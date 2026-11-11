@@ -71,9 +71,11 @@ export function StoreCheckoutModal({
   const [mounted, setMounted] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [showOrderDonePrompt, setShowOrderDonePrompt] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    setIsMobile(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
   }, []);
 
   // Блокировка прокрутки страницы при открытой модалке
@@ -94,7 +96,9 @@ export function StoreCheckoutModal({
   const cleanInstagram = (group.contacts?.instagram || group.storeSlug || "")
     .trim()
     .replace(/^@+/, "")
-    .replace(/https?:\/\/(www\.)?instagram\.com\//, "");
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .split(/[/?#]/)[0]
+    .trim();
 
   const cleanTelegram = (group.contacts?.telegram || "")
     .trim()
@@ -311,7 +315,7 @@ export function StoreCheckoutModal({
             {cleanInstagram ? (
               <a
                 href={`https://ig.me/m/${cleanInstagram}`}
-                target="_blank"
+                target={isMobile ? "_self" : "_blank"}
                 rel="noopener noreferrer"
                 onClick={() => handleChannelClick("instagram")}
                 className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-all active:scale-[0.98]"

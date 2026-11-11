@@ -85,6 +85,7 @@ export function ContactSellerButton({
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [formData, setFormData] = useState({ name: "", contact: "", body: "" });
   const [formStatus, setFormStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -92,6 +93,7 @@ export function ContactSellerButton({
 
   useEffect(() => {
     setMounted(true);
+    setIsMobile(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
   }, []);
 
   // Блокировка прокрутки страницы при открытой модалке
@@ -105,11 +107,13 @@ export function ContactSellerButton({
     }
   }, [isModalOpen]);
 
-  // Формируем чистые контакты
+  // Формируем чистые контакты без лишних символов, слэшей и параметров
   const cleanInstagram = (contacts?.instagram || shopUsername || "")
     .trim()
     .replace(/^@+/, "")
-    .replace(/https?:\/\/(www\.)?instagram\.com\//, "");
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .split(/[/?#]/)[0]
+    .trim();
 
   const cleanTelegram = (contacts?.telegram || "")
     .trim()
@@ -166,7 +170,7 @@ export function ContactSellerButton({
       url: `https://ig.me/m/${cleanInstagram}`,
       icon: Instagram,
       bgClass: "bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white shadow-sm",
-      target: "_blank",
+      target: isMobile ? "_self" : "_blank",
     });
   }
 
@@ -371,7 +375,10 @@ export function ContactSellerButton({
                     rel="noopener noreferrer"
                     onClick={() => {
                       handleChannelClick(ch);
-                      setIsModalOpen(false);
+                      // Закрываем модалку с задержкой 350мс, чтобы браузер успел открыть ссылку
+                      setTimeout(() => {
+                        setIsModalOpen(false);
+                      }, 350);
                     }}
                     className={`group flex items-center justify-between gap-3 w-full rounded-2xl p-3 sm:p-3.5 transition-all duration-200 active:scale-[0.98] ${ch.bgClass}`}
                   >

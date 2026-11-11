@@ -57,9 +57,11 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
   const [sending, setSending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Восстанавливаем имя и контакт из localStorage, если покупатель уже писал ранее
   useEffect(() => {
+    setIsMobile(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
     try {
       const savedName = localStorage.getItem("pmr_buyer_name");
       const savedContact = localStorage.getItem("pmr_buyer_contact");
@@ -85,7 +87,12 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
 
   // Подготавливаем контакты для внешних мессенджеров
   const cleanTelegram = (store.telegram || "").trim().replace(/^@+/, "");
-  const cleanInstagram = (store.instagram || "").trim().replace(/^@+/, "").replace(/https?:\/\/(www\.)?instagram\.com\//, "");
+  const cleanInstagram = (store.instagram || "")
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .split(/[/?#]/)[0]
+    .trim();
   const rawViberOrPhone = (store.viber || store.phone || "").trim();
 
   let viberDigits = rawViberOrPhone.replace(/[^\d]/g, "");
@@ -445,7 +452,7 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
             {cleanInstagram && (
               <a
                 href={`https://ig.me/m/${cleanInstagram}`}
-                target="_blank"
+                target={isMobile ? "_self" : "_blank"}
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-3.5 py-3 text-white hover:opacity-95 transition-opacity active:scale-[0.98] shadow-xs"
               >
