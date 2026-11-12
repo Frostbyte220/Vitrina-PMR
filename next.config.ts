@@ -76,6 +76,7 @@ const nextConfig: NextConfig = {
   // Оптимизация: автоматический tree-shaking для пакетов
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "react-hot-toast"],
+    scrollRestoration: true,
   },
 
   async headers() {

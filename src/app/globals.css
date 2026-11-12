@@ -6,7 +6,9 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
+    @media (hover: hover) {
+      scroll-behavior: smooth;
+    }
     max-width: 100vw;
     overflow-x: hidden;
   }
@@ -36,6 +38,10 @@
     display: none !important;
     width: 0 !important;
     height: 0 !important;
+  }
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
   }
 }
 

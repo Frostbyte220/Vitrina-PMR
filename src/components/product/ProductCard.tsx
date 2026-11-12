@@ -178,7 +178,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
   };
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:shadow-xl">
       
       {/* 1. Шапка продавца */}
       <Link 
@@ -231,7 +231,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         <Link 
           href={`/product/${product.id}`} 
           className="block h-full w-full"
-          prefetch={true}
+          prefetch={false}
           suppressHydrationWarning
         >
           {imageUrl && !imgError ? (
@@ -244,7 +244,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               priority={priority}
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover md:transition-transform md:duration-500 md:group-hover:scale-105"
               onError={() => setImgError(true)}
             />
           ) : (
@@ -274,7 +274,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </div>
             <AvailabilityBadge availability={prod.availability} size="xs" className="self-start" />
           </div>
-          <Link href={`/product/${product.id}`} prefetch={true}>
+          <Link href={`/product/${product.id}`} prefetch={false}>
             <h3 className="mt-1 h-[2.5rem] line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
               {product.title}
             </h3>

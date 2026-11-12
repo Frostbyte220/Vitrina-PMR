@@ -94,8 +94,7 @@ export default function RootLayout({
         {/* Предзагружаем критические домены для ускорения загрузки изображений товаров */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://via.placeholder.com" />
-        <link rel="dns-prefetch" href="https://via.placeholder.com" />
+
       </head>
       <body
         // 🔥 Добавили flex и flex-col для того, чтобы футер всегда был внизу
