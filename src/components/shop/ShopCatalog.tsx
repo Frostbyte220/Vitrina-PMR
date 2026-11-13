@@ -31,6 +31,8 @@ interface ShopCatalogProps {
   categories: string[];
   /** Количество товаров по категориям (весь магазин) */
   categoryCounts: Record<string, number>;
+  /** Количество товаров по подкатегориям: { [category]: { [subCategory]: count } } */
+  subCategoryCounts: Record<string, Record<string, number>>;
   initialCategory?: string;
   initialSort?: string;
   /** Метаданные магазина для повторных запросов */
@@ -63,6 +65,7 @@ export function ShopCatalog({
   initialHasMore,
   categories,
   categoryCounts,
+  subCategoryCounts,
   initialCategory = "all",
   initialSort = "newest",
   storeMetadata,
@@ -88,20 +91,12 @@ export function ShopCatalog({
   const sortRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Подкатегории вычисляем из уже загруженных товаров — они всегда есть
+  // Подкатегории из полных данных магазина (серверные, не из текущей порции)
   const availableSubCategories = useMemo(() => {
     if (selectedCategory === "all") return [];
-    const counts: Record<string, number> = {};
-    for (const p of products) {
-      if (p.category === selectedCategory && p.subCategory) {
-        const subs = p.subCategory.split(",").map((s) => s.trim()).filter(Boolean);
-        for (const sub of subs) {
-          counts[sub] = (counts[sub] || 0) + 1;
-        }
-      }
-    }
+    const counts = subCategoryCounts[selectedCategory] || {};
     return Object.entries(counts).map(([name, count]) => ({ name, count }));
-  }, [products, selectedCategory]);
+  }, [subCategoryCounts, selectedCategory]);
 
   // Закрытие сортировки кликом вне
   useEffect(() => {

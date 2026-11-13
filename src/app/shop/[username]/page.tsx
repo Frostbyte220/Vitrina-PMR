@@ -138,7 +138,7 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     storeIsVerified: store.isVerified,
   };
 
-  const [initialData, rawCategories] = await Promise.all([
+  const [initialData, rawCategories, rawSubCategories] = await Promise.all([
     fetchShopProducts({
       ...storeMetadata,
       category: categoryFilter,
@@ -150,6 +150,10 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
       where: productWhere,
       select: { category: true },
     }),
+    prisma.product.findMany({
+      where: productWhere,
+      select: { category: true, subCategory: true },
+    }),
   ]);
 
   // Автоматический подсчет категорий и количества товаров в каждой
@@ -160,6 +164,17 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     }
   }
   const availableCategories = Object.keys(categoryCounts).sort();
+
+  // Подсчёт подкатегорий по всему магазину: { [category]: { [subCategory]: count } }
+  const subCategoryCounts: Record<string, Record<string, number>> = {};
+  for (const item of rawSubCategories) {
+    if (!item.category || !item.subCategory) continue;
+    if (!subCategoryCounts[item.category]) subCategoryCounts[item.category] = {};
+    const subs = item.subCategory.split(",").map((s) => s.trim()).filter(Boolean);
+    for (const sub of subs) {
+      subCategoryCounts[item.category][sub] = (subCategoryCounts[item.category][sub] || 0) + 1;
+    }
+  }
 
   const storeJsonLd = {
     "@context": "https://schema.org",
@@ -211,6 +226,7 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
             initialHasMore={initialData.hasMore}
             categories={availableCategories}
             categoryCounts={categoryCounts}
+            subCategoryCounts={subCategoryCounts}
             initialCategory={categoryFilter}
             initialSort={sortFilter}
             storeMetadata={storeMetadata}
