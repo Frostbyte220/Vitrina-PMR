@@ -17,6 +17,7 @@ import {
   Tag,
   LayoutGrid,
   UtensilsCrossed,
+  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +37,7 @@ export const ALL_CATEGORIES = [
   "Украшения",
   "Косметика",
   "Парфюмерия",
+  "Здоровье",
   "Еда",
   "Сладости и десерты",
   "Еда и десерты",
@@ -60,6 +62,7 @@ export const VISUAL_CATEGORIES: VisualCategoryItem[] = [
   { name: "Украшения", icon: Gem },
   { name: "Косметика", icon: Sparkles },
   { name: "Парфюмерия", icon: Droplets },
+  { name: "Здоровье", icon: HeartPulse },
   { name: "Еда", icon: UtensilsCrossed },
   { name: "Сладости и десерты", icon: Cake },
   { name: "Детские товары", icon: Baby },
@@ -90,6 +93,9 @@ export function getCategoryIcon(cat: string): LucideIcon {
       return Sparkles;
     case "парфюмерия":
       return Droplets;
+    case "здоровье":
+    case "красота и здоровье":
+      return HeartPulse;
     case "еда":
     case "еда и напитки":
     case "стритфуд":
@@ -191,6 +197,10 @@ export const SUBCATEGORIES_MAP: Record<string, string[]> = {
     "Унисекс",
     "Распив и отливанты",
     "Автопарфюм",
+  ],
+  "Здоровье": [
+    "БАДы",
+    "Витамины",
   ],
   "Еда": [
     "Шаурма и донеры",
