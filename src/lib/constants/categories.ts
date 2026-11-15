@@ -168,6 +168,7 @@ export const SUBCATEGORIES_MAP: Record<string, string[]> = {
     "Поясные сумки",
     "Клатчи",
     "Кошельки",
+    "Мужские сумки",
   ],
   "Украшения": [
     "Серьги",
