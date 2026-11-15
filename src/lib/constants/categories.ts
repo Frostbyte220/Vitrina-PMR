@@ -268,6 +268,8 @@ export const SUBCATEGORIES_MAP: Record<string, string[]> = {
     "Бытовая химия",
   ],
   "Электроника": [
+    "Apple",
+    "Android смартфоны",
     "Наушники",
     "Часы",
     "Колонки",
