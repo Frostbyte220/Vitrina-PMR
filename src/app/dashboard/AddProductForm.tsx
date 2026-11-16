@@ -221,8 +221,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const handleUpdateVariant = (id: string, field: "name" | "price" | "oldPrice", value: string) => {
     setVolumeVariants((prev) => {
       const next = prev.map((item) => (item.id === id ? { ...item, [field]: value } : item));
-      if (field === "price" && value && (!watch("price") || Number(watch("price")) === 0)) {
-        setValue("price", value as any, { shouldValidate: true });
+      if (field === "price") {
+        const validPrices = next.map((v) => Number(v.price)).filter((p) => !isNaN(p) && p > 0);
+        if (validPrices.length > 0) {
+          const minPrice = Math.min(...validPrices);
+          setValue("price", String(minPrice) as any, { shouldValidate: true });
+        }
       }
       return next;
     });
@@ -427,7 +431,13 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
             errors.title ? "border-red-500" : "border-gray-300"
           }`}
-          placeholder="Например: Платье миди из льна"
+          placeholder={
+            selectedCategories.includes("Парфюмерия")
+              ? "Например: Парфюмерная вода Baccarat Rouge 540"
+              : selectedCategories.includes("Автотовары")
+              ? "Например: Авторамки с индивидуальной надписью"
+              : "Например: Платье миди из льна"
+          }
         />
         {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
       </div>
@@ -435,9 +445,16 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       {/* Цены */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="price" className="text-sm font-medium text-gray-700">
-            Текущая цена (руб.) <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="price" className="text-sm font-medium text-gray-700">
+              Текущая цена (руб.) <span className="text-rose-500">*</span>
+            </label>
+            {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                Авто: от {getMinVariantPrice()} руб.
+              </span>
+            )}
+          </div>
           <input
             {...register("price")}
             id="price"
@@ -446,7 +463,11 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
               errors.price ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="150"
+            placeholder={
+              volumeVariants.length > 0 && getMinVariantPrice() > 0
+                ? String(getMinVariantPrice())
+                : "150"
+            }
           />
           {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
           {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
@@ -815,7 +836,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                       step="0.01"
                       value={variant.price}
                       onChange={(e) => handleUpdateVariant(variant.id, "price", e.target.value)}
-                      placeholder="220"
+                      placeholder="Цена, руб."
                       className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-bold text-gray-800"
                     />
                   </div>
@@ -825,7 +846,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                       step="0.01"
                       value={variant.oldPrice || ""}
                       onChange={(e) => handleUpdateVariant(variant.id, "oldPrice", e.target.value)}
-                      placeholder="280 (необяз.)"
+                      placeholder="Старая цена (необяз.)"
                       className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-gray-500"
                     />
                   </div>
@@ -852,7 +873,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
               className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 transition-colors shadow-2xs cursor-pointer active:scale-95"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>+ Свой объем</span>
+              <span>Свой объем</span>
             </button>
             {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
               <span className="text-[11px] text-gray-500">
