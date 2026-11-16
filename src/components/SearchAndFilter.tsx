@@ -412,6 +412,7 @@ export function SearchInput({ className = "" }: { className?: string }) {
                       <li key={product.id}>
                         <Link 
                           href={`/product/${product.id}`}
+                          prefetch={true}
                           className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group"
                           onClick={() => setShowSuggestions(false)}
                         >

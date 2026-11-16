@@ -251,6 +251,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         )}
         <Link 
           href={`/product/${product.id}`} 
+          prefetch={true}
           className="block h-full w-full"
           suppressHydrationWarning
         >
@@ -295,7 +296,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </div>
             <AvailabilityBadge availability={prod.availability} size="xs" className="self-start" />
           </div>
-          <Link href={`/product/${product.id}`}>
+          <Link href={`/product/${product.id}`} prefetch={true}>
             <h3 className="mt-1 h-[2.5rem] line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
               {product.title}
             </h3>

@@ -239,6 +239,7 @@ export default function CartPage() {
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <Link
                               href={`/product/${item.productId}`}
+                              prefetch={true}
                               className="relative h-16 w-16 sm:h-18 sm:w-18 overflow-hidden rounded-xl border border-gray-100 shrink-0 bg-gray-50"
                             >
                               {item.image ? (
@@ -258,6 +259,7 @@ export default function CartPage() {
                             <div className="min-w-0 flex-1">
                               <Link
                                 href={`/product/${item.productId}`}
+                                prefetch={true}
                                 className="font-medium text-sm text-gray-900 hover:text-rose-600 transition-colors line-clamp-1 sm:line-clamp-2"
                               >
                                 {item.title}
