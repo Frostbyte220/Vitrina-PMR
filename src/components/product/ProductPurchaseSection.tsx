@@ -18,6 +18,7 @@ interface ProductPurchaseSectionProps {
   shopUsername?: string | null;
   contacts?: StoreContacts | null;
   sizes?: string[];
+  variants?: { name: string; price: number; oldPrice?: number | null }[] | null;
   category?: string;
   imageUrl?: string | null;
   shopName?: string | null;
@@ -35,6 +36,7 @@ export function ProductPurchaseSection({
   shopUsername,
   contacts,
   sizes = [],
+  variants = [],
   category,
   imageUrl,
   shopName,
@@ -55,8 +57,14 @@ export function ProductPurchaseSection({
     setMounted(true);
   }, []);
 
-  // Выбранный размер: по умолчанию НЕ выбран (null) — клиент выбирает сам
-  const hasSizes = Array.isArray(sizes) && sizes.length > 0;
+  const isPerfume = category === "Парфюмерия";
+  const hasVariants = Array.isArray(variants) && variants.length > 0;
+  const hasSizes = (Array.isArray(sizes) && sizes.length > 0) || hasVariants;
+
+  // Если выбран вариант с отдельной ценой (например, 10 мл)
+  const activeVariant = hasVariants ? variants.find((v) => v.name === selectedSize) : null;
+  const effectivePrice = activeVariant ? activeVariant.price : productPrice;
+  const effectiveOldPrice = activeVariant ? (activeVariant.oldPrice ?? null) : oldPrice;
 
   // Проверяем, находится ли текущий вариант (или товар без размера) в корзине
   const isInCart = mounted && (
@@ -67,22 +75,21 @@ export function ProductPurchaseSection({
 
   const handleSelectSize = (size: string) => {
     setSizeError(false);
-    // Если нажимаем на уже выбранный — переключаем (или оставляем)
     setSelectedSize((prev) => (prev === size ? null : size));
   };
 
   const handleAddToCart = () => {
     if (hasSizes && !selectedSize) {
       setSizeError(true);
-      toast.error("Пожалуйста, выберите подходящий размер товара");
+      toast.error(isPerfume ? "Пожалуйста, выберите подходящий объем" : "Пожалуйста, выберите подходящий размер товара");
       return;
     }
 
     addItem({
       productId,
       title: productName,
-      price: productPrice,
-      oldPrice,
+      price: effectivePrice,
+      oldPrice: effectiveOldPrice,
       image: imageUrl || "",
       selectedSize,
       storeId,
@@ -126,7 +133,7 @@ export function ProductPurchaseSection({
 
   return (
     <>
-      {/* 1. Блок выбора размера на странице товара */}
+      {/* 1. Блок выбора объема / размера на странице товара */}
       {hasSizes && (
         <div
           className={`mt-2 rounded-2xl border p-4 shadow-sm transition-all duration-200 ${
@@ -137,51 +144,111 @@ export function ProductPurchaseSection({
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-text-main">
-              Размер:{" "}
+              {hasVariants ? (isPerfume ? "Объем:" : "Вариант / Объем:") : "Размер:"}{" "}
               {selectedSize ? (
-                <span className="font-bold text-rose-600">{selectedSize}</span>
+                <>
+                  <span className="font-bold text-rose-600">{selectedSize}</span>
+                  {hasVariants && (
+                    <span className="ml-1.5 text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">
+                      {formatPrice(effectivePrice)}
+                    </span>
+                  )}
+                </>
               ) : (
                 <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                  Выберите размер
+                  {hasVariants ? "Выберите объем" : "Выберите размер"}
                 </span>
               )}
             </span>
             <span className="text-xs text-text-muted">
-              {category === "Обувь" ? "Размер обуви" : "Размер одежды"}
+              {hasVariants
+                ? (isPerfume ? "Распив / флакон" : "Варианты")
+                : category === "Обувь"
+                ? "Размер обуви"
+                : "Размер одежды"}
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => {
-              const isSelected = selectedSize === size;
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => handleSelectSize(size)}
-                  className={`relative flex min-w-[44px] items-center justify-center rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 select-none ${
-                    isSelected
-                      ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 border-rose-600 scale-105"
-                      : "bg-white text-gray-800 border border-gray-200 hover:border-gray-400 hover:bg-gray-50 active:scale-95"
-                  }`}
-                  aria-pressed={isSelected}
-                >
-                  <span>{size}</span>
-                  {isSelected && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm border border-rose-200">
-                      <Check className="h-2.5 w-2.5 stroke-[3]" />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          {/* Варианты с ценами (для парфюмерии/распива) */}
+          {hasVariants ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {variants!.map((variant) => {
+                const isSelected = selectedSize === variant.name;
+                const hasVariantDiscount = Boolean(variant.oldPrice && variant.oldPrice > variant.price);
+                return (
+                  <button
+                    key={variant.name}
+                    type="button"
+                    onClick={() => handleSelectSize(variant.name)}
+                    className={`relative flex flex-col items-start justify-center rounded-xl p-2.5 text-left transition-all duration-200 select-none ${
+                      isSelected
+                        ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 border-rose-600 scale-[1.02]"
+                        : "bg-white text-gray-800 border border-gray-200 hover:border-gray-400 hover:bg-gray-50 active:scale-95"
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-bold text-sm leading-tight">{variant.name}</span>
+                      {isSelected && (
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm">
+                          <Check className="h-2.5 w-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                      <span className={`text-xs font-bold ${isSelected ? "text-white" : "text-rose-600"}`}>
+                        {formatPrice(variant.price)}
+                      </span>
+                      {hasVariantDiscount && (
+                        <span className={`text-[10px] line-through ${isSelected ? "text-white/70" : "text-gray-400"}`}>
+                          {formatPrice(variant.oldPrice!)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* Обычные размеры без цен (для одежды/обуви) */
+            <div className="flex flex-wrap gap-2">
+              {sizes.map((size) => {
+                const isSelected = selectedSize === size;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => handleSelectSize(size)}
+                    className={`relative flex min-w-[44px] items-center justify-center rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 select-none ${
+                      isSelected
+                        ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-200 border-rose-600 scale-105"
+                        : "bg-white text-gray-800 border border-gray-200 hover:border-gray-400 hover:bg-gray-50 active:scale-95"
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{size}</span>
+                    {isSelected && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm border border-rose-200">
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <p className="mt-2.5 text-[11px] text-text-muted">
             {selectedSize ? (
-              <span>💡 Выбранный размер <b>{selectedSize}</b> сохранится при добавлении в корзину или сообщении продавцу.</span>
+              <span>
+                💡 Выбран {hasVariants ? "объем" : "размер"} <b>{selectedSize}</b>
+                {hasVariants && <> по цене <b>{formatPrice(effectivePrice)}</b></>}.
+                Сохранится при добавлении в корзину или сообщении продавцу.
+              </span>
             ) : (
-              <span>💡 Нажмите на нужный размер, чтобы выбрать его перед покупкой или вопросом продавцу.</span>
+              <span>
+                💡 Нажмите на нужный {hasVariants ? "объем" : "размер"}, чтобы выбрать его перед покупкой или вопросом продавцу.
+              </span>
             )}
           </p>
         </div>
@@ -217,7 +284,7 @@ export function ProductPurchaseSection({
             <ContactSellerButton
               productId={productId}
               productName={productName}
-              productPrice={productPrice}
+              productPrice={effectivePrice}
               shopUsername={shopUsername}
               contacts={contacts}
               isCardView={true}
@@ -254,20 +321,24 @@ export function ProductPurchaseSection({
           <div className="mb-2 flex items-center justify-between text-xs px-1">
             {selectedSize ? (
               <>
-                <span className="text-gray-600">
-                  Выбранный размер: <strong className="text-rose-600 font-bold">{selectedSize}</strong>
+                <span className="text-gray-600 truncate">
+                  {hasVariants ? "Выбран объем:" : "Выбранный размер:"}{" "}
+                  <strong className="text-rose-600 font-bold">{selectedSize}</strong>
+                  {hasVariants && (
+                    <span className="ml-1 text-gray-800 font-bold">({formatPrice(effectivePrice)})</span>
+                  )}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedSize(null)}
-                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600"
+                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600 shrink-0 ml-2"
                 >
                   Снять выбор
                 </button>
               </>
             ) : (
-              <span className="text-amber-700 font-medium">
-                ⚠️ Размер не выбран
+              <span className="text-amber-700 font-medium text-[11px]">
+                ⚠️ {hasVariants ? "Объем не выбран" : "Размер не выбран"}
               </span>
             )}
           </div>
@@ -300,7 +371,7 @@ export function ProductPurchaseSection({
             <ContactSellerButton
               productId={productId}
               productName={productName}
-              productPrice={productPrice}
+              productPrice={effectivePrice}
               shopUsername={shopUsername}
               contacts={contacts}
               isCardView={true}

@@ -49,6 +49,7 @@ const getProduct = cache(async (id: string) => {
       categories: true,
       subCategory: true,
       sizes: true,
+      variants: true,
       availability: true,
       storeId: true,
       userId: true,
@@ -175,6 +176,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
     : null;
 
+  const productVariants = (product.variants as { name: string; price: number; oldPrice?: number | null }[] | null) || [];
+  const hasVariants = Array.isArray(productVariants) && productVariants.length > 0;
+  const variantPrices = hasVariants ? productVariants.map((v) => v.price).filter((p) => typeof p === "number" && p > 0) : [];
+  const minVariantPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price;
+
   const storeData = product.store || (product.user as any)?.store;
   const storeContacts = {
     instagram: storeData?.instagram || product.user?.instagram || "",
@@ -287,10 +293,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </h1>
               <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className={`text-2xl font-bold md:text-3xl ${hasDiscount ? "text-rose-600" : "text-primary"}`}>
-                    {formatPrice(product.price)}
+                  <span className={`text-2xl font-bold md:text-3xl ${hasDiscount && !hasVariants ? "text-rose-600" : "text-primary"}`}>
+                    {hasVariants ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
                   </span>
-                  {hasDiscount && (
+                  {hasDiscount && !hasVariants && (
                     <>
                       <span className="text-base font-medium text-gray-400 line-through md:text-lg">
                         {formatPrice(product.oldPrice!)}
@@ -364,6 +370,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               shopUsername={cleanUsername}
               contacts={storeContacts}
               sizes={product.sizes || []}
+              variants={product.variants as any}
               category={product.category}
               imageUrl={images[0]}
               shopName={shopName}

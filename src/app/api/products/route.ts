@@ -183,6 +183,7 @@ export async function POST(req: Request) {
         categories: categoriesList,
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],
+        variants: validatedData.variants && validatedData.variants.length > 0 ? (validatedData.variants as any) : undefined,
         images: validatedData.images,
         availability: validatedData.availability || "В наличии",
         userId,

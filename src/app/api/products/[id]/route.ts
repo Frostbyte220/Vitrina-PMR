@@ -45,8 +45,9 @@ export async function PATCH(
           : [validatedData.category || validatedData.categories?.[0] || "Разное"],
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],
+        variants: validatedData.variants && validatedData.variants.length > 0 ? (validatedData.variants as any) : null,
         images: validatedData.images,
-        availability: validatedData.availability || "Р’ РЅР°Р»РёС‡РёРё",
+        availability: validatedData.availability || "В наличии",
       },
     });
 

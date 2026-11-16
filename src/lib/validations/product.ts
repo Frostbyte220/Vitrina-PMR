@@ -3,6 +3,24 @@ import { ALL_CATEGORIES } from "@/lib/constants/categories";
 
 export const CATEGORIES = ALL_CATEGORIES as unknown as string[];
 
+export const productVariantSchema = z.object({
+  name: z.string().trim().min(1, "Укажите название объема или размера"),
+  price: z.coerce.number().positive("Цена должна быть больше 0").max(1000000, "Цена не может превышать 1 000 000 руб."),
+  oldPrice: z
+    .preprocess(
+      (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+      z
+        .number({ message: "Введите корректное число" })
+        .positive("Старая цена должна быть больше 0")
+        .max(1000000, "Цена не может превышать 1 000 000 руб.")
+        .nullable()
+        .optional()
+    )
+    .optional(),
+});
+
+export type ProductVariantData = z.infer<typeof productVariantSchema>;
+
 export const productSchema = z.object({
   title: z
     .string()
@@ -61,6 +79,11 @@ export const productSchema = z.object({
     .default([])
     .optional(),
 
+  variants: z
+    .array(productVariantSchema)
+    .optional()
+    .nullable(),
+
   images: z
     .array(
       z.string().url("Некорректная ссылка на изображение")
@@ -91,6 +114,10 @@ export const CLOTHING_SIZES = [
 
 export const SHOE_SIZES = [
   "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
+];
+
+export const PERFUME_VOLUME_PRESETS = [
+  "2 мл", "3 мл", "5 мл", "10 мл", "15 мл", "20 мл", "30 мл", "50 мл", "100 мл"
 ];
 
 export type ProductFormData = z.infer<typeof productSchema>;

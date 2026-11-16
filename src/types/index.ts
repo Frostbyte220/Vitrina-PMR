@@ -1,3 +1,9 @@
+export interface ProductVariant {
+  name: string;
+  price: number;
+  oldPrice?: number | null;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -11,6 +17,7 @@ export interface Product {
   shopUsername: string;
   description?: string | null; 
   sizes?: string[]; 
+  variants?: ProductVariant[] | null; // Варианты объемов/размеров с отдельными ценами 
   
   // Статус товара (например, "Активен" или "Скрыт")
   status?: string;

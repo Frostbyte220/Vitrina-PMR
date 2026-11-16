@@ -73,6 +73,7 @@ model Product {
   images      String[]  
   description String?
   sizes       String[]  @default([])
+  variants    Json?     // Варианты объемов/размеров с отдельными ценами: [{ name: "10 мл", price: 220, oldPrice: 250 }]
   status      String?   @default("Активен")
   availability String?   @default("В наличии") // "В наличии", "Под заказ", "Ожидается"
   deletedAt   DateTime? 

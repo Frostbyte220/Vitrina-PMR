@@ -5,17 +5,36 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Loader2, Check } from "lucide-react";
-import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
+import { Loader2, Check, Plus, Trash2, Sparkles } from "lucide-react";
+import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES, PERFUME_VOLUME_PRESETS } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AVAILABILITY_OPTIONS } from "@/lib/availability";
 
+interface FormVariantRow {
+  id: string;
+  name: string;
+  price: string;
+  oldPrice?: string;
+}
+
 interface AddProductFormProps {
   onSuccess?: () => void;
   initialData?: any; // Свойство для передачи существующих данных товара при редактировании
 }
+
+const parseInitialVariants = (data?: any): FormVariantRow[] => {
+  if (Array.isArray(data?.variants) && data.variants.length > 0) {
+    return data.variants.map((v: any) => ({
+      id: Math.random().toString(36).slice(2, 9),
+      name: v.name || "",
+      price: v.price !== undefined && v.price !== null ? String(v.price) : "",
+      oldPrice: v.oldPrice !== undefined && v.oldPrice !== null ? String(v.oldPrice) : "",
+    }));
+  }
+  return [];
+};
 
 const parseInitialCategories = (data?: any): string[] => {
   if (Array.isArray(data?.categories) && data.categories.length > 0) {
@@ -50,6 +69,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   );
   const [selectedSizes, setSelectedSizes] = useState<string[]>(
     Array.isArray(initialData?.sizes) ? initialData.sizes : []
+  );
+  const [volumeVariants, setVolumeVariants] = useState<FormVariantRow[]>(() =>
+    parseInitialVariants(initialData)
   );
   const [customSizeInput, setCustomSizeInput] = useState("");
   const [availability, setAvailability] = useState<string>(initialData?.availability || "В наличии");
@@ -163,16 +185,98 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     setSelectedSizes((prev) => prev.filter((s) => s !== sizeToRemove));
   };
 
+  const hasPerfume = selectedCategories.includes("Парфюмерия");
+  const isPerfumeOrHasVariants = hasPerfume || volumeVariants.length > 0;
+
+  const handleAddPresetVolume = (volName: string) => {
+    setVolumeVariants((prev) => {
+      const exists = prev.some((v) => v.name.toLowerCase() === volName.toLowerCase());
+      if (exists) {
+        return prev.filter((v) => v.name.toLowerCase() !== volName.toLowerCase());
+      }
+      return [
+        ...prev,
+        {
+          id: Math.random().toString(36).slice(2, 9),
+          name: volName,
+          price: "",
+          oldPrice: "",
+        },
+      ];
+    });
+  };
+
+  const handleAddNewVariantRow = () => {
+    setVolumeVariants((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(36).slice(2, 9),
+        name: "",
+        price: "",
+        oldPrice: "",
+      },
+    ]);
+  };
+
+  const handleUpdateVariant = (id: string, field: "name" | "price" | "oldPrice", value: string) => {
+    setVolumeVariants((prev) => {
+      const next = prev.map((item) => (item.id === id ? { ...item, [field]: value } : item));
+      if (field === "price" && value && (!watch("price") || Number(watch("price")) === 0)) {
+        setValue("price", value as any, { shouldValidate: true });
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveVariant = (id: string) => {
+    setVolumeVariants((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const getMinVariantPrice = () => {
+    const validPrices = volumeVariants
+      .map((v) => Number(v.price))
+      .filter((p) => !isNaN(p) && p > 0);
+    return validPrices.length > 0 ? Math.min(...validPrices) : 0;
+  };
+
   // Обработчик сохранения формы
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
     try {
       const primaryCat = selectedCategories[0] || "Разное";
+
+      // Валидируем и готовим варианты объемов (парфюмерия/распив)
+      const validVariants = volumeVariants
+        .filter((v) => v.name.trim() !== "" && Number(v.price) > 0)
+        .map((v) => ({
+          name: v.name.trim(),
+          price: Number(v.price),
+          oldPrice: v.oldPrice && Number(v.oldPrice) > 0 ? Number(v.oldPrice) : undefined,
+        }));
+
+      // Если указаны объемы, но основная цена 0 или не заполнена, берем минимальную
+      let finalPrice = Number(data.price) || 0;
+      if (validVariants.length > 0) {
+        const minVarPrice = Math.min(...validVariants.map((v) => v.price));
+        if (!finalPrice || finalPrice <= 0) {
+          finalPrice = minVarPrice;
+        }
+      }
+
+      // Синхронизируем sizes: для парфюмерии пишем названия объемов
+      const finalSizes = isSizeCategory
+        ? selectedSizes
+        : validVariants.length > 0
+        ? validVariants.map((v) => v.name)
+        : [];
+
       const payload = {
         ...data,
+        price: finalPrice > 0 ? finalPrice : Number(data.price),
         category: primaryCat,
         categories: selectedCategories,
         subCategory: selectedSubCategories.length > 0 ? selectedSubCategories.join(", ") : undefined,
-        sizes: isSizeCategory ? selectedSizes : [],
+        sizes: finalSizes,
+        variants: validVariants.length > 0 ? validVariants : null,
         availability,
       };
 
@@ -201,6 +305,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         setSelectedCategories([CATEGORIES[0]]);
         setSelectedSubCategories([]);
         setSelectedSizes([]);
+        setVolumeVariants([]);
         setCustomSizeInput("");
         setAvailability("В наличии");
         if (onSuccess) {
@@ -344,6 +449,15 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             placeholder="150"
           />
           {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
+          {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+            <button
+              type="button"
+              onClick={() => setValue("price", String(getMinVariantPrice()) as any, { shouldValidate: true })}
+              className="text-left text-[11px] text-purple-600 hover:text-purple-800 font-medium underline decoration-dashed transition-colors cursor-pointer"
+            >
+              Подставить мин. цену из объемов ({getMinVariantPrice()} руб.)
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -618,6 +732,134 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                 ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Объемы и цены (для парфюмерии и распива) */}
+      {isPerfumeOrHasVariants && (
+        <div className="flex flex-col gap-3 rounded-xl bg-purple-50/60 p-3.5 sm:p-4 border border-purple-200 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+              <label className="text-sm font-semibold text-gray-900">
+                Объемы и цены (для парфюмерии и распива)
+              </label>
+            </div>
+            {volumeVariants.length > 0 && (
+              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">
+                Вариантов: {volumeVariants.length}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-600">
+            Укажите объемы в наличии (например, отливанты 5 мл, 10 мл или флакон 100 мл) с отдельной ценой для каждого.
+            Покупатели смогут выбрать нужный объем прямо на странице товара.
+          </p>
+
+          {/* Быстрые пресеты объемов */}
+          <div className="flex flex-col gap-1.5 pt-0.5">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+              Быстрый выбор популярного объема:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {PERFUME_VOLUME_PRESETS.map((vol) => {
+                const isAdded = volumeVariants.some((v) => v.name.toLowerCase() === vol.toLowerCase());
+                return (
+                  <button
+                    key={vol}
+                    type="button"
+                    onClick={() => handleAddPresetVolume(vol)}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                      isAdded
+                        ? "bg-purple-600 text-white shadow-2xs ring-1 ring-purple-600"
+                        : "bg-white text-gray-700 border border-purple-200 hover:bg-purple-100/60 active:scale-95"
+                    }`}
+                  >
+                    <span>{isAdded ? "✓" : "+"}</span>
+                    <span>{vol}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Список добавленных вариантов */}
+          {volumeVariants.length > 0 && (
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-gray-500 px-1">
+                <span className="col-span-5 sm:col-span-4">Объем / Вариант *</span>
+                <span className="col-span-3 sm:col-span-3">Цена (руб.) *</span>
+                <span className="col-span-3 sm:col-span-4">Старая цена</span>
+                <span className="col-span-1 text-center"></span>
+              </div>
+
+              {volumeVariants.map((variant) => (
+                <div
+                  key={variant.id}
+                  className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-xl border border-purple-100 shadow-2xs"
+                >
+                  <div className="col-span-5 sm:col-span-4">
+                    <input
+                      type="text"
+                      value={variant.name}
+                      onChange={(e) => handleUpdateVariant(variant.id, "name", e.target.value)}
+                      placeholder="Напр: 10 мл"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-3">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.price}
+                      onChange={(e) => handleUpdateVariant(variant.id, "price", e.target.value)}
+                      placeholder="220"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-bold text-gray-800"
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-4">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.oldPrice || ""}
+                      onChange={(e) => handleUpdateVariant(variant.id, "oldPrice", e.target.value)}
+                      placeholder="280 (необяз.)"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-gray-500"
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVariant(variant.id)}
+                      className="text-gray-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                      title="Удалить объем"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Кнопка добавления новой строки и подсказка */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleAddNewVariantRow}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 transition-colors shadow-2xs cursor-pointer active:scale-95"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Свой объем</span>
+            </button>
+            {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+              <span className="text-[11px] text-gray-500">
+                💡 На витрине отобразится: <strong className="text-purple-700">«от {getMinVariantPrice()} руб.»</strong>
+              </span>
+            )}
+          </div>
         </div>
       )}
 

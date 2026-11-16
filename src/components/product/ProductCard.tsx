@@ -119,13 +119,28 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     prod.user?.store?.isVerified
   );
 
+  const productVariants = (prod.variants as { name: string; price: number; oldPrice?: number | null }[] | null) || [];
+  const hasVariants = Array.isArray(productVariants) && productVariants.length > 0;
+  const variantPrices = hasVariants
+    ? productVariants.map((v) => v.price).filter((p) => typeof p === "number" && p > 0)
+    : [];
+  const minVariantPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Если у товара есть размеры, клиент должен сам выбрать размер на странице товара
-    if (Array.isArray(prod.sizes) && prod.sizes.length > 0) {
-      toast("Пожалуйста, выберите подходящий размер", { icon: "📏" });
+    // Если у товара есть размеры или варианты объемов, клиент должен сам выбрать на странице товара
+    if (
+      (Array.isArray(prod.sizes) && prod.sizes.length > 0) ||
+      hasVariants
+    ) {
+      toast(
+        prod.category === "Парфюмерия"
+          ? "Пожалуйста, выберите объем парфюма"
+          : "Пожалуйста, выберите подходящий размер",
+        { icon: prod.category === "Парфюмерия" ? "✨" : "📏" }
+      );
       router.push(`/product/${product.id}`);
       return;
     }
@@ -263,10 +278,10 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         <div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-baseline gap-2">
-              <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-primary"}`}>
-                {formatPrice(product.price)}
+              <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price && !hasVariants ? "text-rose-600" : "text-primary"}`}>
+                {hasVariants ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
               </span>
-              {product.oldPrice && product.oldPrice > product.price && (
+              {product.oldPrice && product.oldPrice > product.price && !hasVariants && (
                 <span className="text-xs font-medium text-gray-400 line-through">
                   {formatPrice(product.oldPrice)}
                 </span>
@@ -280,8 +295,28 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </h3>
           </Link>
 
-          {/* Бейджи размеров (только если есть и категория одежда/обувь) */}
-          {Array.isArray(prod.sizes) && prod.sizes.length > 0 && (
+          {/* Бейджи объемов/вариантов (парфюмерия/распив) */}
+          {hasVariants && (
+            <div className="mt-1.5 flex flex-wrap gap-1" aria-label="Доступные объемы">
+              {productVariants.slice(0, 4).map((v) => (
+                <span
+                  key={v.name}
+                  className="inline-flex items-center gap-1 rounded-md bg-rose-50 border border-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 leading-tight"
+                >
+                  <span>{v.name}</span>
+                  <span className="text-[9px] text-rose-500 font-bold">· {formatPrice(v.price)}</span>
+                </span>
+              ))}
+              {productVariants.length > 4 && (
+                <span className="inline-block rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 leading-tight">
+                  +{productVariants.length - 4}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Бейджи размеров (только если нет вариантов и есть размеры) */}
+          {!hasVariants && Array.isArray(prod.sizes) && prod.sizes.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1" aria-label="Доступные размеры">
               {(prod.sizes as string[]).slice(0, 5).map((size: string) => (
                 <span
@@ -306,7 +341,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               <ContactSellerButton
                 productId={product.id}
                 productName={product.title}
-                productPrice={product.price}
+                productPrice={hasVariants ? minVariantPrice : product.price}
                 availability={prod.availability}
                 shopUsername={cleanInstagram}
                 contacts={storeContacts}
