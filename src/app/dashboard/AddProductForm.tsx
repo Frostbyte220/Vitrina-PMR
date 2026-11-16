@@ -44,7 +44,7 @@ const parseInitialCategories = (data?: any): string[] => {
   if (data?.category && CATEGORIES.includes(data.category)) {
     return [data.category];
   }
-  return [CATEGORIES[0]];
+  return [];
 };
 
 const parseInitialSubCategories = (rawSub?: string | null): string[] => {
@@ -93,7 +93,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           description: initialData.description || "",
           price: initialData.price ? initialData.price.toString() : ("" as any),
           oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
-          category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : CATEGORIES[0],
+          category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : "",
           categories: parseInitialCategories(initialData),
           images: initialData.images || [],
         }
@@ -102,13 +102,13 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           description: "",
           price: "" as any,
           oldPrice: "" as any,
-          category: CATEGORIES[0] as any,
-          categories: [CATEGORIES[0]],
+          category: "" as any,
+          categories: [],
           images: [],
         },
   });
 
-  const selectedCategory = selectedCategories[0] || CATEGORIES[0];
+  const selectedCategory = selectedCategories[0] || "";
   const watchPrice = Number(watch("price")) || 0;
   const watchOldPrice = Number(watch("oldPrice")) || 0;
   const discountPercent =
@@ -143,17 +143,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) => {
-      let next: string[];
-      if (prev.includes(cat)) {
-        if (prev.length <= 1) {
-          toast.error("У товара должна быть хотя бы одна категория");
-          return prev;
-        }
-        next = prev.filter((c) => c !== cat);
-      } else {
-        next = [...prev, cat];
-      }
-      setValue("category", next[0], { shouldValidate: true });
+      const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
+      setValue("category", next[0] || "", { shouldValidate: true });
       setValue("categories", next, { shouldValidate: true });
       return next;
     });
@@ -246,7 +237,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   // Обработчик сохранения формы
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
     try {
-      const primaryCat = selectedCategories[0] || "Разное";
+      if (!selectedCategories || selectedCategories.length === 0) {
+        toast.error("Пожалуйста, выберите хотя бы одну категорию товара");
+        return;
+      }
+
+      const primaryCat = selectedCategories[0];
 
       // Валидируем и готовим варианты объемов (парфюмерия/распив)
       const validVariants = volumeVariants
@@ -306,7 +302,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         router.refresh();
       } else {
         reset();
-        setSelectedCategories([CATEGORIES[0]]);
+        setSelectedCategories([]);
         setSelectedSubCategories([]);
         setSelectedSizes([]);
         setVolumeVariants([]);
@@ -553,9 +549,15 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           <label className="text-sm font-semibold text-gray-800">
             Категории товара (можно выбрать несколько) <span className="text-rose-500">*</span>
           </label>
-          <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-            Выбрано: {selectedCategories.length}
-          </span>
+          {selectedCategories.length > 0 ? (
+            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+              Выбрано: {selectedCategories.length}
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              Не выбрано
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-500">
           Выберите одну или несколько категорий (например: «Handmade» и «Автотовары»), чтобы товар находили во всех подходящих разделах.
