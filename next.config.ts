@@ -73,10 +73,15 @@ const nextConfig: NextConfig = {
         : false,
   },
 
-  // Оптимизация: автоматический tree-shaking для пакетов
+  // Оптимизация: автоматический tree-shaking для пакетов и мгновенный кэш роутера
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "react-hot-toast"],
     scrollRestoration: true,
+    // ⚡️ Мгновенные переходы: кэшируем динамические маршруты в памяти клиента
+    staleTimes: {
+      dynamic: 30, // 30 секунд кэш динамических страниц при переходах
+      static: 180, // 3 минуты кэш статических страниц
+    },
   },
 
   async headers() {

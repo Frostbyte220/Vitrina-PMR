@@ -40,12 +40,14 @@ export function Header() {
         <div className="flex items-center gap-4 lg:gap-6">
           <Link
             href="/"
-            className="shrink-0 text-base font-bold uppercase tracking-tight text-primary md:text-lg"
+            prefetch={true}
+            className="shrink-0 text-base font-bold uppercase tracking-tight text-primary md:text-lg hover:opacity-90 transition-opacity"
           >
             E-Vitrina PMR
           </Link>
           <Link
             href="/shops"
+            prefetch={true}
             className="hidden sm:inline-flex items-center text-sm font-medium text-text-muted hover:text-primary transition-colors"
           >
             Магазины

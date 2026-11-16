@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Footer } from "@/components/layout/Footer";
 import { MobileTabBarLazy } from "@/components/layout/MobileTabBarLazy";
 import { Suspense } from "react";
+import { NavigationProgressBar } from "@/components/layout/NavigationProgressBar";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { SellerOnboardingWidgetLazy } from "@/components/onboarding/SellerOnboardingWidgetLazy";
 import { FavoritesSyncProvider } from "@/components/providers/FavoritesSyncProvider";
@@ -101,6 +102,9 @@ export default function RootLayout({
         className="flex min-h-screen flex-col antialiased"
         suppressHydrationWarning={true}
       >
+        <Suspense fallback={null}>
+          <NavigationProgressBar />
+        </Suspense>
         <Suspense fallback={null}>
           <YandexMetrika />
         </Suspense>

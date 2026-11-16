@@ -17,6 +17,7 @@ import {
   Percent,
   Sparkles,
   KeyRound,
+  ShoppingBag,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { formatPrice } from "@/lib/utils";
@@ -140,13 +141,21 @@ export default async function DashboardHomePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/"
+            prefetch={true}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors shadow-2xs"
+          >
+            <ShoppingBag className="w-4 h-4 text-gray-500" />
+            <span>В каталог</span>
+          </Link>
+
           {store?.slug && (
             <Link
               href={`/shop/${store.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-xs"
+              prefetch={true}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-2xs"
             >
               <StoreIcon className="w-4 h-4 text-gray-500" />
               <span>Моя витрина</span>
@@ -156,6 +165,7 @@ export default async function DashboardHomePage() {
 
           <Link
             href="/dashboard/new"
+            prefetch={true}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold hover:bg-primary-hover transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />

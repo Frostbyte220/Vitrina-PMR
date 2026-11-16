@@ -153,6 +153,7 @@ export default async function HomePage({
         {/* Кнопка Магазинов (десктоп) с сохранением фильтра городов */}
         <Link
           href={shopsHref}
+          prefetch={true}
           className="hidden sm:flex items-center gap-2 rounded-full bg-white px-4 py-2.5 sm:px-5 text-sm font-medium text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-gray-50 hover:text-rose-800 hover:shadow-md"
         >
           <Store className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -168,6 +169,7 @@ export default async function HomePage({
         {session ? (
           <Link
             href="/dashboard"
+            prefetch={true}
             className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 sm:px-5 text-sm font-medium text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-gray-50 hover:text-rose-800 hover:shadow-md"
           >
             <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -176,6 +178,7 @@ export default async function HomePage({
         ) : (
           <Link
             href="/login"
+            prefetch={true}
             className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 sm:px-5 text-sm font-medium text-gray-700 shadow-sm outline outline-1 outline-gray-200 transition-all hover:bg-gray-50 hover:text-rose-800 hover:shadow-md"
           >
             <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />

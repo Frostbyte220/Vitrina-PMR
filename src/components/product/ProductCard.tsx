@@ -193,11 +193,16 @@ export function ProductCard({ product, priority = false, activeCities }: Product
   };
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:shadow-xl">
+    <div
+      onMouseEnter={() => router.prefetch(`/product/${product.id}`)}
+      onTouchStart={() => router.prefetch(`/product/${product.id}`)}
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:shadow-xl"
+    >
       
       {/* 1. Шапка продавца */}
       <Link 
-        href={shopHref} 
+        href={shopHref}
+        prefetch={true}
         className="flex items-center gap-2 p-3 group/header hover:bg-gray-50 transition-colors cursor-pointer"
       >
         <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gray-100 border border-gray-200 shrink-0">
@@ -246,7 +251,6 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         <Link 
           href={`/product/${product.id}`} 
           className="block h-full w-full"
-          prefetch={false}
           suppressHydrationWarning
         >
           {imageUrl && !imgError ? (
@@ -289,7 +293,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
             </div>
             <AvailabilityBadge availability={prod.availability} size="xs" className="self-start" />
           </div>
-          <Link href={`/product/${product.id}`} prefetch={false}>
+          <Link href={`/product/${product.id}`}>
             <h3 className="mt-1 h-[2.5rem] line-clamp-2 text-sm font-medium leading-snug text-text-main hover:text-rose-700 transition-colors">
               {product.title}
             </h3>
