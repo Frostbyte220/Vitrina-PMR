@@ -253,6 +253,11 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           oldPrice: v.oldPrice && Number(v.oldPrice) > 0 ? Number(v.oldPrice) : undefined,
         }));
 
+      if (hasPerfume && validVariants.length === 0) {
+        toast.error("Пожалуйста, укажите хотя бы один объем и цену товара в блоке «Объемы и цены»");
+        return;
+      }
+
       // Если указаны объемы, но основная цена 0 или не заполнена, берем минимальную
       let finalPrice = Number(data.price) || 0;
       if (validVariants.length > 0) {
@@ -438,75 +443,77 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
       </div>
 
-      {/* Цены */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <label htmlFor="price" className="text-sm font-medium text-gray-700">
-              Текущая цена (руб.) <span className="text-rose-500">*</span>
-            </label>
+      {/* Цены (скрываем для парфюмерии, где цены задаются для каждого объема отдельно) */}
+      {!hasPerfume && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <label htmlFor="price" className="text-sm font-medium text-gray-700">
+                Текущая цена (руб.) <span className="text-rose-500">*</span>
+              </label>
+              {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+                <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                  Авто: от {getMinVariantPrice()} руб.
+                </span>
+              )}
+            </div>
+            <input
+              {...register("price")}
+              id="price"
+              type="number"
+              step="0.01"
+              className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+                errors.price ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder={
+                volumeVariants.length > 0 && getMinVariantPrice() > 0
+                  ? String(getMinVariantPrice())
+                  : "150"
+              }
+            />
+            {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
             {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
-              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
-                Авто: от {getMinVariantPrice()} руб.
-              </span>
+              <button
+                type="button"
+                onClick={() => setValue("price", String(getMinVariantPrice()) as any, { shouldValidate: true })}
+                className="text-left text-[11px] text-purple-600 hover:text-purple-800 font-medium underline decoration-dashed transition-colors cursor-pointer"
+              >
+                Подставить мин. цену из объемов ({getMinVariantPrice()} руб.)
+              </button>
             )}
           </div>
-          <input
-            {...register("price")}
-            id="price"
-            type="number"
-            step="0.01"
-            className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
-              errors.price ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder={
-              volumeVariants.length > 0 && getMinVariantPrice() > 0
-                ? String(getMinVariantPrice())
-                : "150"
-            }
-          />
-          {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
-          {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
-            <button
-              type="button"
-              onClick={() => setValue("price", String(getMinVariantPrice()) as any, { shouldValidate: true })}
-              className="text-left text-[11px] text-purple-600 hover:text-purple-800 font-medium underline decoration-dashed transition-colors cursor-pointer"
-            >
-              Подставить мин. цену из объемов ({getMinVariantPrice()} руб.)
-            </button>
-          )}
-        </div>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
-              Старая цена (руб.)
-            </label>
-            {discountPercent !== null && (
-              <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
-                Скидка -{discountPercent}%
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
+                Старая цена (руб.)
+              </label>
+              {discountPercent !== null && (
+                <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                  Скидка -{discountPercent}%
+                </span>
+              )}
+            </div>
+            <input
+              {...register("oldPrice")}
+              id="oldPrice"
+              type="number"
+              step="0.01"
+              className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
+                errors.oldPrice ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="200 (необязательно)"
+            />
+            {errors.oldPrice ? (
+              <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
+            ) : (
+              <span className="text-[11px] text-gray-400">
+                Укажите, чтобы показать скидку и зачеркнутую цену
               </span>
             )}
           </div>
-          <input
-            {...register("oldPrice")}
-            id="oldPrice"
-            type="number"
-            step="0.01"
-            className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
-              errors.oldPrice ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="200 (необязательно)"
-          />
-          {errors.oldPrice ? (
-            <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
-          ) : (
-            <span className="text-[11px] text-gray-400">
-              Укажите, чтобы показать скидку и зачеркнутую цену
-            </span>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Статус наличия товара */}
       <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200">
@@ -883,6 +890,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
               </span>
             )}
           </div>
+
+          {errors.variants && (
+            <p className="text-xs text-rose-600 font-medium pt-0.5">
+              {errors.variants.message as string}
+            </p>
+          )}
         </div>
       )}
 

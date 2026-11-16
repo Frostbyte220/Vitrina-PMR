@@ -36,10 +36,14 @@ export const productSchema = z.object({
     .or(z.literal("")),
   
   price: z
-    .coerce
-    .number()
-    .positive("Укажите корректную цену больше 0")
-    .max(1000000, "Цена не может превышать 1 000 000 руб."),
+    .preprocess(
+      (val) => (val === "" || val === null || val === undefined ? 0 : Number(val)),
+      z
+        .number({ message: "Введите корректное число" })
+        .nonnegative("Цена не может быть отрицательной")
+        .max(1000000, "Цена не может превышать 1 000 000 руб.")
+    )
+    .default(0),
 
   oldPrice: z
     .preprocess(
@@ -100,7 +104,24 @@ export const productSchema = z.object({
     path: ["categories"],
   }
 ).refine(
-  (data) => !data.oldPrice || data.oldPrice > data.price,
+  (data) => {
+    const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
+    const hasValidVariants = Array.isArray(data.variants) && data.variants.some((v) => v && v.price > 0);
+    if (isPerfume) {
+      return hasValidVariants || data.price > 0;
+    }
+    return data.price > 0;
+  },
+  {
+    message: "Пожалуйста, укажите хотя бы один объем и цену товара",
+    path: ["variants"],
+  }
+).refine(
+  (data) => {
+    const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
+    if (isPerfume && (!data.oldPrice || data.price === 0)) return true;
+    return !data.oldPrice || data.oldPrice > data.price;
+  },
   {
     message: "Старая цена должна быть выше текущей цены со скидкой",
     path: ["oldPrice"],
