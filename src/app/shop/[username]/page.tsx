@@ -239,6 +239,7 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
             initialCategory={categoryFilter}
             initialSort={sortFilter}
             storeMetadata={storeMetadata}
+            allProductsCount={rawCategories.length}
           />
         </div>
       </main>

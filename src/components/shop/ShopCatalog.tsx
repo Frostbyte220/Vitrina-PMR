@@ -37,6 +37,8 @@ interface ShopCatalogProps {
   initialSort?: string;
   /** Метаданные магазина для повторных запросов */
   storeMetadata: StoreMetadata;
+  /** Общее реальное количество уникальных товаров в магазине */
+  allProductsCount?: number;
 }
 
 const TAKE = 12;
@@ -69,14 +71,15 @@ export function ShopCatalog({
   initialCategory = "all",
   initialSort = "newest",
   storeMetadata,
+  allProductsCount,
 }: ShopCatalogProps) {
   // ── Состояние товаров ──────────────────────────────────────────────────────
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [hasMore, setHasMore] = useState(initialHasMore);
-
   // ── Состояние фильтров ─────────────────────────────────────────────────────
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const totalAllProducts = allProductsCount ?? (initialCategory === "all" ? initialTotalCount : initialProducts.length);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
   const [selectedSort, setSelectedSort] = useState<SortValue>(
     (SORT_OPTIONS.some((o) => o.value === initialSort) ? initialSort : "newest") as SortValue
@@ -308,7 +311,7 @@ export function ShopCatalog({
                   : "bg-gray-100 text-gray-600 group-hover:bg-gray-200/80"
               }`}
             >
-              {Object.values(categoryCounts).reduce((a, b) => a + b, 0)}
+              {totalAllProducts}
             </span>
           </button>
 
