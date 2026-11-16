@@ -148,19 +148,22 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
     }),
     prisma.product.findMany({
       where: productWhere,
-      select: { category: true },
+      select: { category: true, categories: true },
     }),
     prisma.product.findMany({
       where: productWhere,
-      select: { category: true, subCategory: true },
+      select: { category: true, categories: true, subCategory: true },
     }),
   ]);
 
   // Автоматический подсчет категорий и количества товаров в каждой
   const categoryCounts: Record<string, number> = {};
   for (const item of rawCategories) {
-    if (item.category) {
-      categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+    const cats = Array.isArray(item.categories) && item.categories.length > 0
+      ? item.categories
+      : (item.category ? [item.category] : []);
+    for (const cat of cats) {
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
     }
   }
   const availableCategories = Object.keys(categoryCounts).sort();
@@ -168,11 +171,17 @@ export default async function ShopPage({ params, searchParams }: ShopPageProps) 
   // Подсчёт подкатегорий по всему магазину: { [category]: { [subCategory]: count } }
   const subCategoryCounts: Record<string, Record<string, number>> = {};
   for (const item of rawSubCategories) {
-    if (!item.category || !item.subCategory) continue;
-    if (!subCategoryCounts[item.category]) subCategoryCounts[item.category] = {};
+    if (!item.subCategory) continue;
+    const cats = Array.isArray(item.categories) && item.categories.length > 0
+      ? item.categories
+      : (item.category ? [item.category] : []);
     const subs = item.subCategory.split(",").map((s) => s.trim()).filter(Boolean);
-    for (const sub of subs) {
-      subCategoryCounts[item.category][sub] = (subCategoryCounts[item.category][sub] || 0) + 1;
+
+    for (const cat of cats) {
+      if (!subCategoryCounts[cat]) subCategoryCounts[cat] = {};
+      for (const sub of subs) {
+        subCategoryCounts[cat][sub] = (subCategoryCounts[cat][sub] || 0) + 1;
+      }
     }
   }
 

@@ -56,9 +56,19 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
   if (category && category !== "all" && category !== "Все товары") {
     const aliases = CATEGORY_ALIASES[category];
     if (aliases && aliases.length > 0) {
-      conditions.push({ category: { in: aliases } });
+      conditions.push({
+        OR: [
+          { category: { in: aliases } },
+          { categories: { hasSome: aliases } },
+        ],
+      });
     } else {
-      conditions.push({ category });
+      conditions.push({
+        OR: [
+          { category },
+          { categories: { has: category } },
+        ],
+      });
     }
   }
 
@@ -102,6 +112,7 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
           price: true,
           oldPrice: true,
           category: true,
+          categories: true,
           subCategory: true,
           sizes: true,
           availability: true,
@@ -124,6 +135,7 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
       price: item.price,
       oldPrice: item.oldPrice,
       category: item.category,
+      categories: item.categories || (item.category ? [item.category] : []),
       subCategory: item.subCategory,
       sizes: item.sizes || [],
       images:

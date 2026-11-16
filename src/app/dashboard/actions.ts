@@ -37,11 +37,15 @@ export async function createProduct(arg1: any, arg2?: any) {
       return { error: "Магазин (пользователь) не найден в базе данных" };
     }
 
+    const formCategories = formData.getAll("categories").filter(Boolean) as string[];
+    const formCategory = (formData.get("category") as string) || (formCategories[0] ?? "Обувь");
+
     const rawData = {
       title: formData.get("title"),
       price: formData.get("price"),
       description: formData.get("description") || "",
-      category: formData.get("category") || "Обувь",
+      category: formCategory,
+      categories: formCategories.length > 0 ? formCategories : [formCategory],
       images: formData.getAll("images").filter(Boolean),
     };
 
@@ -70,13 +74,19 @@ export async function createProduct(arg1: any, arg2?: any) {
       ? subCategoryStr 
       : null;
 
+    const primaryCat = validatedFields.data.category || validatedFields.data.categories?.[0] || "Разное";
+    const catsList = validatedFields.data.categories && validatedFields.data.categories.length > 0
+      ? validatedFields.data.categories
+      : [primaryCat];
+
     await prisma.product.create({
       data: {
         title,
         price,
         images,
         description: description || null,
-        category,
+        category: primaryCat,
+        categories: catsList,
         subCategory, // <-- Передаем в БД
         status: "Активен",
         availability: (formData.get("availability") as string) || "В наличии",
@@ -196,11 +206,15 @@ export async function updateProduct(id: string, formData: FormData) {
       return { error: "У вас нет прав на редактирование этого товара" };
     }
 
+    const formCategories = formData.getAll("categories").filter(Boolean) as string[];
+    const formCategory = (formData.get("category") as string) || product.category;
+
     const rawData = {
       title: formData.get("title"),
       price: formData.get("price"),
       description: formData.get("description") || "",
-      category: formData.get("category") || product.category,
+      category: formCategory,
+      categories: formCategories.length > 0 ? formCategories : ((product as any).categories?.length ? (product as any).categories : [formCategory]),
       images: formData.getAll("images").filter(Boolean),
     };
 
@@ -228,6 +242,11 @@ export async function updateProduct(id: string, formData: FormData) {
       ? subCategoryStr 
       : null;
 
+    const primaryCat = validatedFields.data.category || validatedFields.data.categories?.[0] || "Разное";
+    const catsList = validatedFields.data.categories && validatedFields.data.categories.length > 0
+      ? validatedFields.data.categories
+      : [primaryCat];
+
     await prisma.product.update({
       where: { id },
       data: {
@@ -235,7 +254,8 @@ export async function updateProduct(id: string, formData: FormData) {
         price,
         images,
         description: description || null,
-        category,
+        category: primaryCat,
+        categories: catsList,
         subCategory, // <-- Обновляем в БД
       },
     });
@@ -333,6 +353,7 @@ export async function duplicateProduct(id: string) {
         price: true,
         oldPrice: true,
         category: true,
+        categories: true,
         subCategory: true,
         sizes: true,
         images: true,
@@ -352,6 +373,7 @@ export async function duplicateProduct(id: string) {
         price: original.price,
         oldPrice: original.oldPrice,
         category: original.category,
+        categories: original.categories?.length ? original.categories : [original.category],
         subCategory: original.subCategory,
         sizes: original.sizes,
         images: original.images,

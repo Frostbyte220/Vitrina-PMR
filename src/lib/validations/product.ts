@@ -37,8 +37,13 @@ export const productSchema = z.object({
   
   category: z
     .string()
-    .min(1, "Пожалуйста, выберите категорию")
-    .refine((val) => CATEGORIES.includes(val), "Выбрана недопустимая категория"),
+    .optional(),
+
+  categories: z
+    .array(
+      z.string().refine((val) => CATEGORIES.includes(val), "Выбрана недопустимая категория")
+    )
+    .optional(),
 
   // Добавлено поле подкатегории, чтобы бэкенд пропускал это значение в БД
   subCategory: z
@@ -62,6 +67,16 @@ export const productSchema = z.object({
     )
     .min(1, "Добавьте хотя бы одно изображение"),
 }).refine(
+  (data) => {
+    const hasCategory = Boolean(data.category && CATEGORIES.includes(data.category));
+    const hasCategories = Boolean(data.categories && data.categories.length > 0);
+    return hasCategory || hasCategories;
+  },
+  {
+    message: "Пожалуйста, выберите хотя бы одну категорию",
+    path: ["categories"],
+  }
+).refine(
   (data) => !data.oldPrice || data.oldPrice > data.price,
   {
     message: "Старая цена должна быть выше текущей цены со скидкой",

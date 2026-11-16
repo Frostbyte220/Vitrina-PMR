@@ -46,6 +46,7 @@ const getProduct = cache(async (id: string) => {
       images: true,
       status: true,
       category: true,
+      categories: true,
       subCategory: true,
       sizes: true,
       availability: true,
@@ -304,6 +305,29 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             </div>
 
+            {/* Категории и подкатегории товара */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {((product.categories && product.categories.length > 0) ? product.categories : [product.category]).filter(Boolean).map((cat: string) => (
+                <Link
+                  key={cat}
+                  href={`/?category=${encodeURIComponent(cat)}`}
+                  className="inline-flex items-center gap-1 rounded-lg bg-gray-100 hover:bg-rose-50 hover:text-rose-600 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors"
+                >
+                  <span>{cat}</span>
+                </Link>
+              ))}
+              {product.subCategory &&
+                product.subCategory.split(",").map((s) => s.trim()).filter(Boolean).map((sub: string) => (
+                  <Link
+                    key={sub}
+                    href={`/?sub=${encodeURIComponent(sub)}`}
+                    className="inline-flex items-center gap-1 rounded-lg bg-gray-50 border border-gray-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors"
+                  >
+                    <span>{sub}</span>
+                  </Link>
+                ))}
+            </div>
+
             {/* Добавлен whitespace-pre-wrap для сохранения переносов строк в описании */}
             <p className="text-sm leading-relaxed text-text-muted md:text-base whitespace-pre-wrap">
               {product.description}
@@ -387,6 +411,7 @@ const productCardSelect = {
   oldPrice: true,
   images: true,
   category: true,
+  categories: true,
   subCategory: true,
   sizes: true,
   store: {
@@ -485,7 +510,10 @@ async function RelatedProductsSection({
         id: { not: productId },
         deletedAt: null,
         status: "Активен",
-        category,
+        OR: [
+          { category },
+          { categories: { has: category } },
+        ],
         ...(sellerConditions.length > 0
           ? {
               NOT: {
@@ -509,7 +537,10 @@ async function RelatedProductsSection({
         id: { notIn: Array.from(storeProductIds) },
         deletedAt: null,
         status: "Активен",
-        category,
+        OR: [
+          { category },
+          { categories: { has: category } },
+        ],
       },
       take: 8,
       orderBy: { createdAt: "desc" },

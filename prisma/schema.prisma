@@ -68,6 +68,7 @@ model Product {
   price       Float
   oldPrice    Float?
   category    String    @default("Разное")
+  categories  String[]  @default([])
   subCategory String?   
   images      String[]  
   description String?

@@ -64,9 +64,19 @@ export default async function HomePage({
   if (category && category !== "Все") {
     const aliases = CATEGORY_ALIASES[category];
     if (aliases && aliases.length > 0) {
-      conditions.push({ category: { in: aliases } });
+      conditions.push({
+        OR: [
+          { category: { in: aliases } },
+          { categories: { hasSome: aliases } },
+        ],
+      });
     } else {
-      conditions.push({ category });
+      conditions.push({
+        OR: [
+          { category },
+          { categories: { has: category } },
+        ],
+      });
     }
   }
 

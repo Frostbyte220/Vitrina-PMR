@@ -348,7 +348,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                        <span className="truncate">{product.category}</span>
+                        <span className="truncate">{product.categories && product.categories.length > 0 ? product.categories.join(", ") : product.category}</span>
                         {product.subCategory && (
                           <>
                             <span>•</span>
@@ -543,7 +543,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="text-gray-900">{product.category}</span>
+                          <span className="text-gray-900">{product.categories && product.categories.length > 0 ? product.categories.join(", ") : product.category}</span>
                           {product.subCategory && (
                             <span className="text-xs text-gray-500">{product.subCategory}</span>
                           )}

@@ -104,7 +104,10 @@ export function ProductCatalogClient({
       // Категория с учётом синонимов (алиасов)
       if (hasCategory) {
         const aliases = CATEGORY_ALIASES[category!] || [category!];
-        if (!aliases.includes(p.category)) return false;
+        const pCats: string[] = Array.isArray(p.categories) && p.categories.length > 0
+          ? p.categories
+          : (p.category ? [p.category] : []);
+        if (!pCats.some((c) => aliases.includes(c))) return false;
       }
 
       // Подкатегория (умный поиск: точное совпадение subCategory, вхождение подстроки или вхождение в title)
@@ -148,7 +151,7 @@ export function ProductCatalogClient({
       if (q) {
         const title = (p.title || "").toLowerCase();
         const desc = (p.description || "").toLowerCase();
-        const cat = (p.category || "").toLowerCase();
+        const cat = (Array.isArray(p.categories) ? p.categories.join(" ") : p.category || "").toLowerCase();
         const sub = (p.subCategory || "").toLowerCase();
         const storeName = (p.store?.name || p.user?.store?.name || "").toLowerCase();
         const combined = `${title} ${desc} ${cat} ${sub} ${storeName}`;

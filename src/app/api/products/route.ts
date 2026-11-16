@@ -49,9 +49,19 @@ export async function GET(request: Request) {
   if (category && category !== "Все") {
     const aliases = CATEGORY_ALIASES[category];
     if (aliases && aliases.length > 0) {
-      conditions.push({ category: { in: aliases } });
+      conditions.push({
+        OR: [
+          { category: { in: aliases } },
+          { categories: { hasSome: aliases } },
+        ],
+      });
     } else {
-      conditions.push({ category });
+      conditions.push({
+        OR: [
+          { category },
+          { categories: { has: category } },
+        ],
+      });
     }
   }
   if (sub) {
@@ -158,13 +168,19 @@ export async function POST(req: Request) {
       select: { id: true },
     });
 
+    const primaryCategory = validatedData.category || validatedData.categories?.[0] || "Разное";
+    const categoriesList = validatedData.categories && validatedData.categories.length > 0
+      ? validatedData.categories
+      : [primaryCategory];
+
     const newProduct = await prisma.product.create({
       data: {
         title: validatedData.title,
         description: validatedData.description || "",
         price: validatedData.price,
         oldPrice: validatedData.oldPrice ?? null,
-        category: validatedData.category,
+        category: primaryCategory,
+        categories: categoriesList,
         subCategory: validatedData.subCategory || null,
         sizes: validatedData.sizes || [],
         images: validatedData.images,

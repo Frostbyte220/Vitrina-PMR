@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { Loader2, Check } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
-import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
+import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AVAILABILITY_OPTIONS } from "@/lib/availability";
@@ -17,7 +17,16 @@ interface AddProductFormProps {
   initialData?: any; // Свойство для передачи существующих данных товара при редактировании
 }
 
-const CATEGORIES_WITH_SUBCATEGORIES = Object.keys(SUBCATEGORIES_MAP);
+const parseInitialCategories = (data?: any): string[] => {
+  if (Array.isArray(data?.categories) && data.categories.length > 0) {
+    const valid = data.categories.filter((c: string) => CATEGORIES.includes(c));
+    if (valid.length > 0) return valid;
+  }
+  if (data?.category && CATEGORIES.includes(data.category)) {
+    return [data.category];
+  }
+  return [CATEGORIES[0]];
+};
 
 const parseInitialSubCategories = (rawSub?: string | null): string[] => {
   if (!rawSub || rawSub === "Нет") return [];
@@ -33,6 +42,9 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
+    parseInitialCategories(initialData)
+  );
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>(() =>
     parseInitialSubCategories(initialData?.subCategory)
   );
@@ -60,6 +72,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           price: initialData.price ? initialData.price.toString() : ("" as any),
           oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
           category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : CATEGORIES[0],
+          categories: parseInitialCategories(initialData),
           images: initialData.images || [],
         }
       : {
@@ -68,11 +81,12 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           price: "" as any,
           oldPrice: "" as any,
           category: CATEGORIES[0] as any,
+          categories: [CATEGORIES[0]],
           images: [],
         },
   });
 
-  const selectedCategory = watch("category");
+  const selectedCategory = selectedCategories[0] || CATEGORIES[0];
   const watchPrice = Number(watch("price")) || 0;
   const watchOldPrice = Number(watch("oldPrice")) || 0;
   const discountPercent =
@@ -81,20 +95,47 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       : null;
 
   const imageUrls: string[] = watch("images") || [];
-  const availableSubCategories = SUBCATEGORIES_MAP[selectedCategory] || [];
-  const isSizeCategory = ["Одежда", "Обувь"].includes(selectedCategory);
-  const availablePresetSizes =
-    selectedCategory === "Одежда"
-      ? CLOTHING_SIZES
-      : selectedCategory === "Обувь"
-      ? SHOE_SIZES
-      : [];
+  const activeCategoriesWithSubs = selectedCategories.filter(
+    (cat) => SUBCATEGORIES_MAP[cat] && SUBCATEGORIES_MAP[cat].length > 0
+  );
 
-  // Сбрасываем подкатегории, которые не принадлежат выбранной категории
+  const hasClothing = selectedCategories.includes("Одежда");
+  const hasShoes = selectedCategories.includes("Обувь");
+  const isSizeCategory = hasClothing || hasShoes;
+  const availablePresetSizes = hasClothing && hasShoes
+    ? Array.from(new Set([...CLOTHING_SIZES, ...SHOE_SIZES]))
+    : hasClothing
+    ? CLOTHING_SIZES
+    : hasShoes
+    ? SHOE_SIZES
+    : [];
+
+  // Сбрасываем подкатегории, которые не принадлежат ни одной из выбранных категорий
   useEffect(() => {
-    const validSubs = SUBCATEGORIES_MAP[selectedCategory] || [];
-    setSelectedSubCategories((prev) => prev.filter((s) => validSubs.includes(s)));
-  }, [selectedCategory]);
+    const validSubs = new Set<string>();
+    selectedCategories.forEach((cat) => {
+      (SUBCATEGORIES_MAP[cat] || []).forEach((s) => validSubs.add(s));
+    });
+    setSelectedSubCategories((prev) => prev.filter((s) => validSubs.has(s)));
+  }, [selectedCategories]);
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories((prev) => {
+      let next: string[];
+      if (prev.includes(cat)) {
+        if (prev.length <= 1) {
+          toast.error("У товара должна быть хотя бы одна категория");
+          return prev;
+        }
+        next = prev.filter((c) => c !== cat);
+      } else {
+        next = [...prev, cat];
+      }
+      setValue("category", next[0], { shouldValidate: true });
+      setValue("categories", next, { shouldValidate: true });
+      return next;
+    });
+  };
 
   const toggleSubCategory = (sub: string) => {
     setSelectedSubCategories((prev) =>
@@ -125,8 +166,11 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   // Обработчик сохранения формы
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
     try {
+      const primaryCat = selectedCategories[0] || "Разное";
       const payload = {
         ...data,
+        category: primaryCat,
+        categories: selectedCategories,
         subCategory: selectedSubCategories.length > 0 ? selectedSubCategories.join(", ") : undefined,
         sizes: isSizeCategory ? selectedSizes : [],
         availability,
@@ -154,6 +198,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         router.refresh();
       } else {
         reset();
+        setSelectedCategories([CATEGORIES[0]]);
         setSelectedSubCategories([]);
         setSelectedSizes([]);
         setCustomSizeInput("");
@@ -367,30 +412,59 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         </div>
       </div>
 
-      {/* Категория */}
-      <div className="flex flex-col gap-1">
-        <label htmlFor="category" className="text-sm font-medium text-gray-700">
-          Категория <span className="text-rose-500">*</span>
-        </label>
-        <select
-          {...register("category")}
-          id="category"
-          className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 cursor-pointer ${
-            errors.category ? "border-red-500" : "border-gray-300"
-          }`}
-        >
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-        {errors.category && <span className="text-xs text-red-500">{errors.category.message}</span>}
+      {/* Выбор категорий (мультивыбор) */}
+      <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-gray-800">
+            Категории товара (можно выбрать несколько) <span className="text-rose-500">*</span>
+          </label>
+          <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+            Выбрано: {selectedCategories.length}
+          </span>
+        </div>
+        <p className="text-xs text-gray-500">
+          Выберите одну или несколько категорий (например: «Handmade» и «Автотовары»), чтобы товар находили во всех подходящих разделах.
+        </p>
+
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategories.includes(cat);
+            const isPrimary = selectedCategories[0] === cat;
+            const Icon = getCategoryIcon(cat);
+
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => toggleCategory(cat)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
+                  isSelected
+                    ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                }`}
+              >
+                <Icon className={`h-3.5 w-3.5 shrink-0 ${isSelected ? "text-white" : "text-gray-500"}`} />
+                <span>{cat}</span>
+                {isSelected && (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-white" />
+                )}
+                {isSelected && selectedCategories.length > 1 && isPrimary && (
+                  <span className="text-[10px] bg-rose-700/60 text-rose-100 px-1 py-0.2 rounded font-normal">
+                    основная
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {errors.categories && (
+          <span className="text-xs text-red-500">{errors.categories.message}</span>
+        )}
       </div>
 
-      {/* Подкатегории (мультивыбор) */}
-      {CATEGORIES_WITH_SUBCATEGORIES.includes(selectedCategory) && (
-        <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
+      {/* Подкатегории (мультивыбор по выбранным категориям) */}
+      {activeCategoriesWithSubs.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-gray-800">
               Подкатегории (можно выбрать несколько)
@@ -411,26 +485,43 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             )}
           </div>
           <p className="text-xs text-gray-500">
-            Выберите одну или несколько подходящих подкатегорий, чтобы покупателям было проще найти товар через фильтры.
+            Выберите подходящие подкатегории, чтобы покупателям было проще найти товар через фильтры.
           </p>
 
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {availableSubCategories.map((sub) => {
-              const isSelected = selectedSubCategories.includes(sub);
+          <div className="flex flex-col gap-2.5 pt-0.5">
+            {activeCategoriesWithSubs.map((cat) => {
+              const subs = SUBCATEGORIES_MAP[cat] || [];
+              if (subs.length === 0) return null;
+
               return (
-                <button
-                  key={sub}
-                  type="button"
-                  onClick={() => toggleSubCategory(sub)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
-                    isSelected
-                      ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
-                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                  }`}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
-                  <span>{sub}</span>
-                </button>
+                <div key={cat} className="flex flex-col gap-1.5">
+                  {activeCategoriesWithSubs.length > 1 && (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      <span>{cat}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {subs.map((sub) => {
+                      const isSelected = selectedSubCategories.includes(sub);
+                      return (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => toggleSubCategory(sub)}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
+                            isSelected
+                              ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
+                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+                          <span>{sub}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -442,7 +533,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200 transition-all">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-gray-800">
-              Размеры в наличии {selectedCategory === "Одежда" ? "(одежда)" : "(обувь)"}
+              Размеры в наличии {hasClothing && hasShoes ? "(одежда и обувь)" : hasClothing ? "(одежда)" : "(обувь)"}
             </label>
             {selectedSizes.length > 0 && (
               <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">

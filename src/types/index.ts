@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   oldPrice?: number | null;
   category: string; // Обязательное поле для фильтрации на главной витрине
+  categories?: string[]; // Поддержка нескольких категорий товара
   subCategory?: string | null;
   images: string[];
   shopName: string;

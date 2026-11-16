@@ -20,6 +20,7 @@ export type FuzzyProduct = {
   oldPrice: number | null;
   images: string[];
   category: string;
+  categories?: string[];
   subCategory: string | null;
   sizes: string[];
   availability?: string | null;
@@ -313,6 +314,7 @@ const productSelectFields = {
   oldPrice: true,
   images: true,
   category: true,
+  categories: true,
   subCategory: true,
   sizes: true,
   availability: true,
