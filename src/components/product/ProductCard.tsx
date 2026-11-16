@@ -196,7 +196,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     <div
       onMouseEnter={() => router.prefetch(`/product/${product.id}`)}
       onTouchStart={() => router.prefetch(`/product/${product.id}`)}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:shadow-xl"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:shadow-xl cv-auto"
     >
       
       {/* 1. Шапка продавца */}
@@ -213,6 +213,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               fill 
               loader={cloudinaryLoader}
               sizes="32px"
+              loading="lazy"
               className="object-cover" 
               onError={() => setAvatarError(true)}
             />
@@ -259,8 +260,9 @@ export function ProductCard({ product, priority = false, activeCities }: Product
               alt={product.title}
               fill
               loader={cloudinaryLoader}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 240px, (max-width: 1024px) 300px, 280px"
               priority={priority}
+              loading={priority ? "eager" : "lazy"}
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
               className="object-cover md:transition-transform md:duration-500 md:group-hover:scale-105"

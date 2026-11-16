@@ -590,7 +590,8 @@ export function ContactSellerButton({
         </div>
       )}
 
-      {mounted && typeof document !== "undefined" && createPortal(modalContent, document.body)}
+      {/* Модальное окно рендерится в portal ТОЛЬКО когда открыто — колоссально ускоряет рендер карточек */}
+      {mounted && isModalOpen && typeof document !== "undefined" && createPortal(modalContent, document.body)}
     </>
   );
 }

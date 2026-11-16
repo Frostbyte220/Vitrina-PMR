@@ -357,7 +357,7 @@ export function ProductCatalogClient({
               <ProductCard
                 key={product.id}
                 product={product as any}
-                priority={i < 4}
+                priority={i < 6}
                 activeCities={selectedCities}
               />
             ))}
