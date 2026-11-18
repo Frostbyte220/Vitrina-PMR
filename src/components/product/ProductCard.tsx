@@ -361,23 +361,25 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                 isService={isService}
               />
             </div>
-            <button
-              type="button"
-              onClick={handleCartButtonClick}
-              className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-xl border transition-all shadow-2xs active:scale-95 ${
-                isInCart
-                  ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs"
-                  : "bg-white text-gray-700 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
-              }`}
-              title={isInCart ? "В корзине (нажмите, чтобы открыть)" : (isService ? "Заказать онлайн" : "Добавить в корзину")}
-              aria-label={isInCart ? "Перейти в корзину" : (isService ? "Заказать онлайн" : "Добавить в корзину")}
-            >
-              {isInCart ? (
-                <Check className="h-4 w-4 stroke-[2.5]" />
-              ) : (
-                <ShoppingBag className="h-4 w-4" />
-              )}
-            </button>
+            {!isService && (
+              <button
+                type="button"
+                onClick={handleCartButtonClick}
+                className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-xl border transition-all shadow-2xs active:scale-95 ${
+                  isInCart
+                    ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs"
+                    : "bg-white text-gray-700 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+                }`}
+                title={isInCart ? "В корзине (нажмите, чтобы открыть)" : "Добавить в корзину"}
+                aria-label={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+              >
+                {isInCart ? (
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                ) : (
+                  <ShoppingBag className="h-4 w-4" />
+                )}
+              </button>
+            )}
           </div>
 
           {cleanInstagram && (

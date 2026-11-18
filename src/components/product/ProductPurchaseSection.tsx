@@ -268,30 +268,32 @@ export function ProductPurchaseSection({
       {/* 2. Десктопная секция покупки: «В корзину», «Написать продавцу», «Поделиться» */}
       <div className="hidden md:flex flex-col gap-2 mt-2">
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleCartButtonClick}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-bold text-sm transition-all shadow-sm active:scale-[0.98] ${
-              isInCart
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
-                : "bg-rose-50 text-rose-700 hover:bg-rose-100/90 border border-rose-200"
-            }`}
-            title={isInCart ? "Перейти в корзину" : (isService ? "Заказать услугу онлайн" : "Добавить в корзину")}
-          >
-            {isInCart ? (
-              <>
-                <Check className="h-4 w-4 stroke-[2.5]" />
-                <span>В корзине — перейти →</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                <span>{isService ? "Заказать онлайн" : "В корзину"}</span>
-              </>
-            )}
-          </button>
+          {!isService && (
+            <button
+              type="button"
+              onClick={handleCartButtonClick}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-bold text-sm transition-all shadow-sm active:scale-[0.98] ${
+                isInCart
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
+                  : "bg-rose-50 text-rose-700 hover:bg-rose-100/90 border border-rose-200"
+              }`}
+              title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+            >
+              {isInCart ? (
+                <>
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                  <span>В корзине — перейти →</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>В корзину</span>
+                </>
+              )}
+            </button>
+          )}
 
-          <div className="flex-1">
+          <div className={isService ? "flex-1" : "flex-1"}>
             <ContactSellerButton
               productId={productId}
               productName={productName}
@@ -319,13 +321,15 @@ export function ProductPurchaseSection({
           />
         </div>
 
-        <Link
-          href="/cart"
-          className="inline-flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-rose-600 transition-colors py-0.5"
-        >
-          <ShoppingBag className="h-3.5 w-3.5" />
-          <span>Перейти в корзину для оформления мульти-заказа →</span>
-        </Link>
+        {!isService && (
+          <Link
+            href="/cart"
+            className="inline-flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-rose-600 transition-colors py-0.5"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            <span>Перейти в корзину для оформления мульти-заказа →</span>
+          </Link>
+        )}
       </div>
 
       {/* 3. Мобильная фиксированная панель: «В корзину», «Связаться», «Поделиться» */}
@@ -357,28 +361,30 @@ export function ProductPurchaseSection({
           </div>
         )}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCartButtonClick}
-            className={`h-11 px-3.5 shrink-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-xs transition-all shadow-xs active:scale-95 ${
-              isInCart
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
-                : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
-            }`}
-            title={isInCart ? "Перейти в корзину" : (isService ? "Заказать услугу" : "Добавить в корзину")}
-          >
-            {isInCart ? (
-              <>
-                <Check className="h-4 w-4 stroke-[2.5]" />
-                <span>В корзине →</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                <span>{isService ? "Заказать" : "В корзину"}</span>
-              </>
-            )}
-          </button>
+          {!isService && (
+            <button
+              type="button"
+              onClick={handleCartButtonClick}
+              className={`h-11 px-3.5 shrink-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-xs transition-all shadow-xs active:scale-95 ${
+                isInCart
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
+                  : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+              }`}
+              title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+            >
+              {isInCart ? (
+                <>
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                  <span>В корзине →</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>В корзину</span>
+                </>
+              )}
+            </button>
+          )}
 
           <div className="flex-1">
             <ContactSellerButton
