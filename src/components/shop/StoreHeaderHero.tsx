@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Store, MapPin, Send, MessageCircle, Phone } from "lucide-react";
+import { MapPin, Send, MessageCircle, Phone } from "lucide-react";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ShareButton } from "@/components/ui/ShareButton";
 
@@ -75,11 +75,7 @@ export function StoreHeaderHero({
             </div>
           )}
 
-          {/* Аккуратный бейдж в правом верхнем углу */}
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/25 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-xs select-none">
-            <Store className="w-3.5 h-3.5 text-rose-200" />
-            <span>Магазин в ПМР</span>
-          </div>
+
         </div>
       </div>
 
