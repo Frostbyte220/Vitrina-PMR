@@ -178,6 +178,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const productVariants = (product.variants as { name: string; price: number; oldPrice?: number | null }[] | null) || [];
   const hasVariants = Array.isArray(productVariants) && productVariants.length > 0;
+  const isService = product.category === "Услуги" || (product as any).categories?.includes("Услуги");
   const variantPrices = hasVariants ? productVariants.map((v) => v.price).filter((p) => typeof p === "number" && p > 0) : [];
   const minVariantPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price;
 
@@ -294,7 +295,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-baseline gap-3 flex-wrap">
                   <span className={`text-2xl font-bold md:text-3xl ${hasDiscount && !hasVariants ? "text-rose-600" : "text-primary"}`}>
-                    {hasVariants ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
+                    {hasVariants || isService ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
                   </span>
                   {hasDiscount && !hasVariants && (
                     <>

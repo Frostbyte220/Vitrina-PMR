@@ -58,10 +58,11 @@ export function ProductPurchaseSection({
   }, []);
 
   const isPerfume = category === "Парфюмерия";
+  const isService = category === "Услуги" || category?.toLowerCase().includes("услуг");
   const hasVariants = Array.isArray(variants) && variants.length > 0;
   const hasSizes = (Array.isArray(sizes) && sizes.length > 0) || hasVariants;
 
-  // Если выбран вариант с отдельной ценой (например, 10 мл)
+  // Если выбран вариант с отдельной ценой (например, 10 мл или тип мебели)
   const activeVariant = hasVariants ? variants.find((v) => v.name === selectedSize) : null;
   const effectivePrice = activeVariant ? activeVariant.price : productPrice;
   const effectiveOldPrice = activeVariant ? (activeVariant.oldPrice ?? null) : oldPrice;
@@ -81,7 +82,13 @@ export function ProductPurchaseSection({
   const handleAddToCart = () => {
     if (hasSizes && !selectedSize) {
       setSizeError(true);
-      toast.error(isPerfume ? "Пожалуйста, выберите подходящий объем" : "Пожалуйста, выберите подходящий размер товара");
+      toast.error(
+        isPerfume
+          ? "Пожалуйста, выберите подходящий объем"
+          : isService
+          ? "Пожалуйста, выберите подходящий вариант услуги"
+          : "Пожалуйста, выберите подходящий размер товара"
+      );
       return;
     }
 
@@ -103,7 +110,9 @@ export function ProductPurchaseSection({
     toast.success(
       (t) => (
         <div className="flex items-center justify-between gap-3 w-full">
-          <span className="text-xs sm:text-sm font-medium">Товар добавлен в корзину</span>
+          <span className="text-xs sm:text-sm font-medium">
+            {isService ? "Услуга добавлена в корзину" : "Товар добавлен в корзину"}
+          </span>
           <button
             type="button"
             onClick={() => {
@@ -144,7 +153,9 @@ export function ProductPurchaseSection({
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-text-main">
-              {hasVariants ? (isPerfume ? "Объем:" : "Вариант / Объем:") : "Размер:"}{" "}
+              {hasVariants
+                ? (isPerfume ? "Объем:" : isService ? "Прайс / Вариант услуги:" : "Вариант / Объем:")
+                : "Размер:"}{" "}
               {selectedSize ? (
                 <>
                   <span className="font-bold text-rose-600">{selectedSize}</span>
@@ -156,13 +167,13 @@ export function ProductPurchaseSection({
                 </>
               ) : (
                 <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                  {hasVariants ? "Выберите объем" : "Выберите размер"}
+                  {hasVariants ? (isService ? "Выберите вариант услуги" : "Выберите объем") : "Выберите размер"}
                 </span>
               )}
             </span>
             <span className="text-xs text-text-muted">
               {hasVariants
-                ? (isPerfume ? "Распив / флакон" : "Варианты")
+                ? (isPerfume ? "Распив / флакон" : isService ? "Прайс-лист" : "Варианты")
                 : category === "Обувь"
                 ? "Размер обуви"
                 : "Размер одежды"}
@@ -241,13 +252,13 @@ export function ProductPurchaseSection({
           <p className="mt-2.5 text-[11px] text-text-muted">
             {selectedSize ? (
               <span>
-                💡 Выбран {hasVariants ? "объем" : "размер"} <b>{selectedSize}</b>
+                💡 Выбран {hasVariants ? (isService ? "вариант услуги" : "объем") : "размер"} <b>{selectedSize}</b>
                 {hasVariants && <> по цене <b>{formatPrice(effectivePrice)}</b></>}.
-                Сохранится при добавлении в корзину или сообщении продавцу.
+                Сохранится при {isService ? "записи или вопросе мастеру" : "добавлении в корзину или сообщении продавцу"}.
               </span>
             ) : (
               <span>
-                💡 Нажмите на нужный {hasVariants ? "объем" : "размер"}, чтобы выбрать его перед покупкой или вопросом продавцу.
+                💡 Нажмите на нужный {hasVariants ? (isService ? "вариант услуги" : "объем") : "размер"}, чтобы выбрать его перед {isService ? "записью или заказом" : "покупкой или вопросом продавцу"}.
               </span>
             )}
           </p>
@@ -265,7 +276,7 @@ export function ProductPurchaseSection({
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
                 : "bg-rose-50 text-rose-700 hover:bg-rose-100/90 border border-rose-200"
             }`}
-            title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+            title={isInCart ? "Перейти в корзину" : (isService ? "Заказать услугу онлайн" : "Добавить в корзину")}
           >
             {isInCart ? (
               <>
@@ -275,7 +286,7 @@ export function ProductPurchaseSection({
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                <span>В корзину</span>
+                <span>{isService ? "Заказать онлайн" : "В корзину"}</span>
               </>
             )}
           </button>
@@ -291,6 +302,8 @@ export function ProductPurchaseSection({
               selectedSize={selectedSize}
               availability={availability}
               storeId={storeId}
+              category={category}
+              isService={isService}
             />
           </div>
 
@@ -322,7 +335,7 @@ export function ProductPurchaseSection({
             {selectedSize ? (
               <>
                 <span className="text-gray-600 truncate">
-                  {hasVariants ? "Выбран объем:" : "Выбранный размер:"}{" "}
+                  {hasVariants ? (isService ? "Выбрано:" : "Выбран объем:") : "Выбранный размер:"}{" "}
                   <strong className="text-rose-600 font-bold">{selectedSize}</strong>
                   {hasVariants && (
                     <span className="ml-1 text-gray-800 font-bold">({formatPrice(effectivePrice)})</span>
@@ -338,7 +351,7 @@ export function ProductPurchaseSection({
               </>
             ) : (
               <span className="text-amber-700 font-medium text-[11px]">
-                ⚠️ {hasVariants ? "Объем не выбран" : "Размер не выбран"}
+                ⚠️ {hasVariants ? (isService ? "Вариант не выбран" : "Объем не выбран") : "Размер не выбран"}
               </span>
             )}
           </div>
@@ -352,7 +365,7 @@ export function ProductPurchaseSection({
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
                 : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
             }`}
-            title={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+            title={isInCart ? "Перейти в корзину" : (isService ? "Заказать услугу" : "Добавить в корзину")}
           >
             {isInCart ? (
               <>
@@ -362,7 +375,7 @@ export function ProductPurchaseSection({
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                <span>В корзину</span>
+                <span>{isService ? "Заказать" : "В корзину"}</span>
               </>
             )}
           </button>
@@ -378,6 +391,8 @@ export function ProductPurchaseSection({
               selectedSize={selectedSize}
               availability={availability}
               storeId={storeId}
+              category={category}
+              isService={isService}
             />
           </div>
 

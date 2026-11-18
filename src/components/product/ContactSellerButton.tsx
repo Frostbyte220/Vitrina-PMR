@@ -37,6 +37,8 @@ interface ContactSellerButtonProps {
   selectedSize?: string | null;
   availability?: string | null;
   storeId?: string | null;
+  category?: string;
+  isService?: boolean;
 }
 
 // Универсальная функция копирования текста в буфер обмена
@@ -81,6 +83,8 @@ export function ContactSellerButton({
   selectedSize,
   availability,
   storeId,
+  category,
+  isService,
 }: ContactSellerButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,6 +94,10 @@ export function ContactSellerButton({
   const [formData, setFormData] = useState({ name: "", contact: "", body: "" });
   const [formStatus, setFormStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [threadToken, setThreadToken] = useState<string | null>(null);
+
+  const isServiceEffective = Boolean(
+    isService || category === "Услуги" || category?.toLowerCase().includes("услуг")
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -133,12 +141,18 @@ export function ContactSellerButton({
   const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
   const availInfo = getAvailabilityInfo(availability);
   const availText = availInfo ? ` (${availInfo.label.toLowerCase()})` : "";
-  const sizeText = selectedSize ? `, размер: ${selectedSize}` : "";
+  const sizeText = selectedSize
+    ? (isServiceEffective ? `, вариант/позиция: ${selectedSize}` : `, размер: ${selectedSize}`)
+    : "";
 
   // Фирменное сообщение с четкой атрибуцией e-vitrina.com
-  const greetingMessage = productUrl
-    ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?\nСсылка на товар: ${productUrl}`
-    : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?`;
+  const greetingMessage = isServiceEffective
+    ? (productUrl
+        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?\nСсылка на услугу: ${productUrl}`
+        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?`)
+    : (productUrl
+        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?\nСсылка на товар: ${productUrl}`
+        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?`);
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
@@ -280,7 +294,9 @@ export function ContactSellerButton({
 
   // Текст и иконка для кнопки
   let mainButtonIcon = MessageSquareDot;
-  let mainButtonText = isCardView ? "Написать" : "Связаться с продавцом";
+  let mainButtonText = isCardView
+    ? (isServiceEffective ? "Записаться" : "Написать")
+    : (isServiceEffective ? "Записаться к мастеру" : "Связаться с продавцом");
   let mainButtonBg = "bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 hover:opacity-95 shadow-sm";
 
   if (channels.length === 0) {
@@ -290,7 +306,7 @@ export function ContactSellerButton({
     mainButtonIcon = channels[0].icon;
     mainButtonText = isCardView
       ? channels[0].name.replace(" Direct", "").replace(" (IDC)", "")
-      : channels[0].name;
+      : (isServiceEffective ? `Записаться (${channels[0].name.replace(" Direct", "").replace(" (IDC)", "")})` : channels[0].name);
     mainButtonBg = channels[0].bgClass;
   }
 
@@ -343,9 +359,11 @@ export function ContactSellerButton({
             {/* Заголовок и закрытие */}
             <div className="flex items-start justify-between pb-3 border-b border-gray-100">
               <div className="pr-4">
-                <h3 className="text-lg font-bold text-gray-900 leading-snug">Связаться с продавцом</h3>
+                <h3 className="text-lg font-bold text-gray-900 leading-snug">
+                  {isServiceEffective ? "Записаться / связаться с мастером" : "Связаться с продавцом"}
+                </h3>
                 <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
-                  {productName}{selectedSize ? ` · Размер: ${selectedSize}` : ""} · <span className="font-semibold text-rose-600">{formattedPrice}</span> · <span className="font-medium text-emerald-700">{availInfo.label}</span>
+                  {productName}{sizeText} · <span className="font-semibold text-rose-600">{formattedPrice}</span> · <span className="font-medium text-emerald-700">{availInfo.label}</span>
                 </p>
               </div>
               <button

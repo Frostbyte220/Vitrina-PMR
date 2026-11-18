@@ -1,4 +1,4 @@
-export type AvailabilityCode = "IN_STOCK" | "ON_ORDER" | "PRE_ORDER";
+export type AvailabilityCode = "IN_STOCK" | "ON_ORDER" | "PRE_ORDER" | "SERVICE_ACTIVE" | "HOME_VISIT";
 
 export interface AvailabilityConfig {
   code: AvailabilityCode;
@@ -38,10 +38,30 @@ export const AVAILABILITY_MAP: Record<AvailabilityCode, AvailabilityConfig> = {
     dotClass: "bg-amber-500",
     iconColor: "text-amber-600",
   },
+  SERVICE_ACTIVE: {
+    code: "SERVICE_ACTIVE",
+    label: "Принимает заказы",
+    shortLabel: "Заказ",
+    description: "Услуга доступна для записи и заказа",
+    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+    dotClass: "bg-emerald-500",
+    iconColor: "text-emerald-600",
+  },
+  HOME_VISIT: {
+    code: "HOME_VISIT",
+    label: "Выезд на дом",
+    shortLabel: "Выезд",
+    description: "Мастер выезжает к клиенту на дом или объект",
+    badgeClass: "bg-teal-50 text-teal-700 border-teal-200/80",
+    dotClass: "bg-teal-500",
+    iconColor: "text-teal-600",
+  },
 };
 
 export const AVAILABILITY_OPTIONS: AvailabilityConfig[] = [
   AVAILABILITY_MAP.IN_STOCK,
+  AVAILABILITY_MAP.SERVICE_ACTIVE,
+  AVAILABILITY_MAP.HOME_VISIT,
   AVAILABILITY_MAP.ON_ORDER,
   AVAILABILITY_MAP.PRE_ORDER,
 ];
@@ -53,6 +73,23 @@ export function getAvailabilityInfo(val?: string | null): AvailabilityConfig {
   if (!val) return AVAILABILITY_MAP.IN_STOCK;
 
   const trimmed = val.trim().toLowerCase();
+
+  if (
+    trimmed === "home_visit" ||
+    trimmed === "выезд на дом" ||
+    trimmed.includes("выезд")
+  ) {
+    return AVAILABILITY_MAP.HOME_VISIT;
+  }
+
+  if (
+    trimmed === "service_active" ||
+    trimmed === "принимает заказы" ||
+    trimmed === "запись открыта" ||
+    trimmed.includes("запис")
+  ) {
+    return AVAILABILITY_MAP.SERVICE_ACTIVE;
+  }
 
   if (
     trimmed === "on_order" ||

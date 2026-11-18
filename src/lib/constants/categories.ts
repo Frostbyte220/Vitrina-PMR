@@ -18,6 +18,7 @@ import {
   LayoutGrid,
   UtensilsCrossed,
   HeartPulse,
+  Briefcase,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +50,7 @@ export const ALL_CATEGORIES = [
   "Автотовары",
   "Handmade",
   "Подарки",
+  "Услуги",
 ] as const;
 
 // ─────────────────────────────────────────────────────────────
@@ -71,6 +73,7 @@ export const VISUAL_CATEGORIES: VisualCategoryItem[] = [
   { name: "Спорт и отдых", icon: Dumbbell },
   { name: "Автотовары", icon: Car },
   { name: "Handmade", icon: Palette },
+  { name: "Услуги", icon: Briefcase },
 ];
 
 /** Получение единой Lucide-иконки для любой категории маркетплейса */
@@ -120,6 +123,10 @@ export function getCategoryIcon(cat: string): LucideIcon {
     case "handmade":
     case "handmade и подарки":
       return Palette;
+    case "услуги":
+    case "сфера услуг":
+    case "услуги и сервис":
+      return Briefcase;
     case "разное":
       return Grid;
     default:
@@ -324,6 +331,16 @@ export const SUBCATEGORIES_MAP: Record<string, string[]> = {
     "Сувениры",
     "Свечи и декор",
   ],
+  "Услуги": [
+    "Химчистка и клининг",
+    "Автоуслуги и детейлинг",
+    "Ремонт техники и дома",
+    "Красота и уход",
+    "Праздники и фото",
+    "Бытовые услуги",
+    "Обучение и курсы",
+    "Грузоперевозки и вывоз",
+  ],
 };
 
 // Синонимы категорий для гибкой фильтрации в базе данных
@@ -336,4 +353,6 @@ export const CATEGORY_ALIASES: Record<string, string[]> = {
   "Handmade и подарки": ["Handmade", "Подарки", "Handmade и подарки"],
   "Handmade": ["Handmade", "Handmade и подарки"],
   "Подарки": ["Подарки", "Handmade и подарки"],
+  "Услуги": ["Услуги", "Сфера услуг", "Услуги и сервис"],
+  "Сфера услуг": ["Услуги", "Сфера услуг", "Услуги и сервис"],
 };

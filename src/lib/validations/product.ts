@@ -119,7 +119,8 @@ export const productSchema = z.object({
 ).refine(
   (data) => {
     const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
-    if (isPerfume && (!data.oldPrice || data.price === 0)) return true;
+    const isService = data.category === "Услуги" || data.categories?.includes("Услуги");
+    if ((isPerfume || isService) && (!data.oldPrice || data.price === 0)) return true;
     return !data.oldPrice || data.oldPrice > data.price;
   },
   {
@@ -139,6 +140,10 @@ export const SHOE_SIZES = [
 
 export const PERFUME_VOLUME_PRESETS = [
   "2 мл", "3 мл", "5 мл", "10 мл", "15 мл", "20 мл", "30 мл", "50 мл", "100 мл"
+];
+
+export const SERVICE_PRESETS = [
+  "Базовый", "Стандарт", "Комплекс", "Выезд на дом", "Консультация", "За 1 час"
 ];
 
 export type ProductFormData = z.infer<typeof productSchema>;

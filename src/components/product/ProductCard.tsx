@@ -121,6 +121,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
 
   const productVariants = (prod.variants as { name: string; price: number; oldPrice?: number | null }[] | null) || [];
   const hasVariants = Array.isArray(productVariants) && productVariants.length > 0;
+  const isService = prod.category === "Услуги" || (prod as any).categories?.includes("Услуги");
   const variantPrices = hasVariants
     ? productVariants.map((v) => v.price).filter((p) => typeof p === "number" && p > 0)
     : [];
@@ -130,16 +131,19 @@ export function ProductCard({ product, priority = false, activeCities }: Product
     e.preventDefault();
     e.stopPropagation();
 
-    // Если у товара есть размеры или варианты объемов, клиент должен сам выбрать на странице товара
+    // Если у товара есть размеры или варианты объемов/услуг, клиент должен сам выбрать на странице товара
     if (
       (Array.isArray(prod.sizes) && prod.sizes.length > 0) ||
-      hasVariants
+      hasVariants ||
+      isService
     ) {
       toast(
         prod.category === "Парфюмерия"
           ? "Пожалуйста, выберите объем парфюма"
+          : isService
+          ? "Пожалуйста, выберите вариант услуги и время"
           : "Пожалуйста, выберите подходящий размер",
-        { icon: prod.category === "Парфюмерия" ? "✨" : "📏" }
+        { icon: prod.category === "Парфюмерия" ? "✨" : isService ? "💼" : "📏" }
       );
       router.push(`/product/${product.id}`);
       return;
@@ -286,7 +290,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
           <div className="flex flex-col gap-0.5">
             <div className="flex items-baseline gap-2">
               <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price && !hasVariants ? "text-rose-600" : "text-primary"}`}>
-                {hasVariants ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
+                {hasVariants || isService ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
               </span>
               {product.oldPrice && product.oldPrice > product.price && !hasVariants && (
                 <span className="text-xs font-medium text-gray-400 line-through">
@@ -353,6 +357,8 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                 shopUsername={cleanInstagram}
                 contacts={storeContacts}
                 isCardView={true} 
+                category={prod.category}
+                isService={isService}
               />
             </div>
             <button
@@ -363,8 +369,8 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                   ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs"
                   : "bg-white text-gray-700 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
               }`}
-              title={isInCart ? "В корзине (нажмите, чтобы открыть)" : "Добавить в корзину"}
-              aria-label={isInCart ? "Перейти в корзину" : "Добавить в корзину"}
+              title={isInCart ? "В корзине (нажмите, чтобы открыть)" : (isService ? "Заказать онлайн" : "Добавить в корзину")}
+              aria-label={isInCart ? "Перейти в корзину" : (isService ? "Заказать онлайн" : "Добавить в корзину")}
             >
               {isInCart ? (
                 <Check className="h-4 w-4 stroke-[2.5]" />

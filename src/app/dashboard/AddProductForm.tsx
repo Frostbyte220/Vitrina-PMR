@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Loader2, Check, Plus, Trash2, Sparkles } from "lucide-react";
+import { Loader2, Check, Plus, Trash2, Sparkles, Briefcase } from "lucide-react";
 import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES, PERFUME_VOLUME_PRESETS } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
@@ -177,7 +177,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   };
 
   const hasPerfume = selectedCategories.includes("Парфюмерия");
-  const isPerfumeOrHasVariants = hasPerfume || volumeVariants.length > 0;
+  const hasService = selectedCategories.includes("Услуги");
+  const isPerfumeOrHasVariants = hasPerfume || hasService || volumeVariants.length > 0;
 
   const handleAddPresetVolume = (volName: string) => {
     setVolumeVariants((prev) => {
@@ -765,50 +766,60 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         </div>
       )}
 
-      {/* Объемы и цены (для парфюмерии и распива) */}
+      {/* Объемы и цены (для парфюмерии, услуг или вариантов с ценой) */}
       {isPerfumeOrHasVariants && (
-        <div className="flex flex-col gap-3 rounded-xl bg-purple-50/60 p-3.5 sm:p-4 border border-purple-200 transition-all">
+        <div className={`flex flex-col gap-3 rounded-xl p-3.5 sm:p-4 border transition-all ${
+          hasService ? "bg-teal-50/60 border-teal-200" : "bg-purple-50/60 border-purple-200"
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
-                <Sparkles className="h-3.5 w-3.5" />
+              <span className={`flex h-6 w-6 items-center justify-center rounded-lg ${
+                hasService ? "bg-teal-100 text-teal-700" : "bg-purple-100 text-purple-700"
+              }`}>
+                {hasService ? <Briefcase className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
               </span>
               <label className="text-sm font-semibold text-gray-900">
-                Объемы и цены (для парфюмерии и распива)
+                {hasService ? "Прайс-лист / Варианты услуги" : "Объемы и цены (для парфюмерии и распива)"}
               </label>
             </div>
             {volumeVariants.length > 0 && (
-              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">
-                Вариантов: {volumeVariants.length}
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                hasService ? "text-teal-700 bg-teal-100 border-teal-200" : "text-purple-700 bg-purple-100 border-purple-200"
+              }`}>
+                Позиций: {volumeVariants.length}
               </span>
             )}
           </div>
           <p className="text-xs text-gray-600">
-            Укажите объемы в наличии (например, отливанты 5 мл, 10 мл или флакон 100 мл) с отдельной ценой для каждого.
-            Покупатели смогут выбрать нужный объем прямо на странице товара.
+            {hasService
+              ? "Укажите позиции прайса (например, Диван прямой, Диван угловой, Матрас, Полировка фар) с отдельной ценой для каждого варианта."
+              : "Укажите объемы в наличии (например, отливанты 5 мл, 10 мл или флакон 100 мл) с отдельной ценой для каждого. Покупатели смогут выбрать нужный объем прямо на странице товара."}
           </p>
 
-          {/* Быстрые пресеты объемов */}
+          {/* Быстрые пресеты */}
           <div className="flex flex-col gap-1.5 pt-0.5">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-              Быстрый выбор популярного объема:
+              {hasService ? "Быстрый выбор популярных услуг:" : "Быстрый выбор популярного объема:"}
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {PERFUME_VOLUME_PRESETS.map((vol) => {
-                const isAdded = volumeVariants.some((v) => v.name.toLowerCase() === vol.toLowerCase());
+              {(hasService
+                ? ["Диван прямой", "Диван угловой", "Матрас", "Кресло", "Стул", "Химчистка салона", "Полировка фар", "Комплекс"]
+                : PERFUME_VOLUME_PRESETS
+              ).map((preset) => {
+                const isAdded = volumeVariants.some((v) => v.name.toLowerCase() === preset.toLowerCase());
                 return (
                   <button
-                    key={vol}
+                    key={preset}
                     type="button"
-                    onClick={() => handleAddPresetVolume(vol)}
+                    onClick={() => handleAddPresetVolume(preset)}
                     className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
                       isAdded
-                        ? "bg-purple-600 text-white shadow-2xs ring-1 ring-purple-600"
-                        : "bg-white text-gray-700 border border-purple-200 hover:bg-purple-100/60 active:scale-95"
+                        ? (hasService ? "bg-teal-600 text-white shadow-2xs ring-1 ring-teal-600" : "bg-purple-600 text-white shadow-2xs ring-1 ring-purple-600")
+                        : (hasService ? "bg-white text-gray-700 border border-teal-200 hover:bg-teal-100/60 active:scale-95" : "bg-white text-gray-700 border border-purple-200 hover:bg-purple-100/60 active:scale-95")
                     }`}
                   >
                     <span>{isAdded ? "✓" : "+"}</span>
-                    <span>{vol}</span>
+                    <span>{preset}</span>
                   </button>
                 );
               })}
@@ -819,7 +830,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           {volumeVariants.length > 0 && (
             <div className="flex flex-col gap-2 pt-2">
               <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-gray-500 px-1">
-                <span className="col-span-5 sm:col-span-4">Объем / Вариант *</span>
+                <span className="col-span-5 sm:col-span-4">{hasService ? "Позиция / Услуга *" : "Объем / Вариант *"}</span>
                 <span className="col-span-3 sm:col-span-3">Цена (руб.) *</span>
                 <span className="col-span-3 sm:col-span-4">Старая цена</span>
                 <span className="col-span-1 text-center"></span>
@@ -835,7 +846,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                       type="text"
                       value={variant.name}
                       onChange={(e) => handleUpdateVariant(variant.id, "name", e.target.value)}
-                      placeholder="Напр: 10 мл"
+                      placeholder={hasService ? "Напр: Диван угловой" : "Напр: 10 мл"}
                       className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
@@ -879,14 +890,16 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             <button
               type="button"
               onClick={handleAddNewVariantRow}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 transition-colors shadow-2xs cursor-pointer active:scale-95"
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold transition-colors shadow-2xs cursor-pointer active:scale-95 ${
+                hasService ? "border border-teal-200 text-teal-700 hover:bg-teal-50" : "border border-purple-200 text-purple-700 hover:bg-purple-50"
+              }`}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>Свой объем</span>
+              <span>{hasService ? "Своя позиция / услуга" : "Свой объем"}</span>
             </button>
             {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
               <span className="text-[11px] text-gray-500">
-                💡 На витрине отобразится: <strong className="text-purple-700">«от {getMinVariantPrice()} руб.»</strong>
+                💡 На витрине отобразится: <strong className={hasService ? "text-teal-700" : "text-purple-700"}>«от {getMinVariantPrice()} руб.»</strong>
               </span>
             )}
           </div>
