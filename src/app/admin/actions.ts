@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import bcrypt from "bcryptjs";
+import { deleteCloudinaryImages, cleanupAllDeletedProductsImages } from "@/lib/cloudinaryServer";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
@@ -143,8 +144,32 @@ export async function deleteStoreAdmin(storeId: string) {
   await checkAdmin();
   const store = await prisma.store.findUnique({
     where: { id: storeId },
-    select: { userId: true },
+    select: {
+      id: true,
+      userId: true,
+      avatarUrl: true,
+      coverUrl: true,
+      products: { select: { images: true } },
+    },
   });
+
+  if (store) {
+    const allImages: string[] = [];
+    if (store.avatarUrl) allImages.push(store.avatarUrl);
+    if (store.coverUrl) allImages.push(store.coverUrl);
+    if (store.products) {
+      store.products.forEach((p) => {
+        if (p.images) allImages.push(...p.images);
+      });
+    }
+    if (allImages.length > 0) {
+      try {
+        await deleteCloudinaryImages(allImages);
+      } catch (cloudErr) {
+        console.error("Ошибка при удалении изображений магазина из Cloudinary:", cloudErr);
+      }
+    }
+  }
 
   if (store?.userId) {
     try {
@@ -160,6 +185,15 @@ export async function deleteStoreAdmin(storeId: string) {
   revalidatePath("/admin");
   revalidatePath("/shops");
   revalidatePath("/");
+}
+
+export async function cleanupDeletedProductsImagesAdmin() {
+  await checkAdmin();
+  const stats = await cleanupAllDeletedProductsImages();
+  revalidateTag("products");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return stats;
 }
 
 export async function resolveReportAdmin(reportId: string, hideProduct = true) {
@@ -300,6 +334,17 @@ export async function toggleBannerActiveAdmin(id: string, isActive: boolean) {
 
 export async function deleteBannerAdmin(id: string) {
   await checkAdmin();
+  const banner = await prisma.banner.findUnique({
+    where: { id },
+    select: { imageUrl: true },
+  });
+  if (banner?.imageUrl) {
+    try {
+      await deleteCloudinaryImages([banner.imageUrl]);
+    } catch (err) {
+      console.error("Ошибка удаления баннера из Cloudinary:", err);
+    }
+  }
   await prisma.banner.delete({
     where: { id },
   });

@@ -36,7 +36,8 @@ import {
   updateBannerAdmin,
   toggleBannerActiveAdmin,
   deleteBannerAdmin,
-  toggleStoreVerifiedAdmin
+  toggleStoreVerifiedAdmin,
+  cleanupDeletedProductsImagesAdmin
 } from "./actions";
 import { BannerItem } from "@/lib/banners";
 import { formatPrice } from "@/lib/utils";
@@ -235,6 +236,23 @@ export function AdminClient({
     }
   };
 
+  const [isCleaningCloudinary, setIsCleaningCloudinary] = useState(false);
+
+  const handleCleanupCloudinary = async () => {
+    if (!confirm("Удалить из Cloudinary все фото удаленных товаров и освободить место в хранилище?")) return;
+    setIsCleaningCloudinary(true);
+    try {
+      const stats = await cleanupDeletedProductsImagesAdmin();
+      toast.success(
+        `Очищено товаров: ${stats.deletedProductsCount}, удалено фото: ${stats.deletedImagesCount}`
+      );
+    } catch {
+      toast.error("Ошибка при очистке Cloudinary");
+    } finally {
+      setIsCleaningCloudinary(false);
+    }
+  };
+
   const handleDeleteProduct = async (id: string, isDeleted: boolean) => {
     if (!confirm(isDeleted ? "Восстановить этот товар?" : "Скрыть этот товар?")) return;
     setLoadingId(id);
@@ -380,7 +398,20 @@ export function AdminClient({
 
       {/* Таблица товаров */}
       {activeTab === "products" && (
-        <div className="overflow-hidden rounded-xl bg-white shadow-sm outline outline-1 outline-gray-200">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <h2 className="text-sm font-semibold text-gray-700">Управление товарами ({products.length})</h2>
+            <button
+              onClick={handleCleanupCloudinary}
+              disabled={isCleaningCloudinary}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50 shadow-2xs cursor-pointer"
+              title="Найти все удаленные товары и стереть их фотографии из Cloudinary для экономии места"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+              <span>{isCleaningCloudinary ? "Очистка Cloudinary..." : "Очистить фото удаленных товаров в Cloudinary"}</span>
+            </button>
+          </div>
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm outline outline-1 outline-gray-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500">
@@ -441,6 +472,7 @@ export function AdminClient({
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { productRateLimiter } from "@/lib/rate-limit";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { deleteProductImagesFromCloudinary } from "@/lib/cloudinaryServer";
 
 // РћР±РЅРѕРІР»РµРЅРёРµ С‚РѕРІР°СЂР° (PATCH)
 export async function PATCH(
@@ -100,14 +101,42 @@ export async function DELETE(
       return NextResponse.json({ message: "РЎР»РёС€РєРѕРј РјРЅРѕРіРѕ Р·Р°РїСЂРѕСЃРѕРІ. РџРѕРґРѕР¶РґРёС‚Рµ РјРёРЅСѓС‚Сѓ." }, { status: 429 });
     }
 
-    // РњСЏРіРєРѕРµ СѓРґР°Р»РµРЅРёРµ: РІРјРµСЃС‚Рѕ .delete() РёСЃРїРѕР»СЊР·СѓРµРј .update()
-    const deletedProduct = await prisma.product.update({
+    // Находим товар перед удалением, чтобы удалить фото из Cloudinary
+    const existingProduct = await prisma.product.findFirst({
       where: {
         id: id,
         userId: session.user.id,
       },
+      select: {
+        id: true,
+        images: true,
+      },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { message: "Товар не найден или у вас нет прав на его удаление" },
+        { status: 404 }
+      );
+    }
+
+    if (existingProduct.images && existingProduct.images.length > 0) {
+      try {
+        await deleteProductImagesFromCloudinary(existingProduct.images);
+      } catch (cloudErr) {
+        console.error("Ошибка при удалении фото из Cloudinary:", cloudErr);
+      }
+    }
+
+    // Мягкое удаление с очисткой массива картинок
+    const deletedProduct = await prisma.product.update({
+      where: {
+        id: id,
+      },
       data: {
         deletedAt: new Date(),
+        status: "Удален",
+        images: [],
       },
     });
 

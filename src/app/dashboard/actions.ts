@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { productSchema } from "@/lib/validations/product";
 import bcrypt from "bcryptjs";
+import { deleteProductImagesFromCloudinary } from "@/lib/cloudinaryServer";
 
 // Делаем аргументы гибкими: принимаем любые варианты передачи данных от формы
 export async function createProduct(arg1: any, arg2?: any) {
@@ -131,12 +132,22 @@ export async function deleteProduct(id: string) {
       return { success: false, error: "У вас нет прав на удаление этого товара" };
     }
 
+    // 🔥 Удаляем фото товара из Cloudinary для освобождения места
+    if (product.images && product.images.length > 0) {
+      try {
+        await deleteProductImagesFromCloudinary(product.images);
+      } catch (cloudErr) {
+        console.error("Ошибка при удалении фото из Cloudinary:", cloudErr);
+      }
+    }
+
     // 🔥 МЯГКОЕ УДАЛЕНИЕ (Soft Delete)
     await prisma.product.update({
       where: { id },
       data: {
         deletedAt: new Date(),
         status: "Удален",
+        images: [],
       },
     });
 
@@ -260,6 +271,16 @@ export async function updateProduct(id: string, formData: FormData) {
       },
     });
 
+    // Удаляем из Cloudinary фото, которые продавец убрал при редактировании
+    if (product.images && product.images.length > 0) {
+      const removedImages = product.images.filter((oldImg) => !images.includes(oldImg));
+      if (removedImages.length > 0) {
+        deleteProductImagesFromCloudinary(removedImages).catch((err) =>
+          console.error("Ошибка удаления замененных фото из Cloudinary:", err)
+        );
+      }
+    }
+
     revalidatePath("/dashboard", "layout");
     revalidatePath("/", "layout");
     revalidateTag("products");
@@ -313,6 +334,23 @@ export async function bulkDeleteProducts(ids: string[]) {
       return { success: false, error: "Товары не выбраны" };
     }
 
+    // Находим товары для удаления их фото из Cloudinary
+    const productsToDelete = await prisma.product.findMany({
+      where: {
+        id: { in: ids },
+        userId: session.user.id,
+        deletedAt: null,
+      },
+      select: { id: true, images: true },
+    });
+
+    const allImages = productsToDelete.flatMap((p) => (p.images as string[]) || []);
+    if (allImages.length > 0) {
+      deleteProductImagesFromCloudinary(allImages).catch((err) =>
+        console.error("Ошибка при массовом удалении фото из Cloudinary:", err)
+      );
+    }
+
     const result = await prisma.product.updateMany({
       where: {
         id: { in: ids },
@@ -322,6 +360,7 @@ export async function bulkDeleteProducts(ids: string[]) {
       data: {
         deletedAt: new Date(),
         status: "Удален",
+        images: [],
       },
     });
 
