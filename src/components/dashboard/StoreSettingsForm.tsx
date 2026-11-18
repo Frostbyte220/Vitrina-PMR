@@ -326,6 +326,10 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
               Загрузить лого
               <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "avatar")} />
             </label>
+            <p className="text-xs text-gray-400 leading-tight">
+              Квадрат или круг<br />
+              <span className="font-medium text-gray-500">500×500 px</span> · JPG/PNG · до 2 МБ
+            </p>
           </div>
 
           <div className="flex flex-1 flex-col gap-2">
@@ -334,7 +338,7 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
               {coverUrl ? (
                 <Image fill sizes="(max-width: 768px) 100vw, 50vw" src={coverUrl} alt="Cover" className="object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-400">Рекомендуемый размер 1200x400</div>
+                <div className="flex h-full items-center justify-center text-sm text-gray-400">Нет обложки</div>
               )}
               {uploadingType === "cover" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white font-medium">Сжатие и загрузка...</div>
@@ -344,6 +348,11 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
               Загрузить обложку
               <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
             </label>
+            <p className="text-xs text-gray-400 leading-tight">
+              Широкий горизонтальный баннер<br />
+              <span className="font-medium text-gray-500">1280×400 px</span> · JPG · до 2 МБ<br />
+              Важный контент размещайте по центру
+            </p>
           </div>
         </div>
       </section>
