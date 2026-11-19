@@ -318,6 +318,7 @@ const productSelectFields = {
   subCategory: true,
   sizes: true,
   availability: true,
+  createdAt: true,
   user: {
     select: {
       name: true,

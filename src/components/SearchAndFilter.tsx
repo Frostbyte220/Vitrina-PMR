@@ -1093,10 +1093,17 @@ export function FilterBar({ className = "" }: { className?: string }) {
           return (
             <button
               key={value}
-              onClick={() => updateParams({ sort: value })}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm ${
+              type="button"
+              onClick={() => {
+                if (isActive && value !== "newest") {
+                  updateParams({ sort: "newest" });
+                } else {
+                  updateParams({ sort: value });
+                }
+              }}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm active:scale-95 ${
                 isActive
-                  ? "bg-rose-600 text-white shadow-rose-200"
+                  ? "bg-rose-600 text-white shadow-rose-200 ring-2 ring-rose-200 border border-rose-600"
                   : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
               }`}
             >

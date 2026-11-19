@@ -177,16 +177,26 @@ export function ProductCatalogClient({
 
     // 2. Сортировка
     if (sort === "price_asc") {
-      list.sort((a: any, b: any) => a.price - b.price);
+      list.sort((a: any, b: any) => (a.price ?? 0) - (b.price ?? 0));
     } else if (sort === "price_desc") {
-      list.sort((a: any, b: any) => b.price - a.price);
+      list.sort((a: any, b: any) => (b.price ?? 0) - (a.price ?? 0));
     } else if (sort === "oldest") {
-      list.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      list.sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.id || "").localeCompare(b.id || "");
+      });
     } else if (sort === "title_asc" || sort === "title") {
       list.sort((a: any, b: any) => (a.title || "").localeCompare(b.title || ""));
     } else {
-      // newest
-      list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      // newest (по умолчанию)
+      list.sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.id || "").localeCompare(a.id || "");
+      });
     }
 
     const count      = list.length;
