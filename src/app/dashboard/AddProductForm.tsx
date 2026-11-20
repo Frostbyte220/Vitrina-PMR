@@ -735,41 +735,49 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           </p>
 
           <div className="flex flex-col gap-2.5 pt-0.5">
-            {activeCategoriesWithSubs.map((cat) => {
-              const subs = SUBCATEGORIES_MAP[cat] || [];
-              if (subs.length === 0) return null;
+            {(() => {
+              const renderedSubs = new Set<string>();
+              return activeCategoriesWithSubs.map((cat) => {
+                const rawSubs = SUBCATEGORIES_MAP[cat] || [];
+                const subs = rawSubs.filter((s) => {
+                  if (renderedSubs.has(s)) return false;
+                  renderedSubs.add(s);
+                  return true;
+                });
+                if (subs.length === 0) return null;
 
-              return (
-                <div key={cat} className="flex flex-col gap-1.5">
-                  {activeCategoriesWithSubs.length > 1 && (
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                      <span>{cat}</span>
+                return (
+                  <div key={cat} className="flex flex-col gap-1.5">
+                    {activeCategoriesWithSubs.length > 1 && (
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        <span>{cat}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {subs.map((sub) => {
+                        const isSelected = selectedSubCategories.includes(sub);
+                        return (
+                          <button
+                            key={sub}
+                            type="button"
+                            onClick={() => toggleSubCategory(sub)}
+                            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
+                              isSelected
+                                ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                            }`}
+                          >
+                            {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+                            <span>{sub}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
-                  <div className="flex flex-wrap gap-1.5">
-                    {subs.map((sub) => {
-                      const isSelected = selectedSubCategories.includes(sub);
-                      return (
-                        <button
-                          key={sub}
-                          type="button"
-                          onClick={() => toggleSubCategory(sub)}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none active:scale-95 ${
-                            isSelected
-                              ? "bg-rose-600 text-white shadow-xs font-semibold ring-2 ring-rose-200"
-                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
-                          <span>{sub}</span>
-                        </button>
-                      );
-                    })}
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
       )}
