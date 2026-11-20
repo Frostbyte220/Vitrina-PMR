@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -40,8 +40,33 @@ interface ProductsTableClientProps {
 
 export function ProductsTableClient({ items, searchQuery }: ProductsTableClientProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  // ── Optimistic Status State (моментальный отклик интерфейса 0ms) ──────────
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+  const inFlightRef = useRef<Set<string>>(new Set());
+
+  // Синхронизация при обновлении данных с сервера (очистка временных оверрайдов)
+  useEffect(() => {
+    setOptimisticStatuses((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      items.forEach((p) => {
+        if (next[p.id] && next[p.id] === p.status) {
+          delete next[p.id];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [items]);
+
+  const getEffectiveStatus = useCallback(
+    (product: Product) => {
+      return optimisticStatuses[product.id] ?? product.status ?? "Активен";
+    },
+    [optimisticStatuses]
+  );
 
   // ── Bulk selection state ──────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -91,14 +116,47 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
-    setTogglingId(id);
+    if (inFlightRef.current.has(id)) return;
+
+    const currentEffective = optimisticStatuses[id] ?? currentStatus ?? "Активен";
+    const nextStatus = currentEffective === "Активен" ? "Скрыт" : "Активен";
+
+    // ⚡ Моментальный отклик интерфейса (0ms)
+    setOptimisticStatuses((prev) => ({
+      ...prev,
+      [id]: nextStatus,
+    }));
+
+    toast.success(nextStatus === "Активен" ? "Товар опубликован" : "Товар скрыт", {
+      id: `status-${id}`,
+      duration: 1500,
+    });
+
+    inFlightRef.current.add(id);
+
     try {
-      const result = await toggleProductStatus(id, currentStatus);
-      if (result?.error) alert(result.error);
+      const result = await toggleProductStatus(id, currentEffective, nextStatus);
+      if (result && !result.success) {
+        // Откат при ошибке сервера
+        setOptimisticStatuses((prev) => ({
+          ...prev,
+          [id]: currentEffective,
+        }));
+        toast.error(result.error || "Ошибка при обновлении статуса", {
+          id: `status-${id}`,
+        });
+      }
     } catch {
-      alert("Ошибка при обновлении статуса");
+      // Откат при сетевой ошибке
+      setOptimisticStatuses((prev) => ({
+        ...prev,
+        [id]: currentEffective,
+      }));
+      toast.error("Ошибка сети при обновлении статуса", {
+        id: `status-${id}`,
+      });
     } finally {
-      setTogglingId(null);
+      inFlightRef.current.delete(id);
     }
   };
 
@@ -154,7 +212,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
         escapeCSV(p.subCategory || ""),
         escapeCSV(p.price),
         escapeCSV(p.oldPrice || ""),
-        escapeCSV(p.status || "Активен"),
+        escapeCSV(getEffectiveStatus(p)),
         escapeCSV(p.availability || "В наличии"),
         escapeCSV(p.viewsCount || 0),
         escapeCSV(p.contactClicksCount || 0),
@@ -186,12 +244,23 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
 
   // ── Bulk actions ──────────────────────────────────────────────────────────
   const handleBulkPublish = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+
+    // Моментальное оптимистичное обновление
+    setOptimisticStatuses((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        next[id] = "Активен";
+      });
+      return next;
+    });
+    setSelectedIds(new Set());
     setIsBulkLoading(true);
     try {
-      const result = await bulkUpdateProductsStatus([...selectedIds], "Активен");
+      const result = await bulkUpdateProductsStatus(ids, "Активен");
       if (result.success) {
         toast.success(`Опубликовано товаров: ${result.count}`);
-        setSelectedIds(new Set());
       } else {
         toast.error(result.error ?? "Ошибка при публикации");
       }
@@ -203,12 +272,23 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
   };
 
   const handleBulkHide = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+
+    // Моментальное оптимистичное обновление
+    setOptimisticStatuses((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        next[id] = "Скрыт";
+      });
+      return next;
+    });
+    setSelectedIds(new Set());
     setIsBulkLoading(true);
     try {
-      const result = await bulkUpdateProductsStatus([...selectedIds], "Скрыт");
+      const result = await bulkUpdateProductsStatus(ids, "Скрыт");
       if (result.success) {
         toast.success(`Скрыто товаров: ${result.count}`);
-        setSelectedIds(new Set());
       } else {
         toast.error(result.error ?? "Ошибка при скрытии");
       }
@@ -291,7 +371,8 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
             {/* Список карточек */}
             {items.map((product) => {
               const imageUrl = product.images?.[0];
-              const isActive = product.status === "Активен";
+              const effectiveStatus = getEffectiveStatus(product);
+              const isActive = effectiveStatus === "Активен";
               const isSelected = selectedIds.has(product.id);
               const isDuplicating = duplicatingId === product.id;
               const hasDiscount = product.price > 0 && product.oldPrice && product.oldPrice > product.price;
@@ -342,7 +423,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                               isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
                             }`}
                           >
-                            {product.status || "Активен"}
+                            {effectiveStatus}
                           </span>
                           <AvailabilityBadge availability={product.availability} size="xs" />
                         </div>
@@ -407,8 +488,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                   {/* Нижняя панель действий */}
                   <div className="flex items-center justify-between border-t border-gray-100 pt-2.5">
                     <button
-                      onClick={() => handleToggleStatus(product.id, product.status || "Активен")}
-                      disabled={togglingId === product.id}
+                      onClick={() => handleToggleStatus(product.id, effectiveStatus)}
                       className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                       title={isActive ? "Скрыть товар" : "Показать товар"}
                     >
@@ -500,7 +580,8 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
               {items.length > 0 ? (
                 items.map((product) => {
                   const imageUrl = product.images?.[0];
-                  const isActive = product.status === "Активен";
+                  const effectiveStatus = getEffectiveStatus(product);
+                  const isActive = effectiveStatus === "Активен";
                   const isSelected = selectedIds.has(product.id);
                   const isDuplicating = duplicatingId === product.id;
 
@@ -571,13 +652,13 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1 items-start">
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                               isActive
                                 ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
+                                : "bg-gray-100 text-gray-700"
                             }`}
                           >
-                            {product.status || "Активен"}
+                            {effectiveStatus}
                           </span>
                           <AvailabilityBadge availability={product.availability} size="xs" />
                         </div>
@@ -605,12 +686,11 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleToggleStatus(product.id, product.status || "Активен")}
-                            disabled={togglingId === product.id}
+                            onClick={() => handleToggleStatus(product.id, effectiveStatus)}
                             title={isActive ? "Скрыть товар" : "Показать товар"}
                             className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                           >
-                            {isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {isActive ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-green-600" />}
                           </button>
 
                           <button

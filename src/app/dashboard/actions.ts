@@ -162,28 +162,27 @@ export async function deleteProduct(id: string) {
   }
 }
 
-export async function toggleProductStatus(id: string, currentStatus: string) {
+export async function toggleProductStatus(id: string, currentStatus?: string, targetStatus?: string) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return { success: false, error: "Не авторизован" };
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { user: true }
-    });
+    const newStatus = targetStatus ?? (currentStatus === "Активен" ? "Скрыт" : "Активен");
 
-    if (!product || product.user?.id !== session.user.id) {
-      return { success: false, error: "Товар не найден или у вас нет прав" };
-    }
-
-    const newStatus = currentStatus === "Активен" ? "Скрыт" : "Активен";
-
-    await prisma.product.update({
-      where: { id },
+    const result = await prisma.product.updateMany({
+      where: {
+        id,
+        userId: session.user.id,
+        deletedAt: null,
+      },
       data: { status: newStatus },
     });
+
+    if (result.count === 0) {
+      return { success: false, error: "Товар не найден или у вас нет прав" };
+    }
 
     revalidatePath("/dashboard", "layout");
     revalidatePath("/dashboard/products", "layout");
