@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +17,8 @@ import {
   Bell,
   RefreshCw,
   ExternalLink,
+  CloudUpload,
+  Loader2,
 } from "lucide-react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
@@ -51,6 +53,10 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track if form was ever dirty (changed by user) — don't auto-save on mount
+  const isDirtyRef = useRef(false);
   
   const [avatarUrl, setAvatarUrl] = useState<string>(initialData?.avatarUrl || "");
   const [coverUrl, setCoverUrl] = useState<string>(initialData?.coverUrl || "");
@@ -79,6 +85,77 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   });
 
   const selectedSlug = watch("instagram") || cleanInsta;
+  const formValues = watch();
+
+  // ── Auto-save core function ──────────────────────────────────────────
+  const saveData = useCallback(async (data: StoreFormData, currentAvatarUrl: string, currentCoverUrl: string) => {
+    setIsSaving(true);
+    setAutoSaveStatus("saving");
+    try {
+      const cleanInstaForm = data.instagram.replace(/^@/, "").trim();
+      const cleanTelegram = (data.telegram || "").replace(/^@/, "").trim();
+      const payload = {
+        ...data,
+        instagram: cleanInstaForm,
+        telegram: cleanTelegram,
+        viber: data.viber?.trim() || "",
+        phone: data.phone?.trim() || "",
+        slug: cleanInstaForm,
+        avatarUrl: currentAvatarUrl,
+        coverUrl: currentCoverUrl,
+      };
+
+      const res = await fetch("/api/store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Ошибка при сохранении");
+      }
+
+      setAutoSaveStatus("saved");
+      setJustSaved(true);
+      router.refresh();
+      setTimeout(() => setAutoSaveStatus("idle"), 3000);
+    } catch (error: any) {
+      setAutoSaveStatus("error");
+      toast.error(error.message);
+      setTimeout(() => setAutoSaveStatus("idle"), 4000);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [router]);
+
+  // ── Debounced auto-save on form field changes ────────────────────────
+  useEffect(() => {
+    if (!isDirtyRef.current) {
+      // Skip first render (initial values)
+      isDirtyRef.current = true;
+      return;
+    }
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setAutoSaveStatus("saving"); // show indicator immediately
+    autoSaveTimer.current = setTimeout(() => {
+      saveData(formValues, avatarUrl, coverUrl);
+    }, 1200);
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formValues.name,
+    formValues.instagram,
+    formValues.description,
+    formValues.phone,
+    formValues.telegram,
+    formValues.viber,
+    // cities is array — serialize to string for comparison
+    JSON.stringify(formValues.cities),
+  ]);
+
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || "evitrina_notify_bot";
   const telegramConnectUrl = initialData?.id
     ? `https://t.me/${botUsername}?start=${initialData.id}`
@@ -148,41 +225,9 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
   };
 
   const onSubmit: SubmitHandler<StoreFormData> = async (data) => {
-    setIsSaving(true);
-
-    try {
-      const cleanInstaForm = data.instagram.replace(/^@/, "").trim();
-      const cleanTelegram = (data.telegram || "").replace(/^@/, "").trim();
-      const payload = { 
-        ...data, 
-        instagram: cleanInstaForm,
-        telegram: cleanTelegram,
-        viber: data.viber?.trim() || "",
-        phone: data.phone?.trim() || "",
-        slug: cleanInstaForm, 
-        avatarUrl, 
-        coverUrl,
-      };
-
-      const res = await fetch("/api/store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Ошибка при сохранении");
-      }
-
-      toast.success("Настройки успешно сохранены! 🎉");
-      setJustSaved(true);
-      router.refresh();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsSaving(false);
-    }
+    // Manual save — same logic as auto-save
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    await saveData(data, avatarUrl, coverUrl);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "cover") => {
@@ -201,10 +246,15 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
         quality: 0.85,
       });
 
+      const newAvatarUrl = isAvatar ? url : avatarUrl;
+      const newCoverUrl = !isAvatar ? url : coverUrl;
       if (isAvatar) setAvatarUrl(url);
-      if (!isAvatar) setCoverUrl(url);
+      else setCoverUrl(url);
 
       toast.success(`${isAvatar ? "Логотип" : "Обложка"} успешно обновлена!`, { id: toastId });
+
+      // Auto-save immediately after image upload with the new URL
+      await saveData(watch() as StoreFormData, newAvatarUrl, newCoverUrl);
     } catch (err: any) {
       console.error("Cloudinary upload error:", err);
       toast.error(err.message || `Не удалось загрузить ${label}`, { id: toastId });
@@ -588,13 +638,36 @@ export function StoreSettingsForm({ initialData, isNew = false }: StoreSettingsF
         )}
       </section>
 
-      <button
-        type="submit"
-        disabled={isSaving || !!uploadingType}
-        className="w-full rounded-xl bg-primary py-3.5 font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 shadow-sm"
-      >
-        {isSaving ? "Сохранение..." : "Сохранить настройки магазина"}
-      </button>
+      {/* ── Auto-save status bar ── */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm min-w-0">
+          {autoSaveStatus === "saving" && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400 shrink-0" />
+              <span className="text-gray-500 truncate">Сохранение...</span>
+            </>
+          )}
+          {autoSaveStatus === "saved" && (
+            <>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="text-emerald-700 font-medium truncate">Сохранено</span>
+            </>
+          )}
+          {autoSaveStatus === "error" && (
+            <span className="text-red-600 text-xs">Ошибка сохранения — попробуйте вручную</span>
+          )}
+          {autoSaveStatus === "idle" && (
+            <span className="text-gray-400 text-xs truncate">Изменения сохраняются автоматически</span>
+          )}
+        </div>
+        <button
+          type="submit"
+          disabled={isSaving || !!uploadingType}
+          className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        >
+          {isSaving ? "Сохранение..." : "Сохранить сейчас"}
+        </button>
+      </div>
     </form>
   );
 }
