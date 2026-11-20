@@ -185,6 +185,20 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     setSelectedSubCategories((prev) => prev.filter((s) => validSubs.has(s)));
   }, [selectedCategories]);
 
+  // Защита от случайного изменения цены при прокрутке страницы колесиком мыши
+  useEffect(() => {
+    const handleWheel = () => {
+      if (
+        document.activeElement instanceof HTMLInputElement &&
+        document.activeElement.type === "number"
+      ) {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) => {
       const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
@@ -562,6 +576,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                   id="price"
                   type="number"
                   step="0.01"
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 bg-white ${
                     errors.price ? "border-red-500" : "border-gray-300"
                   }`}
@@ -599,6 +614,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                   id="oldPrice"
                   type="number"
                   step="0.01"
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 bg-white ${
                     errors.oldPrice ? "border-red-500" : "border-gray-300"
                   }`}
@@ -963,6 +979,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                     <input
                       type="number"
                       step="0.01"
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       value={variant.price}
                       onChange={(e) => handleUpdateVariant(variant.id, "price", e.target.value)}
                       placeholder="Цена, руб."
@@ -973,6 +990,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                     <input
                       type="number"
                       step="0.01"
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       value={variant.oldPrice || ""}
                       onChange={(e) => handleUpdateVariant(variant.id, "oldPrice", e.target.value)}
                       placeholder="Старая цена (необяз.)"

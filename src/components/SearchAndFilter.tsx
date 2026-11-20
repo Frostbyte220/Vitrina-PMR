@@ -943,6 +943,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
                       type="number"
                       min="0"
                       step="10"
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       placeholder="От"
                       value={minPrice}
                       onChange={(e) => {
@@ -967,6 +968,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
                       type="number"
                       min="0"
                       step="10"
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       placeholder="До"
                       value={maxPrice}
                       onChange={(e) => {

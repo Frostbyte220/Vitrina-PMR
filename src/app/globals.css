@@ -18,6 +18,16 @@
     max-width: 100vw;
     overflow-x: hidden;
   }
+
+  /* Скрытие стандартных стрелок прокрутки у числовых полей и защита от случайного изменения */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 @layer utilities {
