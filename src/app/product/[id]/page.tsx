@@ -171,7 +171,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   
   const cleanUsername = rawInstagram.replace(/^@/, '') || storeSlug;
 
-  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
+  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price && product.price > 0);
   const discountPercent = hasDiscount
     ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
     : null;

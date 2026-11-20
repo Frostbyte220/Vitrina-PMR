@@ -246,7 +246,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
       {/* 2. Фото товара + Кнопка Избранного + Бейдж скидки */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface/50">
         <FavoriteButton productId={product.id} />
-        {product.oldPrice && product.oldPrice > product.price && (
+        {product.oldPrice && product.oldPrice > product.price && product.price > 0 && (
           <div className="absolute left-2.5 top-2.5 z-10 pointer-events-none">
             <span className="inline-flex items-center rounded-lg bg-rose-600 px-2 py-0.5 text-[11px] font-extrabold text-white shadow-md shadow-rose-600/30 tracking-tight">
               -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
@@ -289,10 +289,10 @@ export function ProductCard({ product, priority = false, activeCities }: Product
         <div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-baseline gap-2">
-              <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price && !hasVariants ? "text-rose-600" : "text-primary"}`}>
+              <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price && product.price > 0 && !hasVariants ? "text-rose-600" : "text-primary"}`}>
                 {hasVariants || isService ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
               </span>
-              {product.oldPrice && product.oldPrice > product.price && !hasVariants && (
+              {product.oldPrice && product.oldPrice > product.price && product.price > 0 && !hasVariants && (
                 <span className="text-xs font-medium text-gray-400 line-through">
                   {formatPrice(product.oldPrice)}
                 </span>

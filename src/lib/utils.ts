@@ -1,4 +1,10 @@
-export function formatPrice(price: number): string {
+export function formatPrice(price: number | null | undefined): string {
+  if (price === 0) {
+    return "Договорная";
+  }
+  if (price === null || price === undefined || isNaN(price)) {
+    return "0 Руб";
+  }
   return `${price.toLocaleString("ru-RU")} Руб`;
 }
 

@@ -6,7 +6,16 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { Loader2, Check, Plus, Trash2, Sparkles, Briefcase } from "lucide-react";
-import { productSchema, ProductFormData, CATEGORIES, CLOTHING_SIZES, SHOE_SIZES, PERFUME_VOLUME_PRESETS } from "@/lib/validations/product";
+import {
+  productSchema,
+  ProductFormData,
+  CATEGORIES,
+  CLOTHING_SIZES,
+  SHOE_SIZES,
+  PERFUME_VOLUME_PRESETS,
+  NEGOTIABLE_PRICE_CATEGORIES,
+  isNegotiablePriceAllowed,
+} from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -83,15 +92,17 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
     setValue,
     watch,
     reset,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
     mode: "onBlur",
+    shouldUnregister: false,
     defaultValues: initialData
       ? {
           title: initialData.title || "",
           description: initialData.description || "",
-          price: initialData.price ? initialData.price.toString() : ("" as any),
+          price: initialData.price !== undefined && initialData.price !== null ? initialData.price.toString() : ("" as any),
           oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
           category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : "",
           categories: parseInitialCategories(initialData),
@@ -109,6 +120,39 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   });
 
   const selectedCategory = selectedCategories[0] || "";
+  const allowsNegotiablePrice = isNegotiablePriceAllowed(
+    selectedCategories[0],
+    selectedCategories
+  );
+
+  const [isPriceNegotiable, setIsPriceNegotiable] = useState<boolean>(() => {
+    if (initialData && (initialData.price === 0 || initialData.price === "0")) {
+      const initCats = parseInitialCategories(initialData);
+      return isNegotiablePriceAllowed(initCats[0], initCats);
+    }
+    return false;
+  });
+
+  // Сбрасываем договорную цену, если сняли категорию, поддерживающую её
+  useEffect(() => {
+    if (!allowsNegotiablePrice && isPriceNegotiable) {
+      setIsPriceNegotiable(false);
+      if (String(watch("price")) === "0") {
+        setValue("price", "" as any, { shouldValidate: true });
+      }
+    }
+  }, [allowsNegotiablePrice, isPriceNegotiable, setValue, watch]);
+
+  const handleToggleNegotiablePrice = (checked: boolean) => {
+    setIsPriceNegotiable(checked);
+    if (checked) {
+      setValue("price", "0" as any, { shouldValidate: true });
+      setValue("oldPrice", "" as any, { shouldValidate: true });
+      clearErrors(["price", "oldPrice"]);
+    } else {
+      setValue("price", "" as any, { shouldValidate: false });
+    }
+  };
   const watchPrice = Number(watch("price")) || 0;
   const watchOldPrice = Number(watch("oldPrice")) || 0;
   const discountPercent =
@@ -261,11 +305,22 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       // Если указаны объемы, но основная цена 0 или не заполнена, берем минимальную
       let finalPrice = Number(data.price) || 0;
-      if (validVariants.length > 0) {
+      if (allowsNegotiablePrice && isPriceNegotiable) {
+        finalPrice = 0;
+      } else if (validVariants.length > 0) {
         const minVarPrice = Math.min(...validVariants.map((v) => v.price));
         if (!finalPrice || finalPrice <= 0) {
           finalPrice = minVarPrice;
         }
+      }
+
+      if (!isPriceNegotiable && (!data.price || Number(data.price) <= 0) && validVariants.length === 0) {
+        toast.error(
+          allowsNegotiablePrice
+            ? "Пожалуйста, укажите цену товара или включите «Договорная цена»"
+            : "Пожалуйста, укажите цену товара больше 0"
+        );
+        return;
       }
 
       // Синхронизируем sizes: для парфюмерии пишем названия объемов
@@ -277,7 +332,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       const payload = {
         ...data,
-        price: finalPrice > 0 ? finalPrice : Number(data.price),
+        price: allowsNegotiablePrice && isPriceNegotiable ? 0 : (finalPrice > 0 ? finalPrice : Number(data.price)),
+        oldPrice: allowsNegotiablePrice && isPriceNegotiable ? null : (data.oldPrice && Number(data.oldPrice) > 0 ? Number(data.oldPrice) : null),
         category: primaryCat,
         categories: selectedCategories,
         subCategory: selectedSubCategories.length > 0 ? selectedSubCategories.join(", ") : undefined,
@@ -446,73 +502,118 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
 
       {/* Цены (скрываем для парфюмерии, где цены задаются для каждого объема отдельно) */}
       {!hasPerfume && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <label htmlFor="price" className="text-sm font-medium text-gray-700">
-                Текущая цена (руб.) <span className="text-rose-500">*</span>
-              </label>
-              {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
-                <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
-                  Авто: от {getMinVariantPrice()} руб.
+        <div className="flex flex-col gap-3 rounded-2xl bg-gray-50/70 p-4 border border-gray-200/80">
+          {allowsNegotiablePrice && (
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200/80">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                  <span className="text-base">🤝</span> Договорная цена
                 </span>
-              )}
+                <span className="text-xs text-gray-500">
+                  Для сладостей, подарков и авторских handmade-изделий под заказ
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isPriceNegotiable}
+                  onChange={(e) => handleToggleNegotiablePrice(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+              </label>
             </div>
-            <input
-              {...register("price")}
-              id="price"
-              type="number"
-              step="0.01"
-              className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
-                errors.price ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder={
-                volumeVariants.length > 0 && getMinVariantPrice() > 0
-                  ? String(getMinVariantPrice())
-                  : "150"
-              }
-            />
-            {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
-            {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+          )}
+
+          {isPriceNegotiable && allowsNegotiablePrice ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-rose-900">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl shrink-0">🤝</span>
+                <div className="text-xs sm:text-sm">
+                  <p className="font-semibold text-rose-800">Установлена договорная цена</p>
+                  <p className="text-rose-600 mt-0.5">
+                    В карточке товара на витрине вместо фиксированной суммы будет отображаться <strong>«Договорная»</strong>.
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setValue("price", String(getMinVariantPrice()) as any, { shouldValidate: true })}
-                className="text-left text-[11px] text-purple-600 hover:text-purple-800 font-medium underline decoration-dashed transition-colors cursor-pointer"
+                onClick={() => handleToggleNegotiablePrice(false)}
+                className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline whitespace-nowrap cursor-pointer shrink-0"
               >
-                Подставить мин. цену из объемов ({getMinVariantPrice()} руб.)
+                Указать точную цену
               </button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
-                Старая цена (руб.)
-              </label>
-              {discountPercent !== null && (
-                <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
-                  Скидка -{discountPercent}%
-                </span>
-              )}
             </div>
-            <input
-              {...register("oldPrice")}
-              id="oldPrice"
-              type="number"
-              step="0.01"
-              className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 ${
-                errors.oldPrice ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="200 (необязательно)"
-            />
-            {errors.oldPrice ? (
-              <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
-            ) : (
-              <span className="text-[11px] text-gray-400">
-                Укажите, чтобы показать скидку и зачеркнутую цену
-              </span>
-            )}
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="price" className="text-sm font-medium text-gray-700">
+                    Текущая цена (руб.) <span className="text-rose-500">*</span>
+                  </label>
+                  {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+                    <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                      Авто: от {getMinVariantPrice()} руб.
+                    </span>
+                  )}
+                </div>
+                <input
+                  {...register("price")}
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 bg-white ${
+                    errors.price ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder={
+                    volumeVariants.length > 0 && getMinVariantPrice() > 0
+                      ? String(getMinVariantPrice())
+                      : "150"
+                  }
+                />
+                {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
+                {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("price", String(getMinVariantPrice()) as any, { shouldValidate: true })}
+                    className="text-left text-[11px] text-purple-600 hover:text-purple-800 font-medium underline decoration-dashed transition-colors cursor-pointer"
+                  >
+                    Подставить мин. цену из объемов ({getMinVariantPrice()} руб.)
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="oldPrice" className="text-sm font-medium text-gray-700">
+                    Старая цена (руб.)
+                  </label>
+                  {discountPercent !== null && (
+                    <span className="inline-flex items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                      Скидка -{discountPercent}%
+                    </span>
+                  )}
+                </div>
+                <input
+                  {...register("oldPrice")}
+                  id="oldPrice"
+                  type="number"
+                  step="0.01"
+                  className={`w-full rounded-lg border p-2.5 outline-none transition-all focus:ring-2 focus:ring-rose-500 bg-white ${
+                    errors.oldPrice ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="200 (необязательно)"
+                />
+                {errors.oldPrice ? (
+                  <span className="text-xs text-red-500">{errors.oldPrice.message}</span>
+                ) : (
+                  <span className="text-[11px] text-gray-400">
+                    Укажите, чтобы показать скидку и зачеркнутую цену
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

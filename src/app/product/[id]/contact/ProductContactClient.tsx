@@ -244,7 +244,7 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
             </h1>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-base font-bold text-rose-600">{formattedPrice}</span>
-              {product.oldPrice && (
+              {product.oldPrice && product.price > 0 && (
                 <span className="text-xs text-gray-400 line-through">
                   {formatPrice(product.oldPrice)}
                 </span>

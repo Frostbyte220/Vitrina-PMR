@@ -180,19 +180,26 @@ export function generateStoreOrderMessage(group: StoreCartGroup): string {
   const itemsList = group.items
     .map((item, idx) => {
       const sizeStr = item.selectedSize ? ` (Размер: ${item.selectedSize})` : "";
+      const isNegotiable = item.price === 0;
       const unitPriceStr = formatPrice(item.price);
-      const totalItemStr = formatPrice(item.price * item.quantity);
-      const qtyStr =
-        item.quantity > 1
-          ? ` — ${item.quantity} шт. × ${unitPriceStr} = ${totalItemStr}`
-          : ` — ${unitPriceStr}`;
+      const totalItemStr = isNegotiable ? "Договорная" : formatPrice(item.price * item.quantity);
+      const qtyStr = isNegotiable
+        ? ` — Договорная цена`
+        : item.quantity > 1
+        ? ` — ${item.quantity} шт. × ${unitPriceStr} = ${totalItemStr}`
+        : ` — ${unitPriceStr}`;
       const productLink = `${origin}/product/${item.productId}`;
 
       return `${idx + 1}. ${item.title}${sizeStr}${qtyStr}\n   ${productLink}`;
     })
     .join("\n\n");
 
-  const totalSumStr = formatPrice(group.totalPrice);
+  const hasNegotiable = group.items.some((it) => it.price === 0);
+  const totalSumStr = hasNegotiable
+    ? group.items.every((it) => it.price === 0)
+      ? "Договорная"
+      : `от ${formatPrice(group.totalPrice)} (+ договорные позиции)`
+    : formatPrice(group.totalPrice);
   const totalCount = group.totalQuantity;
   const countWord =
     totalCount === 1 ? "товар" : totalCount > 1 && totalCount < 5 ? "товара" : "товаров";

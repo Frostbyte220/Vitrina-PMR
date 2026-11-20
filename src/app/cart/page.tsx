@@ -306,7 +306,7 @@ export default function CartPage() {
                             {/* Стоимость */}
                             <div className="text-right min-w-[80px]">
                               <p className="text-sm sm:text-base font-semibold text-gray-900">
-                                {formatPrice(item.price * item.quantity)}
+                                {item.price === 0 ? "Договорная" : formatPrice(item.price * item.quantity)}
                               </p>
                             </div>
 
@@ -332,7 +332,11 @@ export default function CartPage() {
                       <div className="flex items-baseline gap-2">
                         <span className="text-xs text-gray-500">Итого в магазине:</span>
                         <span className="text-base sm:text-lg font-bold text-gray-900">
-                          {formatPrice(group.totalPrice)}
+                          {group.items.every((it) => it.price === 0)
+                            ? "Договорная"
+                            : group.items.some((it) => it.price === 0)
+                            ? `${formatPrice(group.totalPrice)} + договорные`
+                            : formatPrice(group.totalPrice)}
                         </span>
                       </div>
 

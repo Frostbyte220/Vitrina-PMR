@@ -220,7 +220,11 @@ export function StoreCheckoutModal({
               {group.items.length === 1 ? "наименование" : "наименования"})
             </span>
             <span className="text-sm font-extrabold text-rose-600">
-              {formatPrice(group.totalPrice)}
+              {group.items.every((it) => it.price === 0)
+                ? "Договорная"
+                : group.items.some((it) => it.price === 0)
+                ? `${formatPrice(group.totalPrice)} + дог.`
+                : formatPrice(group.totalPrice)}
             </span>
           </div>
 
@@ -231,8 +235,9 @@ export function StoreCheckoutModal({
                   {it.title} {it.selectedSize ? `(${it.selectedSize})` : ""}
                 </span>
                 <span className="shrink-0 text-gray-500 font-medium">
-                  {it.quantity > 1 ? `${it.quantity} × ` : ""}
-                  {formatPrice(it.price * it.quantity)}
+                  {it.price === 0
+                    ? "Договорная"
+                    : it.quantity > 1 ? `${it.quantity} × ${formatPrice(it.price * it.quantity)}` : formatPrice(it.price * it.quantity)}
                 </span>
               </div>
             ))}

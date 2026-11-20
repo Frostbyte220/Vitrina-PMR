@@ -110,17 +110,20 @@ export const productSchema = z.object({
     if (isPerfume) {
       return hasValidVariants || data.price > 0;
     }
+    if (isNegotiablePriceAllowed(data.category, data.categories)) {
+      return data.price >= 0;
+    }
     return data.price > 0;
   },
   {
-    message: "Пожалуйста, укажите хотя бы один объем и цену товара",
-    path: ["variants"],
+    message: "Пожалуйста, укажите цену товара",
+    path: ["price"],
   }
 ).refine(
   (data) => {
     const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
-    const isService = data.category === "Услуги" || data.categories?.includes("Услуги");
-    if ((isPerfume || isService) && (!data.oldPrice || data.price === 0)) return true;
+    const isNegotiableAllowed = isNegotiablePriceAllowed(data.category, data.categories);
+    if ((isPerfume || isNegotiableAllowed) && (!data.oldPrice || data.price === 0)) return true;
     return !data.oldPrice || data.oldPrice > data.price;
   },
   {
@@ -128,6 +131,33 @@ export const productSchema = z.object({
     path: ["oldPrice"],
   }
 );
+
+export const NEGOTIABLE_PRICE_CATEGORIES = [
+  "Сладости и десерты",
+  "Подарки",
+  "Handmade",
+] as const;
+
+export function isNegotiablePriceAllowed(
+  category?: string | null,
+  categories?: string[] | null
+): boolean {
+  if (
+    category &&
+    (NEGOTIABLE_PRICE_CATEGORIES.includes(category as any) || category === "Услуги")
+  ) {
+    return true;
+  }
+  if (
+    categories &&
+    categories.some(
+      (c) => NEGOTIABLE_PRICE_CATEGORIES.includes(c as any) || c === "Услуги"
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export const CLOTHING_SIZES = [
   "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "One Size",

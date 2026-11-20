@@ -294,7 +294,7 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
               const isActive = product.status === "Активен";
               const isSelected = selectedIds.has(product.id);
               const isDuplicating = duplicatingId === product.id;
-              const hasDiscount = product.oldPrice && product.oldPrice > product.price;
+              const hasDiscount = product.price > 0 && product.oldPrice && product.oldPrice > product.price;
 
               return (
                 <div
@@ -552,11 +552,11 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span
-                            className={`font-semibold ${product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-gray-900"}`}
+                            className={`font-semibold ${product.price > 0 && product.oldPrice && product.oldPrice > product.price ? "text-rose-600" : "text-gray-900"}`}
                           >
                             {formatPrice(product.price)}
                           </span>
-                          {product.oldPrice && product.oldPrice > product.price && (
+                          {product.price > 0 && product.oldPrice && product.oldPrice > product.price && (
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-xs text-gray-400 line-through">
                                 {formatPrice(product.oldPrice)}

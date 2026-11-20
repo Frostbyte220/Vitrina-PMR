@@ -45,7 +45,7 @@ export function ProductPageHeader({
     setMounted(true);
   }, []);
 
-  const formattedPrice = price ? formatPrice(price) : "";
+  const formattedPrice = price !== undefined && price !== null ? formatPrice(price) : "";
   const subtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
 
   return (
@@ -144,7 +144,7 @@ export function ProductPageHeaderDesktop({
     setMounted(true);
   }, []);
 
-  const formattedPrice = price ? formatPrice(price) : "";
+  const formattedPrice = price !== undefined && price !== null ? formatPrice(price) : "";
   const subtitle = [shopName, formattedPrice].filter(Boolean).join(" · ");
 
   return (

@@ -138,7 +138,8 @@ export function ContactSellerButton({
       ? `https://www.e-vitrina.com/product/${productId}`
       : "";
 
-  const formattedPrice = formatPrice(productPrice); // возвращает число с "Руб"
+  const formattedPrice = formatPrice(productPrice); // "Договорная" для price=0, иначе "X Руб"
+  const priceStr = productPrice === 0 ? "договорная цена" : formattedPrice;
   const availInfo = getAvailabilityInfo(availability);
   const availText = availInfo ? ` (${availInfo.label.toLowerCase()})` : "";
   const sizeText = selectedSize
@@ -148,11 +149,11 @@ export function ContactSellerButton({
   // Фирменное сообщение с четкой атрибуцией e-vitrina.com
   const greetingMessage = isServiceEffective
     ? (productUrl
-        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?\nСсылка на услугу: ${productUrl}`
-        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?`)
+        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${priceStr}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?\nСсылка на услугу: ${productUrl}`
+        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу услуги «${productName}»${sizeText} (${priceStr}${availText}).\nПодскажите, пожалуйста, когда можно записаться / оформить выезд?`)
     : (productUrl
-        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?\nСсылка на товар: ${productUrl}`
-        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${formattedPrice}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?`);
+        ? `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${priceStr}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?\nСсылка на товар: ${productUrl}`
+        : `Здравствуйте! Пишу вам с сайта e-vitrina.com по поводу товара «${productName}»${sizeText} (${priceStr}${availText}).\nПодскажите, пожалуйста, есть ли в наличии?`);
 
   const copyGreeting = () => {
     copyToClipboard(greetingMessage).then((copied) => {
