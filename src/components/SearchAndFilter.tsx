@@ -11,6 +11,7 @@ import { formatPrice, cloudinaryLoader } from "@/lib/utils";
 import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP } from "@/lib/constants/categories";
 import { useCatalogFilterStore } from "@/store/useCatalogFilterStore";
+import { CatalogMegaMenu } from "@/components/home/CatalogMegaMenu";
 
 const SORT_OPTIONS = [
   { value: "newest",     label: "Сначала новые",       Icon: ArrowUpDown },
@@ -222,58 +223,69 @@ export function SearchInput({ className = "" }: { className?: string }) {
   };
 
   return (
-    <form ref={searchRef} onSubmit={handleSearch} className={`relative mx-auto max-w-2xl px-4 sm:px-0 z-40 ${className}`}>
-      <div className="relative flex items-center">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          placeholder="Поиск товаров, брендов или магазинов..."
-          className="w-full rounded-full border border-gray-200/90 bg-white py-3.5 sm:py-4 pl-12 pr-11 text-sm sm:text-base text-gray-900 shadow-sm hover:shadow-md focus:shadow-md outline-none transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-        />
-        {isPending || isDebouncing ? (
-          <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
-        ) : (
-          <Search className="absolute left-4 h-5 w-5 text-gray-400" />
-        )}
-
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery("");
-              setProductSuggestions([]);
-              setStoreSuggestions([]);
-              setCategorySuggestions([]);
-              updateQuery("");
+    <div className={`relative mx-auto max-w-2xl px-4 sm:px-0 z-40 ${className}`}>
+      <form ref={searchRef} onSubmit={handleSearch} className="relative">
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
               setShowSuggestions(true);
             }}
-            className="absolute right-3.5 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-            title="Очистить поиск"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-      <button type="submit" className="hidden" aria-label="Искать" />
-      
-      {/* Выпадающий список «живого» поиска и недавней истории */}
-      <AnimatePresence>
-        {showSuggestions && (
-          (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
-          searchQuery.trim().length >= 2
-        ) && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-4 right-4 sm:left-0 sm:right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
-          >
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Искать одежду, бенто-торты, детские вещи..."
+            className="w-full rounded-full border border-gray-200/90 bg-white py-3.5 sm:py-4 pl-12 pr-24 sm:pr-28 text-sm sm:text-base text-gray-900 shadow-sm hover:shadow-md focus:shadow-md outline-none transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+          />
+          {isPending || isDebouncing ? (
+            <Loader2 className="absolute left-4 h-5 w-5 animate-spin text-rose-500" />
+          ) : (
+            <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+          )}
+
+          <div className="absolute right-2 flex items-center gap-1">
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setProductSuggestions([]);
+                  setStoreSuggestions([]);
+                  setCategorySuggestions([]);
+                  updateQuery("");
+                  setShowSuggestions(true);
+                }}
+                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                title="Очистить поиск"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 rounded-full bg-rose-700 hover:bg-rose-800 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-95"
+              aria-label="Искать"
+            >
+              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Найти</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Выпадающий список «живого» поиска и недавней истории */}
+        <AnimatePresence>
+          {showSuggestions && (
+            (searchQuery.trim().length < 2 && searchHistory.length > 0) ||
+            searchQuery.trim().length >= 2
+          ) && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100 z-50 max-h-[75vh] overflow-y-auto"
+            >
             {/* История поиска (показывается при фокусе, когда запрос пуст или короче 2 символов) */}
             {searchQuery.trim().length < 2 && searchHistory.length > 0 && (
               <div className="p-2">
@@ -481,7 +493,26 @@ export function SearchInput({ className = "" }: { className?: string }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </form>
+      </form>
+
+      {/* Быстрые популярные запросы (чипсы под строкой поиска) */}
+      <div className="mt-2.5 flex items-center justify-center gap-1.5 overflow-x-auto scrollbar-hide px-1 py-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {["Бенто-торты", "Платья", "Детская одежда", "Хэндмейд", "Кроссовки", "Костюмы"].map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => {
+              setSearchQuery(tag);
+              updateQuery(tag);
+              scrollToResults();
+            }}
+            className="shrink-0 rounded-full bg-white/95 hover:bg-white text-gray-600 hover:text-rose-700 px-3 py-1 text-xs font-medium border border-gray-200/80 hover:border-rose-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -567,6 +598,10 @@ export function FilterBar({ className = "" }: { className?: string }) {
   const [isSizeOpen, setIsSizeOpen] = useState(false);
   const sizePopoverRef = useRef<HTMLDivElement>(null);
 
+  // Выпадающее меню сортировки
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortPopoverRef = useRef<HTMLDivElement>(null);
+
   // Синхронизация цен с параметрами URL / стора
   useEffect(() => {
     setMinPrice(currentMinPrice);
@@ -584,6 +619,9 @@ export function FilterBar({ className = "" }: { className?: string }) {
       }
       if (sizePopoverRef.current && !sizePopoverRef.current.contains(event.target as Node)) {
         setIsSizeOpen(false);
+      }
+      if (sortPopoverRef.current && !sortPopoverRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -659,11 +697,14 @@ export function FilterBar({ className = "" }: { className?: string }) {
       {/* 1. Фильтры и сортировка (Объединенный адаптивный ряд) */}
       <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-2 relative z-30">
         
+        {/* Кнопка "Каталог товаров" (Mega-Menu) */}
+        <CatalogMegaMenu />
+
         {/* Кнопка фильтра по городу (выпадающий popover) */}
         <div className="relative" ref={cityPopoverRef}>
           <button
             type="button"
-            onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); setIsSizeOpen(false); }}
+            onClick={() => { setIsCityOpen(!isCityOpen); setIsPriceOpen(false); setIsSizeOpen(false); setIsSortOpen(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
               currentCities.length > 0
                 ? "bg-rose-50 text-rose-700 border border-rose-300 ring-2 ring-rose-100"
@@ -758,6 +799,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
                 setIsSizeOpen(!isSizeOpen);
                 setIsCityOpen(false);
                 setIsPriceOpen(false);
+                setIsSortOpen(false);
               }}
               className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm ${
                 currentSizes.length > 0
@@ -851,6 +893,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
               setIsPriceOpen(!isPriceOpen);
               setIsCityOpen(false);
               setIsSizeOpen(false);
+              setIsSortOpen(false);
               setMinPrice(currentMinPrice);
               setMaxPrice(currentMaxPrice);
             }}
@@ -1089,31 +1132,66 @@ export function FilterBar({ className = "" }: { className?: string }) {
           )}
         </button>
 
-        {/* Кнопки сортировки */}
-        {SORT_OPTIONS.map(({ value, label, Icon }) => {
-          const isActive = currentSort === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => {
-                if (isActive && value !== "newest") {
-                  updateParams({ sort: "newest" });
-                } else {
-                  updateParams({ sort: value });
-                }
-              }}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shrink-0 shadow-sm active:scale-95 ${
-                isActive
-                  ? "bg-rose-600 text-white shadow-rose-200 ring-2 ring-rose-200 border border-rose-600"
-                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {label}
-            </button>
-          );
-        })}
+        {/* Выпадающий список сортировки (компактный дропдаун в один ряд) */}
+        <div className="relative" ref={sortPopoverRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsSortOpen(!isSortOpen);
+              setIsCityOpen(false);
+              setIsPriceOpen(false);
+              setIsSizeOpen(false);
+            }}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all sm:text-sm shadow-sm active:scale-95 ${
+              currentSort !== "newest"
+                ? "bg-rose-700 text-white shadow-rose-200 ring-2 ring-rose-200 border border-rose-700"
+                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+            }`}
+          >
+            <ArrowUpDown className={`h-3.5 w-3.5 shrink-0 ${currentSort !== "newest" ? "text-white" : "text-gray-500"}`} />
+            <span>
+              {SORT_OPTIONS.find((s) => s.value === currentSort)?.label || "Сортировка"}
+            </span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence>
+            {isSortOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 sm:left-0 sm:right-auto top-full mt-2 z-50 w-52 rounded-2xl bg-white py-2 shadow-xl border border-gray-100"
+              >
+                <div className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                  Сортировка
+                </div>
+                {SORT_OPTIONS.map(({ value, label, Icon }) => {
+                  const isActive = currentSort === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        updateParams({ sort: value });
+                        setIsSortOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left ${
+                        isActive
+                          ? "bg-rose-50 text-rose-700 font-semibold"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-rose-600" : "text-gray-400"}`} />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* 2. Активные фильтры (быстрые теги для сброса) */}
@@ -1235,29 +1313,32 @@ export function FilterBar({ className = "" }: { className?: string }) {
         </div>
       )}
 
-      {/* 3. Подкатегории (Чипсы фильтрации) */}
+      {/* 3. Подкатегории (Чипсы фильтрации в 1 аккуратный ряд со скроллом) */}
       {activeSubCategories && activeSubCategories.length > 0 && (
-        <div className="mx-auto max-w-6xl flex items-center justify-center relative z-20">
+        <div className="relative mx-auto max-w-6xl w-full px-4 overflow-hidden z-20">
+          <div className="pointer-events-none absolute left-3 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 to-transparent z-10" />
+          <div className="pointer-events-none absolute right-3 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent z-10" />
+
           <AnimatePresence mode="popLayout">
             <motion.div
-              initial={{ opacity: 0, y: -6 }}
+              initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6, scale: 0.95 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide sm:flex-wrap sm:justify-center py-0.5 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 px-4 sm:justify-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {activeSubCategories.map((sub) => {
                 const isActive = currentSubCategory === sub;
                 return (
                   <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     key={sub}
                     type="button"
                     onClick={() => toggleSubCategory(sub)}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all sm:text-xs sm:px-4 sm:py-2 select-none shadow-2xs ${
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all select-none shadow-2xs ${
                       isActive
-                        ? "bg-rose-600 text-white shadow-xs font-semibold"
+                        ? "bg-rose-700 text-white shadow-xs font-semibold"
                         : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border border-gray-200"
                     }`}
                   >
