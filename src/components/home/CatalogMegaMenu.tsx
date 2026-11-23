@@ -232,21 +232,19 @@ export function CatalogMegaMenu({ className = "" }: CatalogMegaMenuProps) {
                         </button>
                       </div>
 
-                      {/* Сетка подкатегорий */}
+                      {/* Сетка подкатегорий — просторные колонки с полным отображением названий */}
                       {subcategories.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 overflow-y-auto pr-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 overflow-y-auto pr-1">
                           {subcategories.map((sub) => (
                             <button
                               key={sub}
                               type="button"
                               onClick={() => handleSelectSubCategory(activeCategory, sub)}
-                              className="text-left text-xs sm:text-sm text-gray-600 hover:text-rose-700 hover:bg-rose-50/70 rounded-lg px-2.5 py-1.5 transition-colors font-medium group flex items-center justify-between cursor-pointer"
+                              className="text-left text-xs sm:text-sm text-gray-700 hover:text-rose-700 hover:bg-rose-50/80 rounded-xl px-3 py-2 transition-colors font-medium group flex items-center gap-2.5 cursor-pointer"
                             >
-                              <span className="group-hover:translate-x-0.5 transition-transform truncate">
+                              <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-rose-500 transition-colors shrink-0" />
+                              <span className="leading-snug">
                                 {sub}
-                              </span>
-                              <span className="text-[10px] text-gray-300 group-hover:text-rose-500">
-                                →
                               </span>
                             </button>
                           ))}
