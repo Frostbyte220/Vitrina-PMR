@@ -524,6 +524,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
     setCities: setStoreCities,
     setSizes: setStoreSizes,
     setSubCategory: setStoreSubCategory,
+    resetFilters,
     initFromUrl,
   } = useCatalogFilterStore();
 
@@ -1315,16 +1316,9 @@ export function FilterBar({ className = "" }: { className?: string }) {
             onClick={() => {
               setMinPrice("");
               setMaxPrice("");
-              updateParams({
-                minPrice: "",
-                maxPrice: "",
-                cities: null,
-                sizes: null,
-                discount: false,
-                availability: null,
-              });
+              resetFilters();
             }}
-            className="text-gray-400 hover:text-rose-600 underline font-medium ml-1 transition-colors"
+            className="text-gray-400 hover:text-rose-600 underline font-medium ml-1 transition-colors cursor-pointer"
           >
             Сбросить все
           </button>

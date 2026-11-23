@@ -220,6 +220,8 @@ export const useCatalogFilterStore = create<CatalogFilterState>((set, get) => ({
   resetFilters: () => {
     set({
       searchQuery: "",
+      selectedCategory: null,
+      selectedSubCategory: null,
       sort: "newest",
       discount: false,
       availability: null,
