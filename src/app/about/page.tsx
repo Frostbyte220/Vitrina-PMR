@@ -307,13 +307,13 @@ export default function AboutPage() {
                     <span>Telegram: <strong>@Evitrina</strong></span>
                   </a>
                   <a
-                    href="https://www.instagram.com/evitrinapmr/"
+                    href="https://www.instagram.com/evitrina.pmr/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:text-rose-600 hover:border-gray-300 transition-colors"
                   >
                     <Instagram className="h-4 w-4 text-rose-500" />
-                    <span>Официальный Instagram: <strong>@evitrinapmr</strong></span>
+                    <span>Официальный Instagram: <strong>@evitrina.pmr</strong></span>
                   </a>
                 </div>
               </section>

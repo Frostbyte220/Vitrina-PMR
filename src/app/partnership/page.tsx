@@ -106,13 +106,13 @@ export default function PartnershipPage() {
                 Создать витрину бесплатно
               </Link>
               <a
-                href="https://www.instagram.com/evitrinapmr/"
+                href="https://www.instagram.com/evitrina.pmr/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-rose-800/80 hover:bg-rose-800 px-6 py-3.5 text-sm font-semibold text-white border border-rose-400/30 transition-all"
               >
                 <Instagram className="h-4 w-4" />
-                Наш Instagram: @evitrinapmr
+                Наш Instagram: @evitrina.pmr
               </a>
             </div>
           </div>

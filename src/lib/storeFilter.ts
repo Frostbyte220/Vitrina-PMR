@@ -4,6 +4,8 @@
 
 export const HIDDEN_STORE_SLUGS = [
   "evitrina_pmr",
+  "evitrina.pmr",
+  "evitrinapmr",
   "evitrina-admin-store",
   "e-vitrina-admin-store",
   "admin-store",
@@ -12,7 +14,7 @@ export const HIDDEN_STORE_SLUGS = [
 
 export const HIDDEN_STORE_PRISMA_NOT = [
   { slug: { in: HIDDEN_STORE_SLUGS } },
-  { instagram: { in: ["evitrina_pmr", "@evitrina_pmr", "evitrina-admin-store"] } },
+  { instagram: { in: ["evitrina_pmr", "@evitrina_pmr", "evitrina.pmr", "@evitrina.pmr", "evitrinapmr", "@evitrinapmr", "evitrina-admin-store"] } },
   { name: { contains: "E-Vitrina Admin", mode: "insensitive" as const } },
 ];
 

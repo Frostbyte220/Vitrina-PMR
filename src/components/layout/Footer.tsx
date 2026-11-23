@@ -34,14 +34,14 @@ export function Footer() {
                   <span>@Evitrina</span>
                 </a>
                 <a
-                  href="https://www.instagram.com/evitrinapmr/"
+                  href="https://www.instagram.com/evitrina.pmr/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Официальный Instagram: @evitrinapmr"
+                  title="Официальный Instagram: @evitrina.pmr"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 shadow-2xs hover:border-gray-300 hover:bg-gray-50 hover:text-rose-600 transition-colors touch-manipulation"
                 >
                   <Instagram className="h-4 w-4 text-rose-500" />
-                  <span>@evitrinapmr</span>
+                  <span>@evitrina.pmr</span>
                 </a>
               </div>
             </div>
