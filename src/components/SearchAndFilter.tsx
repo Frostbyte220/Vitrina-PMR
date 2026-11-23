@@ -494,24 +494,6 @@ export function SearchInput({ className = "" }: { className?: string }) {
         )}
       </AnimatePresence>
       </form>
-
-      {/* Быстрые популярные запросы (чипсы под строкой поиска) */}
-      <div className="mt-2.5 flex items-center justify-center gap-1.5 overflow-x-auto scrollbar-hide px-1 py-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {["Бенто-торты", "Платья", "Детская одежда", "Хэндмейд", "Кроссовки", "Костюмы"].map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            onClick={() => {
-              setSearchQuery(tag);
-              updateQuery(tag);
-              scrollToResults();
-            }}
-            className="shrink-0 rounded-full bg-white/95 hover:bg-white text-gray-600 hover:text-rose-700 px-3 py-1 text-xs font-medium border border-gray-200/80 hover:border-rose-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
@@ -534,6 +516,7 @@ export function FilterBar({ className = "" }: { className?: string }) {
     cities: storeCities,
     sizes: storeSizes,
     isInitialized: storeInitialized,
+    setCategory: setStoreCategory,
     setSort: setStoreSort,
     setDiscount: setStoreDiscount,
     setAvailability: setStoreAvailability,
@@ -683,6 +666,8 @@ export function FilterBar({ className = "" }: { className?: string }) {
   const activeSubCategories = SUBCATEGORIES_MAP[currentCategory] || null;
 
   const hasActiveFilters = Boolean(
+    (currentCategory && currentCategory !== "Все") ||
+    currentSubCategory ||
     currentMinPrice ||
     currentMaxPrice ||
     currentCities.length > 0 ||
@@ -1199,6 +1184,39 @@ export function FilterBar({ className = "" }: { className?: string }) {
         <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-1.5 text-xs z-20 relative">
           <span className="text-gray-400 font-medium mr-0.5">Выбрано:</span>
 
+          {/* Тег категории */}
+          {currentCategory && currentCategory !== "Все" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 font-semibold text-rose-700 shadow-2xs">
+              <span>{currentCategory}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setStoreCategory(null);
+                  setStoreSubCategory(null);
+                }}
+                className="hover:bg-rose-200 rounded-full p-0.5 text-rose-600 transition-colors"
+                title="Сбросить категорию"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {/* Тег подкатегории */}
+          {currentSubCategory && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 font-semibold text-rose-700 shadow-2xs">
+              <span>{currentSubCategory}</span>
+              <button
+                type="button"
+                onClick={() => setStoreSubCategory(null)}
+                className="hover:bg-rose-200 rounded-full p-0.5 text-rose-600 transition-colors"
+                title="Сбросить подкатегорию"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
           {/* Тег цены */}
           {(currentMinPrice || currentMaxPrice) && (
             <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 font-semibold text-rose-700 shadow-2xs">
@@ -1310,44 +1328,6 @@ export function FilterBar({ className = "" }: { className?: string }) {
           >
             Сбросить все
           </button>
-        </div>
-      )}
-
-      {/* 3. Подкатегории (Чипсы фильтрации в 1 аккуратный ряд со скроллом) */}
-      {activeSubCategories && activeSubCategories.length > 0 && (
-        <div className="relative mx-auto max-w-6xl w-full px-4 overflow-hidden z-20">
-          <div className="pointer-events-none absolute left-3 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 to-transparent z-10" />
-          <div className="pointer-events-none absolute right-3 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent z-10" />
-
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 px-4 sm:justify-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {activeSubCategories.map((sub) => {
-                const isActive = currentSubCategory === sub;
-                return (
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    key={sub}
-                    type="button"
-                    onClick={() => toggleSubCategory(sub)}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all select-none shadow-2xs ${
-                      isActive
-                        ? "bg-rose-700 text-white shadow-xs font-semibold"
-                        : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border border-gray-200"
-                    }`}
-                  >
-                    {sub}
-                  </motion.button>
-                );
-              })}
-            </motion.div>
-          </AnimatePresence>
         </div>
       )}
     </div>
