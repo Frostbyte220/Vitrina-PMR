@@ -7,7 +7,6 @@ import { authOptions } from "@/lib/auth";
 import { SearchInput, FilterBar } from "@/components/SearchAndFilter";
 import { FavoritesButton } from "@/components/layout/FavoritesButton";
 import { CartButton } from "@/components/layout/CartButton";
-import { VisualCategories } from "@/components/home/VisualCategories";
 import { ProductCatalogClient } from "@/components/home/ProductCatalogClient";
 import { getProducts } from "@/lib/cache";
 import { getFuzzyProducts } from "@/lib/fuzzySearch";
@@ -212,16 +211,11 @@ export default async function HomePage({
         </React.Suspense>
       </div>
 
-      {/* Фильтры, сортировка и подкатегории (под поисковой строкой, над категориями) */}
+      {/* Фильтры, сортировка и подкатегории (под поисковой строкой) */}
       <div className="mt-3.5 sm:mt-4">
         <React.Suspense fallback={null}>
           <FilterBar />
         </React.Suspense>
-      </div>
-
-      {/* Категории (визуальные) */}
-      <div className="mt-1 sm:mt-1.5">
-        <VisualCategories />
       </div>
 
       {/* Сетка товаров — клиентский компонент (мгновенные фильтры без skeleton) */}
