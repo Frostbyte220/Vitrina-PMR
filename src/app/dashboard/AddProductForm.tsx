@@ -13,8 +13,6 @@ import {
   CLOTHING_SIZES,
   SHOE_SIZES,
   PERFUME_VOLUME_PRESETS,
-  NEGOTIABLE_PRICE_CATEGORIES,
-  isNegotiablePriceAllowed,
 } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
@@ -85,6 +83,16 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   const [customSizeInput, setCustomSizeInput] = useState("");
   const [availability, setAvailability] = useState<string>(initialData?.availability || "В наличии");
 
+  const selectedCategory = selectedCategories[0] || "";
+  const initialNegotiable = Boolean(
+    initialData &&
+      (initialData.price === 0 || initialData.price === "0") &&
+      !(
+        Array.isArray(initialData.variants) &&
+        initialData.variants.some((v: any) => Number(v?.price) > 0)
+      )
+  );
+
   // Инициализация React Hook Form
   const {
     register,
@@ -106,6 +114,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           oldPrice: initialData.oldPrice ? initialData.oldPrice.toString() : ("" as any),
           category: (initialData.category && CATEGORIES.includes(initialData.category)) ? initialData.category : "",
           categories: parseInitialCategories(initialData),
+          isNegotiable: initialNegotiable,
           images: initialData.images || [],
         }
       : {
@@ -115,36 +124,16 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           oldPrice: "" as any,
           category: "" as any,
           categories: [],
+          isNegotiable: false,
           images: [],
         },
   });
 
-  const selectedCategory = selectedCategories[0] || "";
-  const allowsNegotiablePrice = isNegotiablePriceAllowed(
-    selectedCategories[0],
-    selectedCategories
-  );
-
-  const [isPriceNegotiable, setIsPriceNegotiable] = useState<boolean>(() => {
-    if (initialData && (initialData.price === 0 || initialData.price === "0")) {
-      const initCats = parseInitialCategories(initialData);
-      return isNegotiablePriceAllowed(initCats[0], initCats);
-    }
-    return false;
-  });
-
-  // Сбрасываем договорную цену, если сняли категорию, поддерживающую её
-  useEffect(() => {
-    if (!allowsNegotiablePrice && isPriceNegotiable) {
-      setIsPriceNegotiable(false);
-      if (String(watch("price")) === "0") {
-        setValue("price", "" as any, { shouldValidate: true });
-      }
-    }
-  }, [allowsNegotiablePrice, isPriceNegotiable, setValue, watch]);
+  const [isPriceNegotiable, setIsPriceNegotiable] = useState<boolean>(initialNegotiable);
 
   const handleToggleNegotiablePrice = (checked: boolean) => {
     setIsPriceNegotiable(checked);
+    setValue("isNegotiable", checked);
     if (checked) {
       setValue("price", "0" as any, { shouldValidate: true });
       setValue("oldPrice", "" as any, { shouldValidate: true });
@@ -312,14 +301,14 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           oldPrice: v.oldPrice && Number(v.oldPrice) > 0 ? Number(v.oldPrice) : undefined,
         }));
 
-      if (hasPerfume && validVariants.length === 0) {
+      if (hasPerfume && !isPriceNegotiable && validVariants.length === 0) {
         toast.error("Пожалуйста, укажите хотя бы один объем и цену товара в блоке «Объемы и цены»");
         return;
       }
 
       // Если указаны объемы, но основная цена 0 или не заполнена, берем минимальную
       let finalPrice = Number(data.price) || 0;
-      if (allowsNegotiablePrice && isPriceNegotiable) {
+      if (isPriceNegotiable) {
         finalPrice = 0;
       } else if (validVariants.length > 0) {
         const minVarPrice = Math.min(...validVariants.map((v) => v.price));
@@ -329,30 +318,27 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       }
 
       if (!isPriceNegotiable && (!data.price || Number(data.price) <= 0) && validVariants.length === 0) {
-        toast.error(
-          allowsNegotiablePrice
-            ? "Пожалуйста, укажите цену товара или включите «Договорная цена»"
-            : "Пожалуйста, укажите цену товара больше 0"
-        );
+        toast.error("Пожалуйста, укажите цену товара или включите «Договорная цена»");
         return;
       }
 
       // Синхронизируем sizes: для парфюмерии пишем названия объемов
       const finalSizes = isSizeCategory
         ? selectedSizes
-        : validVariants.length > 0
+        : validVariants.length > 0 && !isPriceNegotiable
         ? validVariants.map((v) => v.name)
         : [];
 
       const payload = {
         ...data,
-        price: allowsNegotiablePrice && isPriceNegotiable ? 0 : (finalPrice > 0 ? finalPrice : Number(data.price)),
-        oldPrice: allowsNegotiablePrice && isPriceNegotiable ? null : (data.oldPrice && Number(data.oldPrice) > 0 ? Number(data.oldPrice) : null),
+        isNegotiable: isPriceNegotiable,
+        price: isPriceNegotiable ? 0 : (finalPrice > 0 ? finalPrice : Number(data.price)),
+        oldPrice: isPriceNegotiable ? null : (data.oldPrice && Number(data.oldPrice) > 0 ? Number(data.oldPrice) : null),
         category: primaryCat,
         categories: selectedCategories,
         subCategory: selectedSubCategories.length > 0 ? selectedSubCategories.join(", ") : undefined,
         sizes: finalSizes,
-        variants: validVariants.length > 0 ? validVariants : null,
+        variants: isPriceNegotiable ? null : (validVariants.length > 0 ? validVariants : null),
         availability,
       };
 
@@ -378,6 +364,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         router.refresh();
       } else {
         reset();
+        setIsPriceNegotiable(false);
         setSelectedCategories([]);
         setSelectedSubCategories([]);
         setSelectedSizes([]);
@@ -514,52 +501,49 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         {errors.title && <span className="text-xs text-red-500">{errors.title.message}</span>}
       </div>
 
-      {/* Цены (скрываем для парфюмерии, где цены задаются для каждого объема отдельно) */}
-      {!hasPerfume && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-gray-50/70 p-4 border border-gray-200/80">
-          {allowsNegotiablePrice && (
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200/80">
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                  <span className="text-base">🤝</span> Договорная цена
-                </span>
-                <span className="text-xs text-gray-500">
-                  Для сладостей, подарков и авторских handmade-изделий под заказ
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isPriceNegotiable}
-                  onChange={(e) => handleToggleNegotiablePrice(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
-              </label>
-            </div>
-          )}
+      {/* Цены и переключатель «Договорная цена» (доступен для всех категорий) */}
+      <div className="flex flex-col gap-3 rounded-2xl bg-gray-50/70 p-4 border border-gray-200/80">
+        <div className={`flex items-center justify-between ${(!hasPerfume || isPriceNegotiable) ? "pb-3 border-b border-gray-200/80" : ""}`}>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+              <span className="text-base">🤝</span> Договорная цена
+            </span>
+            <span className="text-xs text-gray-500">
+              Покупатели увидят «Договорная» вместо фиксированной суммы
+            </span>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isPriceNegotiable}
+              onChange={(e) => handleToggleNegotiablePrice(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+          </label>
+        </div>
 
-          {isPriceNegotiable && allowsNegotiablePrice ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-rose-900">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl shrink-0">🤝</span>
-                <div className="text-xs sm:text-sm">
-                  <p className="font-semibold text-rose-800">Установлена договорная цена</p>
-                  <p className="text-rose-600 mt-0.5">
-                    В карточке товара на витрине вместо фиксированной суммы будет отображаться <strong>«Договорная»</strong>.
-                  </p>
-                </div>
+        {isPriceNegotiable ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-rose-900">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl shrink-0">🤝</span>
+              <div className="text-xs sm:text-sm">
+                <p className="font-semibold text-rose-800">Установлена договорная цена</p>
+                <p className="text-rose-600 mt-0.5">
+                  В карточке товара на витрине вместо фиксированной суммы будет отображаться <strong>«Договорная»</strong>.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => handleToggleNegotiablePrice(false)}
-                className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline whitespace-nowrap cursor-pointer shrink-0"
-              >
-                Указать точную цену
-              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => handleToggleNegotiablePrice(false)}
+              className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline whitespace-nowrap cursor-pointer shrink-0"
+            >
+              Указать точную цену
+            </button>
+          </div>
+        ) : !hasPerfume ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <label htmlFor="price" className="text-sm font-medium text-gray-700">
@@ -629,9 +613,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                 )}
               </div>
             </div>
-          )}
-        </div>
-      )}
+        ) : null}
+      </div>
 
       {/* Статус наличия товара */}
       <div className="flex flex-col gap-2 rounded-xl bg-gray-50/80 p-3.5 border border-gray-200">
@@ -892,7 +875,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
       )}
 
       {/* Объемы и цены (для парфюмерии, услуг или вариантов с ценой) */}
-      {isPerfumeOrHasVariants && (
+      {isPerfumeOrHasVariants && !isPriceNegotiable && (
         <div className={`flex flex-col gap-3 rounded-xl p-3.5 sm:p-4 border transition-all ${
           hasService ? "bg-teal-50/60 border-teal-200" : "bg-purple-50/60 border-purple-200"
         }`}>

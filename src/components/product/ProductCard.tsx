@@ -290,7 +290,7 @@ export function ProductCard({ product, priority = false, activeCities }: Product
           <div className="flex flex-col gap-0.5">
             <div className="flex items-baseline gap-2">
               <span className={`text-lg font-bold ${product.oldPrice && product.oldPrice > product.price && product.price > 0 && !hasVariants ? "text-rose-600" : "text-primary"}`}>
-                {hasVariants || isService ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
+                {(hasVariants || isService) && minVariantPrice > 0 ? `от ${formatPrice(minVariantPrice)}` : formatPrice(hasVariants ? minVariantPrice : product.price)}
               </span>
               {product.oldPrice && product.oldPrice > product.price && product.price > 0 && !hasVariants && (
                 <span className="text-xs font-medium text-gray-400 line-through">

@@ -295,7 +295,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-baseline gap-3 flex-wrap">
                   <span className={`text-2xl font-bold md:text-3xl ${hasDiscount && !hasVariants ? "text-rose-600" : "text-primary"}`}>
-                    {hasVariants || isService ? `от ${formatPrice(minVariantPrice)}` : formatPrice(product.price)}
+                    {(hasVariants || isService) && minVariantPrice > 0 ? `от ${formatPrice(minVariantPrice)}` : formatPrice(hasVariants ? minVariantPrice : product.price)}
                   </span>
                   {hasDiscount && !hasVariants && (
                     <>

@@ -88,6 +88,10 @@ export const productSchema = z.object({
     .optional()
     .nullable(),
 
+  isNegotiable: z
+    .boolean()
+    .optional(),
+
   images: z
     .array(
       z.string().url("Некорректная ссылка на изображение")
@@ -105,15 +109,21 @@ export const productSchema = z.object({
   }
 ).refine(
   (data) => {
+    if (data.isNegotiable === true) {
+      return data.price >= 0;
+    }
     const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
     const hasValidVariants = Array.isArray(data.variants) && data.variants.some((v) => v && v.price > 0);
     if (isPerfume) {
-      return hasValidVariants || data.price > 0;
+      if (data.isNegotiable === false) {
+        return hasValidVariants || data.price > 0;
+      }
+      return hasValidVariants || data.price >= 0;
     }
-    if (isNegotiablePriceAllowed(data.category, data.categories)) {
-      return data.price >= 0;
+    if (data.isNegotiable === false) {
+      return data.price > 0;
     }
-    return data.price > 0;
+    return data.price >= 0;
   },
   {
     message: "Пожалуйста, укажите цену товара",
@@ -121,10 +131,8 @@ export const productSchema = z.object({
   }
 ).refine(
   (data) => {
-    const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
-    const isNegotiableAllowed = isNegotiablePriceAllowed(data.category, data.categories);
-    if ((isPerfume || isNegotiableAllowed) && (!data.oldPrice || data.price === 0)) return true;
-    return !data.oldPrice || data.oldPrice > data.price;
+    if (data.isNegotiable === true || !data.oldPrice || data.price === 0) return true;
+    return data.oldPrice > data.price;
   },
   {
     message: "Старая цена должна быть выше текущей цены со скидкой",
@@ -132,31 +140,13 @@ export const productSchema = z.object({
   }
 );
 
-export const NEGOTIABLE_PRICE_CATEGORIES = [
-  "Сладости и десерты",
-  "Подарки",
-  "Handmade",
-] as const;
+export const NEGOTIABLE_PRICE_CATEGORIES = ALL_CATEGORIES;
 
 export function isNegotiablePriceAllowed(
-  category?: string | null,
-  categories?: string[] | null
+  _category?: string | null,
+  _categories?: string[] | null
 ): boolean {
-  if (
-    category &&
-    (NEGOTIABLE_PRICE_CATEGORIES.includes(category as any) || category === "Услуги")
-  ) {
-    return true;
-  }
-  if (
-    categories &&
-    categories.some(
-      (c) => NEGOTIABLE_PRICE_CATEGORIES.includes(c as any) || c === "Услуги"
-    )
-  ) {
-    return true;
-  }
-  return false;
+  return true;
 }
 
 export const CLOTHING_SIZES = [
