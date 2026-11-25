@@ -2,15 +2,44 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminClient } from "./AdminClient";
+import { ReturnToAdminButton } from "@/components/dashboard/ImpersonationBanner";
+import { isAdminEmail } from "@/lib/impersonation";
 import { ShieldAlert, Users, Package, Store, ArrowLeft, Megaphone } from "lucide-react";
 import Link from "next/link";
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email || !ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) {
+  const isImpersonatingAdmin = Boolean(
+    session?.user?.impersonatedBy &&
+      isAdminEmail(session.user.impersonatedBy.email)
+  );
+
+  if (isImpersonatingAdmin) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center p-4 text-center">
+        <ShieldAlert className="h-16 w-16 text-amber-500 mb-4" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Активен режим управления кабинетом продавца
+        </h1>
+        <p className="text-gray-500 mb-6 max-w-md">
+          Вы сейчас вошли в личный кабинет «{session?.user?.name || session?.user?.email}».
+          Чтобы открыть панель администратора, завершите работу с этим кабинетом.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <ReturnToAdminButton />
+          <Link
+            href="/dashboard"
+            className="rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Перейти в кабинет продавца
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdminEmail(session?.user?.email)) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center p-4 text-center">
         <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />
@@ -24,7 +53,7 @@ export default async function AdminDashboardPage() {
   }
 
   // Запрашиваем данные для дашборда
-  const [stores, products, totalUsers, reports, banners] = await Promise.all([
+  const [stores, products, users, reports, banners] = await Promise.all([
     prisma.store.findMany({
       include: {
         _count: { select: { products: true } },
@@ -38,7 +67,25 @@ export default async function AdminDashboardPage() {
       },
       orderBy: { createdAt: "desc" }
     }),
-    prisma.user.count(),
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        instagram: true,
+        createdAt: true,
+        _count: { select: { products: true } },
+        store: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            isVerified: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
     prisma.productReport.findMany({
       include: {
         product: {
@@ -59,6 +106,8 @@ export default async function AdminDashboardPage() {
       orderBy: { order: "asc" },
     }),
   ]);
+
+  const totalUsers = users.length;
 
   const pendingReportsCount = reports.filter((r) => r.status === "PENDING").length;
 
@@ -142,6 +191,7 @@ export default async function AdminDashboardPage() {
 
       <AdminClient
         stores={stores}
+        users={users}
         products={products as any}
         reports={reports as any}
         banners={banners as any}

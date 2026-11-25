@@ -6,16 +6,18 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import bcrypt from "bcryptjs";
 import { deleteCloudinaryImages, cleanupAllDeletedProductsImages } from "@/lib/cloudinaryServer";
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+import { createImpersonationToken, isAdminEmail } from "@/lib/impersonation";
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email?.toLowerCase().trim();
-  const adminEmail = ADMIN_EMAIL?.toLowerCase().trim();
-  if (!userEmail || !adminEmail || userEmail !== adminEmail) {
+  if (
+    !session?.user?.id ||
+    session.user.impersonatedBy ||
+    !isAdminEmail(session.user.email)
+  ) {
     throw new Error("Доступ запрещен. Недостаточно прав администратора.");
   }
+  return session;
 }
 
 export async function deleteProductAdmin(productId: string) {
@@ -381,6 +383,7 @@ export type QuickCreateStoreSuccess = {
   success: true;
   store: {
     id: string;
+    userId: string;
     name: string;
     slug: string;
     instagram: string | null;
@@ -517,6 +520,7 @@ export async function createStoreByInstagramAdmin(
       success: true,
       store: {
         id: user.store.id,
+        userId: user.store.userId,
         name: user.store.name,
         slug: user.store.slug,
         instagram: user.store.instagram,
@@ -537,6 +541,79 @@ export async function createStoreByInstagramAdmin(
     return {
       success: false,
       error: err?.message || "Произошла ошибка при создании витрины",
+    };
+  }
+}
+
+export type StartImpersonationResult =
+  | {
+      success: true;
+      token: string;
+      targetName: string;
+      targetEmail: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function startImpersonationAdmin(
+  targetUserId: string
+): Promise<StartImpersonationResult> {
+  try {
+    const adminSession = await checkAdmin();
+
+    if (!targetUserId || typeof targetUserId !== "string") {
+      return { success: false, error: "Не указан идентификатор пользователя" };
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        store: {
+          select: { name: true, slug: true },
+        },
+      },
+    });
+
+    if (!targetUser) {
+      return { success: false, error: "Пользователь не найден в базе данных" };
+    }
+
+    if (targetUser.id === adminSession.user.id || isAdminEmail(targetUser.email)) {
+      return {
+        success: false,
+        error: "Вы уже находитесь в аккаунте администратора",
+      };
+    }
+
+    const displayName = targetUser.store?.name || targetUser.name;
+    const token = createImpersonationToken({
+      adminId: adminSession.user.id,
+      adminEmail: adminSession.user.email as string,
+      targetUserId: targetUser.id,
+      targetEmail: targetUser.email,
+      targetName: displayName,
+    });
+
+    console.info(
+      `[ADMIN_IMPERSONATE] ${adminSession.user.email} -> ${targetUser.email} (${targetUser.id})`
+    );
+
+    return {
+      success: true,
+      token,
+      targetName: displayName,
+      targetEmail: targetUser.email,
+    };
+  } catch (err: any) {
+    console.error("[startImpersonationAdmin] Error:", err);
+    return {
+      success: false,
+      error: err?.message || "Не удалось выполнить вход в кабинет пользователя",
     };
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { 
   Trash2, 
   Store, 
@@ -16,12 +17,15 @@ import {
   X, 
   Megaphone, 
   Plus, 
+  PlusCircle,
   Edit2, 
   Link as LinkIcon,
   BadgeCheck,
   Instagram,
   Sparkles,
-  Key
+  Key,
+  Users,
+  LogIn
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -37,7 +41,8 @@ import {
   toggleBannerActiveAdmin,
   deleteBannerAdmin,
   toggleStoreVerifiedAdmin,
-  cleanupDeletedProductsImagesAdmin
+  cleanupDeletedProductsImagesAdmin,
+  startImpersonationAdmin
 } from "./actions";
 import { BannerItem } from "@/lib/banners";
 import { formatPrice } from "@/lib/utils";
@@ -59,6 +64,7 @@ const LABEL_PRESETS = ["Реклама", "Акция", "Партнёр", "Нов
 
 export type StoreData = {
   id: string;
+  userId: string;
   name: string;
   slug: string;
   instagram: string | null;
@@ -66,6 +72,21 @@ export type StoreData = {
   createdAt: Date;
   _count: { products: number };
   user?: { email: string } | null;
+};
+
+export type UserData = {
+  id: string;
+  name: string;
+  email: string;
+  instagram: string;
+  createdAt: Date;
+  _count: { products: number };
+  store: {
+    id: string;
+    name: string;
+    slug: string;
+    isVerified: boolean;
+  } | null;
 };
 
 type ProductData = {
@@ -98,23 +119,28 @@ export type ReportData = {
 
 export function AdminClient({
   stores,
+  users = [],
   products,
   reports = [],
   banners = [],
 }: {
   stores: StoreData[];
+  users?: UserData[];
   products: ProductData[];
   reports?: ReportData[];
   banners?: BannerItem[];
 }) {
-  const [activeTab, setActiveTab] = useState<"products" | "stores" | "reports" | "banners">("products");
+  const { update: updateSession } = useSession();
+  const [activeTab, setActiveTab] = useState<"products" | "stores" | "users" | "reports" | "banners">("products");
   const [reportsFilter, setReportsFilter] = useState<"pending" | "all" | "resolved" | "dismissed">("pending");
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [impersonatingUserId, setImpersonatingUserId] = useState<string | null>(null);
 
   // Состояние магазинов
   const [storesList, setStoresList] = useState<StoreData[]>(stores);
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
   const [storeSearchQuery, setStoreSearchQuery] = useState("");
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   const filteredStores = storesList.filter((s) => {
     if (!storeSearchQuery.trim()) return true;
@@ -122,9 +148,45 @@ export function AdminClient({
     return (
       s.name.toLowerCase().includes(q) ||
       s.slug.toLowerCase().includes(q) ||
-      (s.instagram && s.instagram.toLowerCase().includes(q))
+      (s.instagram && s.instagram.toLowerCase().includes(q)) ||
+      (s.user?.email && s.user.email.toLowerCase().includes(q))
     );
   });
+
+  const filteredUsers = users.filter((u) => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase();
+    return (
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.instagram.toLowerCase().includes(q) ||
+      (u.store?.name && u.store.name.toLowerCase().includes(q)) ||
+      (u.store?.slug && u.store.slug.toLowerCase().includes(q))
+    );
+  });
+
+  const handleImpersonate = async (
+    targetUserId: string,
+    label: string,
+    redirectTo: "/dashboard" | "/dashboard/new" = "/dashboard"
+  ) => {
+    setImpersonatingUserId(targetUserId);
+    try {
+      const res = await startImpersonationAdmin(targetUserId);
+      if (!res.success) {
+        toast.error(res.error);
+        setImpersonatingUserId(null);
+        return;
+      }
+
+      await updateSession({ impersonateToken: res.token });
+      toast.success(`Вы вошли в кабинет «${label}»`);
+      window.location.assign(redirectTo);
+    } catch {
+      toast.error("Не удалось войти в кабинет пользователя");
+      setImpersonatingUserId(null);
+    }
+  };
 
   // Состояние управления баннерами
   const [bannersList, setBannersList] = useState<BannerItem[]>(banners);
@@ -354,10 +416,10 @@ export function AdminClient({
   return (
     <div className="space-y-6">
       {/* Навигация (Табы) */}
-      <div className="flex gap-2 rounded-xl bg-white p-2 shadow-sm outline outline-1 outline-gray-200">
+      <div className="flex flex-wrap gap-2 rounded-xl bg-white p-2 shadow-sm outline outline-1 outline-gray-200">
         <button
           onClick={() => setActiveTab("products")}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+          className={`flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "products" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
           }`}
         >
@@ -365,15 +427,23 @@ export function AdminClient({
         </button>
         <button
           onClick={() => setActiveTab("stores")}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+          className={`flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "stores" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
           }`}
         >
           <Store className="h-4 w-4" /> Магазины ({storesList.length})
         </button>
         <button
+          onClick={() => setActiveTab("users")}
+          className={`flex flex-1 min-w-[150px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
+            activeTab === "users" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
+          }`}
+        >
+          <Users className="h-4 w-4" /> Пользователи ({users.length})
+        </button>
+        <button
           onClick={() => setActiveTab("reports")}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+          className={`flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "reports" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
           }`}
         >
@@ -387,7 +457,7 @@ export function AdminClient({
         </button>
         <button
           onClick={() => setActiveTab("banners")}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+          className={`flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "banners" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
           }`}
         >
@@ -599,6 +669,30 @@ export function AdminClient({
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleImpersonate(s.userId, s.name, "/dashboard")}
+                              disabled={impersonatingUserId === s.userId}
+                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50 cursor-pointer"
+                              title={`Войти в личный кабинет «${s.name}»`}
+                            >
+                              {impersonatingUserId === s.userId ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <LogIn className="h-3.5 w-3.5" />
+                              )}
+                              <span className="hidden lg:inline">Кабинет</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleImpersonate(s.userId, s.name, "/dashboard/new")}
+                              disabled={impersonatingUserId === s.userId}
+                              className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50 cursor-pointer"
+                              title={`Войти в кабинет «${s.name}» и сразу добавить товар`}
+                            >
+                              <PlusCircle className="h-3.5 w-3.5" />
+                              <span className="hidden xl:inline">+ Товар</span>
+                            </button>
                             {isUnclaimed && s.user?.email && (
                               <button
                                 onClick={() => {
@@ -633,6 +727,129 @@ export function AdminClient({
                               ) : (
                                 <Trash2 className="h-4 w-4" />
                               )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Секция пользователей */}
+      {activeTab === "users" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <input
+                type="text"
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                placeholder="Поиск по имени, email, Instagram или магазину..."
+                className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-800 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 shadow-xs"
+              />
+              {userSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setUserSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500">
+              Нажмите «Войти в кабинет» или «+ Товар», чтобы добавить товары прямо на страницу выбранного пользователя.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm outline outline-1 outline-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Пользователь</th>
+                    <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Магазин</th>
+                    <th className="px-4 py-3 font-semibold text-center">Товаров</th>
+                    <th className="px-4 py-3 font-semibold">Регистрация</th>
+                    <th className="px-4 py-3 text-right font-semibold">Действие</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredUsers.map((u) => {
+                    const displayLabel = u.store?.name || u.name;
+                    const isUnclaimed = u.email.includes("@unclaimed.");
+
+                    return (
+                      <tr key={u.id} className="transition-colors hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{u.name}</div>
+                          {u.instagram && (
+                            <div className="text-xs text-blue-600">
+                              @{u.instagram.replace(/^@/, "")}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs text-gray-700">{u.email}</span>
+                            {isUnclaimed && (
+                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+                                Авто
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {u.store ? (
+                            <a
+                              href={`/shop/${u.store.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 font-medium text-gray-900 hover:text-primary"
+                            >
+                              <span>{u.store.name}</span>
+                              {u.store.isVerified && <VerifiedBadge size="sm" />}
+                              <ExternalLink className="h-3 w-3 text-gray-400" />
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-400">Магазин не настроен</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium">
+                          {u._count.products}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
+                          {new Date(u.createdAt).toLocaleDateString("ru-RU")}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleImpersonate(u.id, displayLabel, "/dashboard")}
+                              disabled={impersonatingUserId === u.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              {impersonatingUserId === u.id ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <LogIn className="h-3.5 w-3.5" />
+                              )}
+                              <span>Войти в кабинет</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleImpersonate(u.id, displayLabel, "/dashboard/new")}
+                              disabled={impersonatingUserId === u.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              <PlusCircle className="h-3.5 w-3.5" />
+                              <span>+ Товар</span>
                             </button>
                           </div>
                         </td>

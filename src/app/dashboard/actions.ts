@@ -449,6 +449,13 @@ export async function updateUserCredentials(input: UpdateCredentialsInput) {
       return { success: false, error: "Не авторизован" };
     }
 
+    if (session.user.impersonatedBy) {
+      return {
+        success: false,
+        error: "Изменение почты и пароля недоступно в режиме входа администратора",
+      };
+    }
+
     const user = await prisma.user.findFirst({
       where: session.user.id
         ? { id: session.user.id }
