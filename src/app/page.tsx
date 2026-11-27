@@ -115,13 +115,47 @@ export default async function HomePage({
     ? await getFuzzyProducts(q.trim(), whereClause, skip, ITEMS_PER_PAGE, orderBy, isCustomSort)
     : await getProducts(whereClause, skip, ITEMS_PER_PAGE, orderBy);
 
-  // Загружаем каталог активных товаров для мгновенной фильтрации в памяти на клиенте (<16 мс)
-  const [catalogPool] = await getProducts(
+  // Загружаем каталог активных товаров чанками для мгновенной фильтрации в памяти и точного подсчёта
+  const POOL_CHUNK_SIZE = 300;
+  const MAX_POOL_ITEMS = 1500;
+  const [firstPoolChunk, catalogTotalCount] = await getProducts(
     { deletedAt: null, status: "Активен" },
     0,
-    300,
+    POOL_CHUNK_SIZE,
     { createdAt: "desc" }
   );
+
+  let catalogPool = firstPoolChunk;
+  if (catalogTotalCount > firstPoolChunk.length) {
+    const targetTotal = Math.min(catalogTotalCount, MAX_POOL_ITEMS);
+    const remainingOffsets: number[] = [];
+    for (let offset = POOL_CHUNK_SIZE; offset < targetTotal; offset += POOL_CHUNK_SIZE) {
+      remainingOffsets.push(offset);
+    }
+    if (remainingOffsets.length > 0) {
+      const extraChunks = await Promise.all(
+        remainingOffsets.map((offset) =>
+          getProducts(
+            { deletedAt: null, status: "Активен" },
+            offset,
+            POOL_CHUNK_SIZE,
+            { createdAt: "desc" }
+          )
+        )
+      );
+      const seenIds = new Set(firstPoolChunk.map((p: any) => p.id));
+      const merged = [...firstPoolChunk];
+      for (const [items] of extraChunks) {
+        for (const item of items) {
+          if (!seenIds.has(item.id)) {
+            seenIds.add(item.id);
+            merged.push(item);
+          }
+        }
+      }
+      catalogPool = merged;
+    }
+  }
 
   const initialTotalPages = Math.ceil(initialTotalCount / ITEMS_PER_PAGE);
 
@@ -227,6 +261,7 @@ export default async function HomePage({
             initialTotalPages={initialTotalPages}
             initialPage={currentPage}
             catalogPool={catalogPool as any[]}
+            catalogTotalCount={catalogTotalCount}
           />
         </React.Suspense>
 

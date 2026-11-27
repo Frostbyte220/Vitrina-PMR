@@ -11,18 +11,30 @@ import { useCatalogFilterStore } from "@/store/useCatalogFilterStore";
 
 const ITEMS_PER_PAGE = 12;
 
+function pluralizeProducts(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod100 >= 11 && mod100 <= 19) return "товаров";
+  if (mod10 === 1) return "товар";
+  if (mod10 >= 2 && mod10 <= 4) return "товара";
+  return "товаров";
+}
+
 interface ProductCatalogClientProps {
   initialProducts: any[];
   initialTotalCount: number;
   initialTotalPages: number;
   initialPage: number;
   catalogPool?: any[];
+  catalogTotalCount?: number;
 }
 
 export function ProductCatalogClient({
   initialProducts,
+  initialTotalCount,
   initialPage,
   catalogPool,
+  catalogTotalCount,
 }: ProductCatalogClientProps) {
   const searchParams = useSearchParams();
 
@@ -90,6 +102,19 @@ export function ProductCatalogClient({
   const pool = useMemo(() => {
     return catalogPool && catalogPool.length > 0 ? catalogPool : initialProducts;
   }, [catalogPool, initialProducts]);
+  const realTotalAllCount = catalogTotalCount ?? Math.max(pool.length, initialTotalCount);
+  const isPoolComplete = pool.length >= realTotalAllCount;
+  const hasFilters = Boolean(
+    (category && category !== "Все") ||
+      subCategory ||
+      discount ||
+      availability ||
+      minPrice !== null ||
+      maxPrice !== null ||
+      selectedCities.length > 0 ||
+      selectedSizes.length > 0 ||
+      q
+  );
 
   // Мгновенная in-memory фильтрация (<1 мс, 60+ FPS)
   const inMemoryResult = useMemo(() => {
@@ -207,7 +232,9 @@ export function ProductCatalogClient({
     return { products: paginated, totalCount: count, totalPages: pages };
   }, [pool, category, subCategory, discount, availability, minPrice, maxPrice, selectedSizes, selectedCities, q, sort, page]);
 
-  // Серверный fallback для глубокого нечеткого поиска (только для текстового 'q')
+  // Серверный fallback:
+  // 1) для глубокого нечеткого поиска (когда in-memory по 'q' ничего не нашёл),
+  // 2) когда в базе больше товаров, чем поместилось в in-memory пул (isPoolComplete === false)
   const [serverFallbackData, setServerFallbackData] = useState<{
     products: any[];
     totalCount: number;
@@ -216,23 +243,37 @@ export function ProductCatalogClient({
   const [isFetchingFallback, setIsFetchingFallback] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  const needsServerQuery =
+    (!isPoolComplete && (hasFilters || sort !== "newest" || page * ITEMS_PER_PAGE > pool.length)) ||
+    Boolean(q && inMemoryResult.totalCount === 0);
+
   useEffect(() => {
-    if (q && inMemoryResult.totalCount === 0) {
+    if (needsServerQuery) {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
       setIsFetchingFallback(true);
-      const search = typeof window !== "undefined" && window.location.search
-        ? window.location.search
-        : `?q=${encodeURIComponent(q)}`;
+      const params = new URLSearchParams();
+      if (category && category !== "Все") params.set("category", category);
+      if (subCategory) params.set("sub", subCategory);
+      if (q) params.set("q", q);
+      if (page > 1) params.set("page", String(page));
+      if (sort && sort !== "newest") params.set("sort", sort);
+      if (discount) params.set("discount", "true");
+      if (availability) params.set("availability", availability);
+      if (minPrice !== null && !isNaN(minPrice)) params.set("minPrice", String(minPrice));
+      if (maxPrice !== null && !isNaN(maxPrice)) params.set("maxPrice", String(maxPrice));
+      if (selectedCities.length > 0) params.set("cities", selectedCities.join(","));
+      if (selectedSizes.length > 0) params.set("sizes", selectedSizes.join(","));
 
-      fetch(`/api/products${search}`, { signal: controller.signal })
+      const queryString = params.toString();
+      fetch(`/api/products${queryString ? `?${queryString}` : ""}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => {
-          if (data.products && data.products.length > 0) {
+          if (Array.isArray(data.products) && (data.products.length > 0 || !isPoolComplete)) {
             setServerFallbackData({
-              products:   data.products,
+              products: data.products,
               totalCount: data.totalCount ?? data.products.length,
               totalPages: data.totalPages ?? 1,
             });
@@ -245,13 +286,27 @@ export function ProductCatalogClient({
     } else {
       setServerFallbackData(null);
     }
-  }, [q, inMemoryResult.totalCount]);
+  }, [
+    needsServerQuery,
+    isPoolComplete,
+    category,
+    subCategory,
+    q,
+    page,
+    sort,
+    discount,
+    availability,
+    minPrice,
+    maxPrice,
+    selectedCities,
+    selectedSizes,
+  ]);
 
   // Данные для отображения
-  const activeData   = (q && serverFallbackData) ? serverFallbackData : inMemoryResult;
-  const products     = activeData.products;
-  const totalCount   = activeData.totalCount;
-  const totalPages   = activeData.totalPages;
+  const activeData = serverFallbackData ?? inMemoryResult;
+  const products   = activeData.products;
+  const totalCount = !serverFallbackData && !hasFilters ? realTotalAllCount : activeData.totalCount;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE) || 1;
 
   const priceLabel = minPrice && maxPrice
     ? `${minPrice}–${maxPrice} Руб`
@@ -334,8 +389,7 @@ export function ProductCatalogClient({
           <HeadingText />
         </h2>
         <span className="text-xs sm:text-sm text-gray-500">
-          {totalCount}{" "}
-          {totalCount === 1 ? "товар" : totalCount < 5 ? "товара" : "товаров"}
+          {totalCount} {pluralizeProducts(totalCount)}
         </span>
       </div>
 
