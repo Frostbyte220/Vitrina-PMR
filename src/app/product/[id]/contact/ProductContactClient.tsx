@@ -28,8 +28,10 @@ interface ProductContactClientProps {
     oldPrice?: number | null;
     images: string[];
     sizes: string[];
+    variants?: { name: string; price: number; oldPrice?: number | null }[] | null;
     availability?: string | null;
     category?: string | null;
+    categories?: string[] | null;
   };
   store: {
     id: string;
@@ -48,7 +50,23 @@ interface ProductContactClientProps {
 export function ProductContactClient({ product, store }: ProductContactClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialSize = searchParams.get("size") || (product.sizes.length === 1 ? product.sizes[0] : "");
+  const variantsList = Array.isArray(product.variants) ? product.variants : [];
+  const hasVariants = variantsList.length > 0;
+  const isService = product.category === "Услуги" || product.categories?.includes("Услуги");
+  const isVolumeCategory =
+    product.category === "Парфюмерия" ||
+    product.category === "Косметика" ||
+    product.categories?.includes("Парфюмерия") ||
+    product.categories?.includes("Косметика") ||
+    (hasVariants && !isService);
+
+  const initialSize =
+    searchParams.get("size") ||
+    (hasVariants && variantsList.length === 1
+      ? variantsList[0].name
+      : !hasVariants && product.sizes.length === 1
+      ? product.sizes[0]
+      : "");
 
   const [selectedSize, setSelectedSize] = useState<string>(initialSize);
   const [senderName, setSenderName] = useState("");
@@ -58,6 +76,17 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  const activeVariant = hasVariants ? variantsList.find((v) => v.name === selectedSize) : null;
+  const minVariantPrice = hasVariants
+    ? Math.min(...variantsList.map((v) => v.price).filter((p) => typeof p === "number" && p > 0))
+    : product.price;
+  const effectivePrice = activeVariant
+    ? activeVariant.price
+    : hasVariants && minVariantPrice > 0
+    ? minVariantPrice
+    : product.price;
+  const effectiveOldPrice = activeVariant ? (activeVariant.oldPrice ?? null) : (hasVariants ? null : product.oldPrice);
 
   // Восстанавливаем имя и контакт из localStorage, если покупатель уже писал ранее
   useEffect(() => {
@@ -70,19 +99,24 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
     } catch {}
   }, []);
 
-  // Предварительно заполняем текст сообщения при смене размера
+  // Предварительно заполняем текст сообщения при смене размера / объема
   useEffect(() => {
-    const sizeInfo = selectedSize ? `, размер: ${selectedSize}` : "";
+    const optionLabel = isService ? "вариант" : isVolumeCategory ? "объем" : "размер";
+    const sizeInfo = selectedSize ? `, ${optionLabel}: ${selectedSize}` : "";
+    const priceInfo = activeVariant ? ` (${formatPrice(activeVariant.price)})` : "";
     setBody((prev) => {
       if (!prev || prev.startsWith("Здравствуйте! Интересует товар")) {
-        return `Здравствуйте! Интересует товар «${product.title}»${sizeInfo}. Подскажите, пожалуйста, есть ли в наличии и как можно получить?`;
+        return `Здравствуйте! Интересует товар «${product.title}»${sizeInfo}${priceInfo}. Подскажите, пожалуйста, есть ли в наличии и как можно получить?`;
       }
       return prev;
     });
-  }, [selectedSize, product.title]);
+  }, [selectedSize, product.title, isService, isVolumeCategory, activeVariant]);
 
   const availInfo = getAvailabilityInfo(product.availability);
-  const formattedPrice = formatPrice(product.price);
+  const formattedPrice =
+    hasVariants && !activeVariant && minVariantPrice > 0
+      ? `от ${formatPrice(minVariantPrice)}`
+      : formatPrice(effectivePrice);
   const mainImage = product.images?.[0] || "/placeholder.png";
 
   // Подготавливаем контакты для внешних мессенджеров
@@ -244,21 +278,26 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
             </h1>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-base font-bold text-rose-600">{formattedPrice}</span>
-              {product.oldPrice && product.price > 0 && (
+              {effectiveOldPrice && effectiveOldPrice > effectivePrice && effectivePrice > 0 && (
                 <span className="text-xs text-gray-400 line-through">
-                  {formatPrice(product.oldPrice)}
+                  {formatPrice(effectiveOldPrice)}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Выбор размера, если есть */}
-        {product.sizes && product.sizes.length > 0 && (
+        {/* Выбор объема / варианта / размера, если есть */}
+        {(hasVariants || (product.sizes && product.sizes.length > 0)) && (
           <div className="rounded-2xl bg-white p-4 shadow-xs border border-gray-100 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-700">
-                Интересующий размер: {selectedSize ? <span className="text-rose-600 font-bold">{selectedSize}</span> : <span className="text-gray-400 font-normal">не выбран</span>}
+                {isService ? "Интересующий вариант:" : isVolumeCategory ? "Интересующий объем:" : "Интересующий размер:"}{" "}
+                {selectedSize ? (
+                  <span className="text-rose-600 font-bold">{selectedSize}</span>
+                ) : (
+                  <span className="text-gray-400 font-normal">не выбран</span>
+                )}
               </label>
               {selectedSize && (
                 <button
@@ -270,25 +309,50 @@ export function ProductContactClient({ product, store }: ProductContactClientPro
                 </button>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {product.sizes.map((s) => {
-                const isSelected = selectedSize === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setSelectedSize(s)}
-                    className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
-                      isSelected
-                        ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
+            {hasVariants ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                {variantsList.map((v) => {
+                  const isSelected = selectedSize === v.name;
+                  return (
+                    <button
+                      key={v.name}
+                      type="button"
+                      onClick={() => setSelectedSize(v.name)}
+                      className={`flex flex-col items-start rounded-xl p-2.5 text-left transition-all active:scale-95 ${
+                        isSelected
+                          ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="text-xs font-bold leading-tight">{v.name}</span>
+                      <span className={`mt-0.5 text-[11px] font-bold ${isSelected ? "text-white/95" : "text-rose-600"}`}>
+                        {formatPrice(v.price)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {product.sizes.map((s) => {
+                  const isSelected = selectedSize === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSelectedSize(s)}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                        isSelected
+                          ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

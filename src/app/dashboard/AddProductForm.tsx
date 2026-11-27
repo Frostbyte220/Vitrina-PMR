@@ -13,6 +13,7 @@ import {
   CLOTHING_SIZES,
   SHOE_SIZES,
   PERFUME_VOLUME_PRESETS,
+  COSMETICS_VOLUME_PRESETS,
 } from "@/lib/validations/product";
 import { SUBCATEGORIES_MAP, getCategoryIcon } from "@/lib/constants/categories";
 import toast from "react-hot-toast";
@@ -224,8 +225,57 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   };
 
   const hasPerfume = selectedCategories.includes("Парфюмерия");
+  const hasCosmetics = selectedCategories.includes("Косметика");
   const hasService = selectedCategories.includes("Услуги");
-  const isPerfumeOrHasVariants = hasPerfume || hasService || volumeVariants.length > 0;
+  const isPerfumeOrHasVariants = hasPerfume || hasCosmetics || hasService || volumeVariants.length > 0;
+
+  const variantUiConfig = hasService
+    ? {
+        sectionClass: "bg-teal-50/60 border-teal-200",
+        iconBgClass: "bg-teal-100 text-teal-700",
+        badgeClass: "text-teal-700 bg-teal-100 border-teal-200",
+        presetActiveClass: "bg-teal-600 text-white shadow-2xs ring-1 ring-teal-600",
+        presetIdleClass: "bg-white text-gray-700 border border-teal-200 hover:bg-teal-100/60 active:scale-95",
+        addBtnClass: "border border-teal-200 text-teal-700 hover:bg-teal-50",
+        accentTextClass: "text-teal-700",
+        title: "Прайс-лист / Варианты услуги",
+        description:
+          "Укажите позиции прайса (например, Диван прямой, Диван угловой, Матрас, Полировка фар) с отдельной ценой для каждого варианта.",
+        presetLabel: "Быстрый выбор популярных услуг:",
+        presets: ["Диван прямой", "Диван угловой", "Матрас", "Кресло", "Стул", "Химчистка салона", "Полировка фар", "Комплекс"],
+        colLabel: "Позиция / Услуга *",
+        placeholder: "Напр: Диван угловой",
+        addLabel: "Своя позиция / услуга",
+      }
+    : {
+        sectionClass: "bg-purple-50/60 border-purple-200",
+        iconBgClass: "bg-purple-100 text-purple-700",
+        badgeClass: "text-purple-700 bg-purple-100 border-purple-200",
+        presetActiveClass: "bg-purple-600 text-white shadow-2xs ring-1 ring-purple-600",
+        presetIdleClass: "bg-white text-gray-700 border border-purple-200 hover:bg-purple-100/60 active:scale-95",
+        addBtnClass: "border border-purple-200 text-purple-700 hover:bg-purple-50",
+        accentTextClass: "text-purple-700",
+        title:
+          hasCosmetics && hasPerfume
+            ? "Объемы и цены (для парфюмерии и косметики)"
+            : hasCosmetics
+            ? "Объемы и цены (для разных объемов косметики)"
+            : "Объемы и цены (для парфюмерии и распива)",
+        description:
+          hasCosmetics && !hasPerfume
+            ? "Если средство представлено в разных объемах или фасовках (например, 30 мл, 50 мл, 100 мл или 50 г), укажите их с отдельной ценой для каждого. Если объем один — достаточно указать общую цену выше."
+            : "Укажите объемы в наличии (например, отливанты 5 мл, 10 мл или флакон 100 мл) с отдельной ценой для каждого. Покупатели смогут выбрать нужный объем прямо на странице товара.",
+        presetLabel: "Быстрый выбор популярного объема:",
+        presets:
+          hasCosmetics && hasPerfume
+            ? Array.from(new Set([...PERFUME_VOLUME_PRESETS, ...COSMETICS_VOLUME_PRESETS]))
+            : hasCosmetics
+            ? COSMETICS_VOLUME_PRESETS
+            : PERFUME_VOLUME_PRESETS,
+        colLabel: "Объем / Вариант *",
+        placeholder: hasCosmetics && !hasPerfume ? "Напр: 50 мл" : "Напр: 10 мл",
+        addLabel: "Свой объем",
+      };
 
   const handleAddPresetVolume = (volName: string) => {
     setVolumeVariants((prev) => {
@@ -272,7 +322,14 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
   };
 
   const handleRemoveVariant = (id: string) => {
-    setVolumeVariants((prev) => prev.filter((item) => item.id !== id));
+    setVolumeVariants((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      const validPrices = next.map((v) => Number(v.price)).filter((p) => !isNaN(p) && p > 0);
+      if (validPrices.length > 0) {
+        setValue("price", String(Math.min(...validPrices)) as any, { shouldValidate: true });
+      }
+      return next;
+    });
   };
 
   const getMinVariantPrice = () => {
@@ -493,6 +550,8 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           placeholder={
             selectedCategories.includes("Парфюмерия")
               ? "Например: Парфюмерная вода Baccarat Rouge 540"
+              : selectedCategories.includes("Косметика")
+              ? "Например: Увлажняющий крем для лица CeraVe"
               : selectedCategories.includes("Автотовары")
               ? "Например: Авторамки с индивидуальной надписью"
               : "Например: Платье миди из льна"
@@ -874,46 +933,35 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
         </div>
       )}
 
-      {/* Объемы и цены (для парфюмерии, услуг или вариантов с ценой) */}
+      {/* Объемы и цены (для парфюмерии, косметики, услуг или вариантов с ценой) */}
       {isPerfumeOrHasVariants && !isPriceNegotiable && (
-        <div className={`flex flex-col gap-3 rounded-xl p-3.5 sm:p-4 border transition-all ${
-          hasService ? "bg-teal-50/60 border-teal-200" : "bg-purple-50/60 border-purple-200"
-        }`}>
+        <div className={`flex flex-col gap-3 rounded-xl p-3.5 sm:p-4 border transition-all ${variantUiConfig.sectionClass}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`flex h-6 w-6 items-center justify-center rounded-lg ${
-                hasService ? "bg-teal-100 text-teal-700" : "bg-purple-100 text-purple-700"
-              }`}>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-lg ${variantUiConfig.iconBgClass}`}>
                 {hasService ? <Briefcase className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
               </span>
               <label className="text-sm font-semibold text-gray-900">
-                {hasService ? "Прайс-лист / Варианты услуги" : "Объемы и цены (для парфюмерии и распива)"}
+                {variantUiConfig.title}
               </label>
             </div>
             {volumeVariants.length > 0 && (
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                hasService ? "text-teal-700 bg-teal-100 border-teal-200" : "text-purple-700 bg-purple-100 border-purple-200"
-              }`}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${variantUiConfig.badgeClass}`}>
                 Позиций: {volumeVariants.length}
               </span>
             )}
           </div>
           <p className="text-xs text-gray-600">
-            {hasService
-              ? "Укажите позиции прайса (например, Диван прямой, Диван угловой, Матрас, Полировка фар) с отдельной ценой для каждого варианта."
-              : "Укажите объемы в наличии (например, отливанты 5 мл, 10 мл или флакон 100 мл) с отдельной ценой для каждого. Покупатели смогут выбрать нужный объем прямо на странице товара."}
+            {variantUiConfig.description}
           </p>
 
           {/* Быстрые пресеты */}
           <div className="flex flex-col gap-1.5 pt-0.5">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-              {hasService ? "Быстрый выбор популярных услуг:" : "Быстрый выбор популярного объема:"}
+              {variantUiConfig.presetLabel}
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {(hasService
-                ? ["Диван прямой", "Диван угловой", "Матрас", "Кресло", "Стул", "Химчистка салона", "Полировка фар", "Комплекс"]
-                : PERFUME_VOLUME_PRESETS
-              ).map((preset) => {
+              {variantUiConfig.presets.map((preset) => {
                 const isAdded = volumeVariants.some((v) => v.name.toLowerCase() === preset.toLowerCase());
                 return (
                   <button
@@ -921,9 +969,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                     type="button"
                     onClick={() => handleAddPresetVolume(preset)}
                     className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                      isAdded
-                        ? (hasService ? "bg-teal-600 text-white shadow-2xs ring-1 ring-teal-600" : "bg-purple-600 text-white shadow-2xs ring-1 ring-purple-600")
-                        : (hasService ? "bg-white text-gray-700 border border-teal-200 hover:bg-teal-100/60 active:scale-95" : "bg-white text-gray-700 border border-purple-200 hover:bg-purple-100/60 active:scale-95")
+                      isAdded ? variantUiConfig.presetActiveClass : variantUiConfig.presetIdleClass
                     }`}
                   >
                     <span>{isAdded ? "✓" : "+"}</span>
@@ -938,7 +984,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
           {volumeVariants.length > 0 && (
             <div className="flex flex-col gap-2 pt-2">
               <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-gray-500 px-1">
-                <span className="col-span-5 sm:col-span-4">{hasService ? "Позиция / Услуга *" : "Объем / Вариант *"}</span>
+                <span className="col-span-5 sm:col-span-4">{variantUiConfig.colLabel}</span>
                 <span className="col-span-3 sm:col-span-3">Цена (руб.) *</span>
                 <span className="col-span-3 sm:col-span-4">Старая цена</span>
                 <span className="col-span-1 text-center"></span>
@@ -954,7 +1000,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                       type="text"
                       value={variant.name}
                       onChange={(e) => handleUpdateVariant(variant.id, "name", e.target.value)}
-                      placeholder={hasService ? "Напр: Диван угловой" : "Напр: 10 мл"}
+                      placeholder={variantUiConfig.placeholder}
                       className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
@@ -985,7 +1031,7 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
                       type="button"
                       onClick={() => handleRemoveVariant(variant.id)}
                       className="text-gray-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
-                      title="Удалить объем"
+                      title="Удалить вариант"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -1000,16 +1046,14 @@ export default function AddProductForm({ onSuccess, initialData }: AddProductFor
             <button
               type="button"
               onClick={handleAddNewVariantRow}
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold transition-colors shadow-2xs cursor-pointer active:scale-95 ${
-                hasService ? "border border-teal-200 text-teal-700 hover:bg-teal-50" : "border border-purple-200 text-purple-700 hover:bg-purple-50"
-              }`}
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold transition-colors shadow-2xs cursor-pointer active:scale-95 ${variantUiConfig.addBtnClass}`}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>{hasService ? "Своя позиция / услуга" : "Свой объем"}</span>
+              <span>{variantUiConfig.addLabel}</span>
             </button>
             {volumeVariants.length > 0 && getMinVariantPrice() > 0 && (
               <span className="text-[11px] text-gray-500">
-                💡 На витрине отобразится: <strong className={hasService ? "text-teal-700" : "text-purple-700"}>«от {getMinVariantPrice()} руб.»</strong>
+                💡 На витрине отобразится: <strong className={variantUiConfig.accentTextClass}>«от {getMinVariantPrice()} руб.»</strong>
               </span>
             )}
           </div>

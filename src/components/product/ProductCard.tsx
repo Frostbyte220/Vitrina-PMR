@@ -122,6 +122,9 @@ export function ProductCard({ product, priority = false, activeCities }: Product
   const productVariants = (prod.variants as { name: string; price: number; oldPrice?: number | null }[] | null) || [];
   const hasVariants = Array.isArray(productVariants) && productVariants.length > 0;
   const isService = prod.category === "Услуги" || (prod as any).categories?.includes("Услуги");
+  const isPerfume = prod.category === "Парфюмерия" || (prod as any).categories?.includes("Парфюмерия");
+  const isCosmetics = prod.category === "Косметика" || (prod as any).categories?.includes("Косметика");
+  const isVolumeVariant = !isService && (isPerfume || isCosmetics || hasVariants);
   const variantPrices = hasVariants
     ? productVariants.map((v) => v.price).filter((p) => typeof p === "number" && p > 0)
     : [];
@@ -138,12 +141,14 @@ export function ProductCard({ product, priority = false, activeCities }: Product
       isService
     ) {
       toast(
-        prod.category === "Парфюмерия"
+        isPerfume
           ? "Пожалуйста, выберите объем парфюма"
           : isService
           ? "Пожалуйста, выберите вариант услуги и время"
+          : isVolumeVariant
+          ? "Пожалуйста, выберите подходящий объем"
           : "Пожалуйста, выберите подходящий размер",
-        { icon: prod.category === "Парфюмерия" ? "✨" : isService ? "💼" : "📏" }
+        { icon: isVolumeVariant ? "✨" : isService ? "💼" : "📏" }
       );
       router.push(`/product/${product.id}`);
       return;
@@ -358,7 +363,9 @@ export function ProductCard({ product, priority = false, activeCities }: Product
                 contacts={storeContacts}
                 isCardView={true} 
                 category={prod.category}
+                categories={prod.categories}
                 isService={isService}
+                isVolume={isVolumeVariant}
               />
             </div>
             {!isService && (

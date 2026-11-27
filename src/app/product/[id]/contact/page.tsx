@@ -40,8 +40,10 @@ export default async function ProductContactPage({ params }: PageProps) {
       oldPrice: true,
       images: true,
       sizes: true,
+      variants: true,
       availability: true,
       category: true,
+      categories: true,
       store: {
         select: {
           id: true,
@@ -96,8 +98,10 @@ export default async function ProductContactPage({ params }: PageProps) {
         oldPrice: product.oldPrice,
         images: product.images,
         sizes: product.sizes,
+        variants: (product.variants as any) ?? null,
         availability: product.availability,
         category: product.category,
+        categories: product.categories,
       }}
       store={{
         id: resolvedStore.id,

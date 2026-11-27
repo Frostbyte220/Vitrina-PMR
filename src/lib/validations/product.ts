@@ -114,7 +114,7 @@ export const productSchema = z.object({
     }
     const isPerfume = data.category === "Парфюмерия" || data.categories?.includes("Парфюмерия");
     const hasValidVariants = Array.isArray(data.variants) && data.variants.some((v) => v && v.price > 0);
-    if (isPerfume) {
+    if (isPerfume || hasValidVariants) {
       if (data.isNegotiable === false) {
         return hasValidVariants || data.price > 0;
       }
@@ -160,6 +160,10 @@ export const SHOE_SIZES = [
 
 export const PERFUME_VOLUME_PRESETS = [
   "2 мл", "3 мл", "5 мл", "10 мл", "15 мл", "20 мл", "30 мл", "50 мл", "100 мл"
+];
+
+export const COSMETICS_VOLUME_PRESETS = [
+  "10 мл", "15 мл", "30 мл", "50 мл", "75 мл", "100 мл", "150 мл", "200 мл", "250 мл", "500 мл", "50 г", "100 г"
 ];
 
 export const SERVICE_PRESETS = [

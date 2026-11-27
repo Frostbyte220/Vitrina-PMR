@@ -373,6 +373,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               sizes={product.sizes || []}
               variants={product.variants as any}
               category={product.category}
+              categories={product.categories}
               imageUrl={images[0]}
               shopName={shopName}
               oldPrice={product.oldPrice}
@@ -422,6 +423,7 @@ const productCardSelect = {
   categories: true,
   subCategory: true,
   sizes: true,
+  variants: true,
   store: {
     select: {
       name: true,

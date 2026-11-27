@@ -17,6 +17,7 @@ export interface CartItem {
   oldPrice?: number | null;
   image: string;
   selectedSize?: string | null;
+  variantLabel?: string | null;
   quantity: number;
 
   // Данные магазина
@@ -179,7 +180,7 @@ export function generateStoreOrderMessage(group: StoreCartGroup): string {
 
   const itemsList = group.items
     .map((item, idx) => {
-      const sizeStr = item.selectedSize ? ` (Размер: ${item.selectedSize})` : "";
+      const sizeStr = item.selectedSize ? ` (${item.variantLabel || "Размер"}: ${item.selectedSize})` : "";
       const isNegotiable = item.price === 0;
       const unitPriceStr = formatPrice(item.price);
       const totalItemStr = isNegotiable ? "Договорная" : formatPrice(item.price * item.quantity);

@@ -115,6 +115,7 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
           categories: true,
           subCategory: true,
           sizes: true,
+          variants: true,
           availability: true,
           images: true,
           description: true,
@@ -138,6 +139,7 @@ export async function fetchShopProducts(params: FetchShopProductsParams) {
       categories: item.categories || (item.category ? [item.category] : []),
       subCategory: item.subCategory,
       sizes: item.sizes || [],
+      variants: (item as any).variants ?? null,
       images:
         item.images && item.images.length > 0
           ? item.images

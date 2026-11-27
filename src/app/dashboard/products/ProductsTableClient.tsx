@@ -440,28 +440,42 @@ export function ProductsTableClient({ items, searchQuery }: ProductsTableClientP
                     </div>
                   </div>
 
-                  {/* Средняя строка: Цена, скидка и размеры */}
+                  {/* Средняя строка: Цена, скидка и размеры/варианты */}
                   <div className="flex items-center justify-between border-t border-gray-50 pt-2.5">
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-base font-bold ${hasDiscount ? "text-rose-600" : "text-gray-900"}`}>
-                        {formatPrice(product.price)}
-                      </span>
-                      {hasDiscount && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-gray-400 line-through">
-                            {formatPrice(product.oldPrice!)}
+                      {Array.isArray(product.variants) && product.variants.length > 0 ? (
+                        <span className="text-base font-bold text-gray-900">
+                          от {formatPrice(Math.min(...product.variants.map((v) => v.price).filter((p) => p > 0)) || product.price)}
+                        </span>
+                      ) : (
+                        <>
+                          <span className={`text-base font-bold ${hasDiscount ? "text-rose-600" : "text-gray-900"}`}>
+                            {formatPrice(product.price)}
                           </span>
-                          <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
-                            -{Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)}%
-                          </span>
-                        </div>
+                          {hasDiscount && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-gray-400 line-through">
+                                {formatPrice(product.oldPrice!)}
+                              </span>
+                              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                                -{Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)}%
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
-                    {product.sizes && product.sizes.length > 0 && (
-                      <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-                        {product.sizes.length} разм.
+                    {Array.isArray(product.variants) && product.variants.length > 0 ? (
+                      <span className="text-[11px] font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                        {product.variants.length} вар.
                       </span>
+                    ) : (
+                      product.sizes && product.sizes.length > 0 && (
+                        <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                          {product.sizes.length} разм.
+                        </span>
+                      )
                     )}
                   </div>
 

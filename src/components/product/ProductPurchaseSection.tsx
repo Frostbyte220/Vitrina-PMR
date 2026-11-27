@@ -20,6 +20,7 @@ interface ProductPurchaseSectionProps {
   sizes?: string[];
   variants?: { name: string; price: number; oldPrice?: number | null }[] | null;
   category?: string;
+  categories?: string[] | null;
   imageUrl?: string | null;
   shopName?: string | null;
   storeId?: string | null;
@@ -38,6 +39,7 @@ export function ProductPurchaseSection({
   sizes = [],
   variants = [],
   category,
+  categories,
   imageUrl,
   shopName,
   storeId,
@@ -57,9 +59,14 @@ export function ProductPurchaseSection({
     setMounted(true);
   }, []);
 
-  const isPerfume = category === "Парфюмерия";
-  const isService = category === "Услуги" || category?.toLowerCase().includes("услуг");
+  const isPerfume = category === "Парфюмерия" || Boolean(categories?.includes("Парфюмерия"));
+  const isCosmetics = category === "Косметика" || Boolean(categories?.includes("Косметика"));
+  const isService =
+    category === "Услуги" ||
+    Boolean(category?.toLowerCase().includes("услуг")) ||
+    Boolean(categories?.includes("Услуги"));
   const hasVariants = Array.isArray(variants) && variants.length > 0;
+  const isVolumeCategory = isPerfume || isCosmetics || (hasVariants && !isService);
   const hasSizes = (Array.isArray(sizes) && sizes.length > 0) || hasVariants;
 
   // Если выбран вариант с отдельной ценой (например, 10 мл или тип мебели)
@@ -83,10 +90,10 @@ export function ProductPurchaseSection({
     if (hasSizes && !selectedSize) {
       setSizeError(true);
       toast.error(
-        isPerfume
-          ? "Пожалуйста, выберите подходящий объем"
-          : isService
+        isService
           ? "Пожалуйста, выберите подходящий вариант услуги"
+          : isVolumeCategory
+          ? "Пожалуйста, выберите подходящий объем"
           : "Пожалуйста, выберите подходящий размер товара"
       );
       return;
@@ -99,6 +106,7 @@ export function ProductPurchaseSection({
       oldPrice: effectiveOldPrice,
       image: imageUrl || "",
       selectedSize,
+      variantLabel: isService ? "Вариант" : hasVariants || isVolumeCategory ? "Объем" : "Размер",
       storeId,
       storeName: shopName || "Магазин",
       storeSlug: shopUsername,
@@ -154,7 +162,7 @@ export function ProductPurchaseSection({
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-text-main">
               {hasVariants
-                ? (isPerfume ? "Объем:" : isService ? "Прайс / Вариант услуги:" : "Вариант / Объем:")
+                ? (isService ? "Прайс / Вариант услуги:" : isVolumeCategory ? "Объем:" : "Вариант / Объем:")
                 : "Размер:"}{" "}
               {selectedSize ? (
                 <>
@@ -173,7 +181,7 @@ export function ProductPurchaseSection({
             </span>
             <span className="text-xs text-text-muted">
               {hasVariants
-                ? (isPerfume ? "Распив / флакон" : isService ? "Прайс-лист" : "Варианты")
+                ? (isPerfume ? "Распив / флакон" : isCosmetics ? "Объем / вес" : isService ? "Прайс-лист" : "Варианты")
                 : category === "Обувь"
                 ? "Размер обуви"
                 : "Размер одежды"}
@@ -305,7 +313,9 @@ export function ProductPurchaseSection({
               availability={availability}
               storeId={storeId}
               category={category}
+              categories={categories}
               isService={isService}
+              isVolume={isVolumeCategory}
             />
           </div>
 
@@ -398,7 +408,9 @@ export function ProductPurchaseSection({
               availability={availability}
               storeId={storeId}
               category={category}
+              categories={categories}
               isService={isService}
+              isVolume={isVolumeCategory}
             />
           </div>
 

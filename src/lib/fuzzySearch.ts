@@ -245,6 +245,7 @@ export async function getFuzzySuggestions(
       images: true,
       category: true,
       sizes: true,
+      variants: true,
       store: { select: { name: true, slug: true, avatarUrl: true, isVerified: true } },
       user: {
         select: {
@@ -317,6 +318,7 @@ const productSelectFields = {
   categories: true,
   subCategory: true,
   sizes: true,
+  variants: true,
   availability: true,
   createdAt: true,
   user: {

@@ -19,6 +19,7 @@ export const getProducts = unstable_cache(
           categories: true,
           subCategory: true,
           sizes: true,
+          variants: true,
           availability: true,
           createdAt: true,
           user: {

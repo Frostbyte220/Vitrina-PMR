@@ -38,7 +38,9 @@ interface ContactSellerButtonProps {
   availability?: string | null;
   storeId?: string | null;
   category?: string;
+  categories?: string[] | null;
   isService?: boolean;
+  isVolume?: boolean;
 }
 
 // Универсальная функция копирования текста в буфер обмена
@@ -84,7 +86,9 @@ export function ContactSellerButton({
   availability,
   storeId,
   category,
+  categories,
   isService,
+  isVolume,
 }: ContactSellerButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,7 +100,15 @@ export function ContactSellerButton({
   const [threadToken, setThreadToken] = useState<string | null>(null);
 
   const isServiceEffective = Boolean(
-    isService || category === "Услуги" || category?.toLowerCase().includes("услуг")
+    isService || category === "Услуги" || category?.toLowerCase().includes("услуг") || categories?.includes("Услуги")
+  );
+  const isVolumeEffective = Boolean(
+    !isServiceEffective &&
+      (isVolume ||
+        category === "Парфюмерия" ||
+        category === "Косметика" ||
+        categories?.includes("Парфюмерия") ||
+        categories?.includes("Косметика"))
   );
 
   useEffect(() => {
@@ -143,7 +155,7 @@ export function ContactSellerButton({
   const availInfo = getAvailabilityInfo(availability);
   const availText = availInfo ? ` (${availInfo.label.toLowerCase()})` : "";
   const sizeText = selectedSize
-    ? (isServiceEffective ? `, вариант/позиция: ${selectedSize}` : `, размер: ${selectedSize}`)
+    ? (isServiceEffective ? `, вариант/позиция: ${selectedSize}` : isVolumeEffective ? `, объем: ${selectedSize}` : `, размер: ${selectedSize}`)
     : "";
 
   // Фирменное сообщение с четкой атрибуцией e-vitrina.com

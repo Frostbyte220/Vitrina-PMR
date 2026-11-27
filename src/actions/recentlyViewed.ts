@@ -31,6 +31,7 @@ export async function getRecentlyViewedProducts(
         category: true,
         subCategory: true,
         sizes: true,
+        variants: true,
         user: {
           select: {
             name: true,
